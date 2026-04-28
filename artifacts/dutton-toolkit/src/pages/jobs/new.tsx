@@ -11,7 +11,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Crosshair, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
@@ -19,6 +19,8 @@ const jobSchema = z.object({
   title: z.string().min(1, "Title is required"),
   customerId: z.string().min(1, "Customer is required"),
   address: z.string().min(1, "Address is required"),
+  latitude: z.union([z.coerce.number(), z.literal("")]).optional(),
+  longitude: z.union([z.coerce.number(), z.literal("")]).optional(),
   scheduledDate: z.string().min(1, "Date is required"),
   estimatedHours: z.coerce.number().min(0),
   hourlyRate: z.coerce.number().min(0),
@@ -39,6 +41,7 @@ export default function NewJob() {
   const { customers, addCustomer, addJob } = useAppStore();
   const [, setLocation] = useLocation();
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
@@ -46,6 +49,8 @@ export default function NewJob() {
       title: "",
       customerId: "",
       address: "",
+      latitude: "",
+      longitude: "",
       scheduledDate: new Date().toISOString().split('T')[0],
       estimatedHours: 0,
       hourlyRate: 75,
@@ -55,6 +60,37 @@ export default function NewJob() {
     }
   });
 
+  function handleUseMyLocation() {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocation is not supported by this browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        form.setValue("latitude", lat, { shouldDirty: true, shouldValidate: true });
+        form.setValue("longitude", lng, { shouldDirty: true, shouldValidate: true });
+        setLocating(false);
+        toast.success("Location captured");
+      },
+      (err) => {
+        setLocating(false);
+        const msg =
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission denied"
+            : err.code === err.POSITION_UNAVAILABLE
+              ? "Location unavailable"
+              : err.code === err.TIMEOUT
+                ? "Location request timed out"
+                : "Could not get location";
+        toast.error(msg);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  }
+
   const customerForm = useForm<z.infer<typeof customerSchema>>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -63,9 +99,21 @@ export default function NewJob() {
   });
 
   function onSubmit(data: z.infer<typeof jobSchema>) {
+    const lat = data.latitude === "" || data.latitude === undefined ? undefined : Number(data.latitude);
+    const lng = data.longitude === "" || data.longitude === undefined ? undefined : Number(data.longitude);
     const newJob = {
-      ...data,
-      notes: ""
+      title: data.title,
+      customerId: data.customerId,
+      address: data.address,
+      latitude: typeof lat === "number" && !Number.isNaN(lat) ? lat : undefined,
+      longitude: typeof lng === "number" && !Number.isNaN(lng) ? lng : undefined,
+      scheduledDate: data.scheduledDate,
+      estimatedHours: data.estimatedHours,
+      hourlyRate: data.hourlyRate,
+      materialsCost: data.materialsCost,
+      description: data.description || "",
+      status: data.status,
+      notes: "",
     };
     addJob(newJob);
     toast.success("Job created successfully");
@@ -186,6 +234,68 @@ export default function NewJob() {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <Label className="text-sm font-medium">Coordinates (optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUseMyLocation}
+                    disabled={locating}
+                  >
+                    {locating ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Locating...</>
+                    ) : (
+                      <><Crosshair className="mr-2 h-4 w-4" /> Use My Location</>
+                    )}
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="latitude"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs text-muted-foreground">Latitude</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="any"
+                            placeholder="33.9519"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="longitude"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs text-muted-foreground">Longitude</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="any"
+                            placeholder="-83.3576"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Used to place this job on the map and power directions. Leave blank if you don't have coordinates yet.
+                </p>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField

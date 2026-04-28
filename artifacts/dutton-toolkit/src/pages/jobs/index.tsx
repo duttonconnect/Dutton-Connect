@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -66,23 +66,40 @@ export default function JobsList() {
             ) : (
               filteredJobs.map(job => {
                 const customer = customers.find(c => c.id === job.customerId);
+                const directionsHref =
+                  typeof job.latitude === "number" && typeof job.longitude === "number"
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`
+                    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}`;
                 return (
-                  <Link key={job.id} href={`/jobs/${job.id}`}>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
+                  <div
+                    key={job.id}
+                    className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
+                  >
+                    <Link href={`/jobs/${job.id}`} className="flex-1 cursor-pointer">
                       <div className="space-y-1">
                         <div className="font-semibold text-lg">{job.title}</div>
                         <div className="text-sm text-muted-foreground">{customer?.name} • {job.address}</div>
                       </div>
-                      <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2">
-                        <div className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-                          {job.status.replace("_", " ").toUpperCase()}
-                        </div>
-                        <div className="text-sm font-medium">
-                          {format(new Date(job.scheduledDate), "MMM d, yyyy")}
-                        </div>
+                    </Link>
+                    <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2 sm:min-w-[160px]">
+                      <div className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                        {job.status.replace("_", " ").toUpperCase()}
                       </div>
+                      <div className="text-sm font-medium">
+                        {format(new Date(job.scheduledDate), "MMM d, yyyy")}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a href={directionsHref} target="_blank" rel="noopener noreferrer">
+                          <Navigation className="mr-2 h-3.5 w-3.5" /> Directions
+                        </a>
+                      </Button>
                     </div>
-                  </Link>
+                  </div>
                 );
               })
             )}

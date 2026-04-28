@@ -13,7 +13,9 @@ import QuotesList from "@/pages/quotes/index";
 import NewQuote from "@/pages/quotes/new";
 import QuoteDetail from "@/pages/quotes/detail";
 import CustomersList from "@/pages/customers/index";
+import CustomerDetail from "@/pages/customers/detail";
 import PaymentsList from "@/pages/payments/index";
+import MapView from "@/pages/map";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -30,7 +32,9 @@ function Router() {
         <Route path="/quotes/new" component={NewQuote} />
         <Route path="/quotes/:id" component={QuoteDetail} />
         <Route path="/customers" component={CustomersList} />
+        <Route path="/customers/:id" component={CustomerDetail} />
         <Route path="/payments" component={PaymentsList} />
+        <Route path="/map" component={MapView} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

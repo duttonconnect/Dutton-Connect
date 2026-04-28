@@ -1,11 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { Hammer, Users, FileText, DollarSign, Home, Menu, X } from "lucide-react";
+import { Hammer, Users, FileText, DollarSign, Home, Menu, X, Map as MapIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/jobs", label: "Jobs", icon: Hammer },
+  { href: "/map", label: "Map", icon: MapIcon },
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/payments", label: "Payments", icon: DollarSign },

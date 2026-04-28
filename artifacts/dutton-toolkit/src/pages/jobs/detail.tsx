@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2 } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -115,9 +115,32 @@ export default function JobDetail() {
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <div className="font-medium">Address</div>
                   <div className="text-muted-foreground">{job.address}</div>
+                  {typeof job.latitude === "number" && typeof job.longitude === "number" && (
+                    <div className="text-xs text-muted-foreground mt-0.5 font-mono">
+                      {job.latitude.toFixed(5)}, {job.longitude.toFixed(5)}
+                    </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    asChild
+                  >
+                    <a
+                      href={
+                        typeof job.latitude === "number" && typeof job.longitude === "number"
+                          ? `https://www.google.com/maps/dir/?api=1&destination=${job.latitude},${job.longitude}`
+                          : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Navigation className="mr-2 h-4 w-4" /> Get Directions
+                    </a>
+                  </Button>
                 </div>
               </div>
               <div className="flex items-start gap-3">
