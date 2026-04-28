@@ -2,7 +2,7 @@ import { useAppStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Link } from "wouter";
-import { Hammer, Users, FileText, Plus, ArrowRight } from "lucide-react";
+import { Hammer, Users, FileText, Plus, ArrowRight, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
@@ -20,12 +20,15 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
           <p className="text-gray-500">Welcome back to Dutton Solutions Toolkit.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/jobs/new">
             <Button><Plus className="mr-2 h-4 w-4" /> New Job</Button>
           </Link>
           <Link href="/quotes/new">
             <Button variant="outline"><Plus className="mr-2 h-4 w-4" /> New Quote</Button>
+          </Link>
+          <Link href="/map">
+            <Button variant="outline"><MapIcon className="mr-2 h-4 w-4" /> View Job Map</Button>
           </Link>
         </div>
       </div>
