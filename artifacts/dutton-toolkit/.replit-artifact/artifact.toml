@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Dutton Solutions Toolkit"
+version = "1.0.0"
+id = "artifacts/dutton-toolkit"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22890
+
+[services.development]
+run = "pnpm --filter @workspace/dutton-toolkit run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dutton-toolkit", "run", "build" ]
+publicDir = "artifacts/dutton-toolkit/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22890"
+BASE_PATH = "/"
