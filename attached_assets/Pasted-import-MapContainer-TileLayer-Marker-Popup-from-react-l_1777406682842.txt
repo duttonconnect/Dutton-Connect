@@ -1,0 +1,92 @@
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+
+const jobs = [
+  {
+    id: 1,
+    title: "Fence Repair",
+    customer: "John Smith",
+    address: "LaGrange, GA",
+    lat: 33.0362,
+    lng: -85.0322,
+    status: "Scheduled",
+  },
+  {
+    id: 2,
+    title: "Plumbing Repair",
+    customer: "Mary Jones",
+    address: "Hogansville, GA",
+    lat: 33.1732,
+    lng: -84.9144,
+    status: "New",
+  },
+];
+
+const markerIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+export default function MapView() {
+  const openDirections = (job) => {
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`,
+      "_blank"
+    );
+  };
+
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-2">Job Map</h1>
+      <p className="mb-4 text-gray-600">
+        View nearby jobs and open directions.
+      </p>
+
+      <div className="h-[500px] rounded-xl overflow-hidden border">
+        <MapContainer
+          center={[33.0362, -85.0322]}
+          zoom={10}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          {jobs.map((job) => (
+            <Marker
+              key={job.id}
+              position={[job.lat, job.lng]}
+              icon={markerIcon}
+            >
+              <Popup>
+                <strong>{job.title}</strong>
+                <br />
+                Customer: {job.customer}
+                <br />
+                Status: {job.status}
+                <br />
+                Address: {job.address}
+                <br />
+                <button
+                  onClick={() => openDirections(job)}
+                  style={{
+                    marginTop: "8px",
+                    padding: "6px 10px",
+                    background: "#111827",
+                    color: "white",
+                    borderRadius: "6px",
+                  }}
+                >
+                  Open Directions
+                </button>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
+    </div>
+  );
+}
