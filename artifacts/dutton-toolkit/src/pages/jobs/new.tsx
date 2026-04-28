@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Plus, Crosshair, Loader2 } from "lucide-react";
+import { LocationPicker } from "@/components/location-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
@@ -293,8 +294,24 @@ export default function NewJob() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Used to place this job on the map and power directions. Leave blank if you don't have coordinates yet.
+                  Used to place this job on the map and power directions. Click on the map below, drag the pin, type values, or use your current location.
                 </p>
+                {(() => {
+                  const latVal = form.watch("latitude");
+                  const lngVal = form.watch("longitude");
+                  const latNum = typeof latVal === "number" ? latVal : latVal === "" || latVal === undefined ? null : Number(latVal);
+                  const lngNum = typeof lngVal === "number" ? lngVal : lngVal === "" || lngVal === undefined ? null : Number(lngVal);
+                  return (
+                    <LocationPicker
+                      lat={latNum != null && !Number.isNaN(latNum) ? latNum : null}
+                      lng={lngNum != null && !Number.isNaN(lngNum) ? lngNum : null}
+                      onChange={(lat, lng) => {
+                        form.setValue("latitude", lat, { shouldDirty: true, shouldValidate: true });
+                        form.setValue("longitude", lng, { shouldDirty: true, shouldValidate: true });
+                      }}
+                    />
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
