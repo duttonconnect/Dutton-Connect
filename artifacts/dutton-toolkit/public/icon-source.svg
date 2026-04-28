@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#1d4ed8"/>
+  <g transform="translate(256 256)">
+    <text x="0" y="0"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+      font-weight="800"
+      font-size="240"
+      fill="#ffffff"
+      letter-spacing="-8">DS</text>
+  </g>
+  <g transform="translate(256 410)">
+    <rect x="-110" y="-3" width="220" height="6" rx="3" fill="#ffffff" opacity="0.85"/>
+  </g>
+</svg>

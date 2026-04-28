@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline · Dutton Solutions Toolkit</title>
+    <meta name="theme-color" content="#111827" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        max-width: 420px;
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 32px 28px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        text-align: center;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        background: #1d4ed8;
+        color: #fff;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: -0.5px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 20px;
+        color: #475569;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      button, a.btn {
+        appearance: none;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #0f172a;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s ease;
+      }
+      button.primary {
+        background: #1d4ed8;
+        color: #ffffff;
+        border-color: #1d4ed8;
+      }
+      button:hover, a.btn:hover { background: #f1f5f9; }
+      button.primary:hover { background: #1e40af; }
+      .meta {
+        margin-top: 18px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <main class="card" role="main">
+        <div class="badge">DS</div>
+        <h1>You're offline</h1>
+        <p>
+          The Dutton Solutions Toolkit can't reach the network right now. Any jobs,
+          customers, quotes, and payments you've saved are still on this device — you
+          can keep working once you're back online.
+        </p>
+        <div class="row">
+          <button class="primary" type="button" onclick="window.location.reload()">
+            Try again
+          </button>
+          <a class="btn" href="/">Open app</a>
+        </div>
+        <div class="meta">Dutton Solutions LLC · 706-523-1447</div>
+      </main>
+    </div>
+  </body>
+</html>
