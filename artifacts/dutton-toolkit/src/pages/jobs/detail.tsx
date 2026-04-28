@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -92,6 +92,11 @@ export default function JobDetail() {
           </div>
         </div>
         <div className="hidden sm:flex gap-2">
+          <Link href={`/jobs/${job.id}/edit`}>
+            <Button variant="outline">
+              <Pencil className="mr-2 h-4 w-4" /> Edit
+            </Button>
+          </Link>
           {job.status !== "completed" && (
             <Button onClick={() => handleStatusChange("completed")} className="bg-green-600 hover:bg-green-700 text-white">
               <CheckCircle className="mr-2 h-4 w-4" /> Mark Complete
@@ -307,6 +312,11 @@ export default function JobDetail() {
           </Card>
           
           <div className="flex sm:hidden gap-2">
+            <Link href={`/jobs/${job.id}/edit`} className="flex-1">
+              <Button variant="outline" className="w-full">
+                <Pencil className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            </Link>
             {job.status !== "completed" && (
               <Button onClick={() => handleStatusChange("completed")} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
                 <CheckCircle className="mr-2 h-4 w-4" /> Complete

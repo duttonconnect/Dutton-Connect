@@ -8,6 +8,7 @@ import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
 import JobsList from "@/pages/jobs/index";
 import NewJob from "@/pages/jobs/new";
+import EditJob from "@/pages/jobs/edit";
 import JobDetail from "@/pages/jobs/detail";
 import QuotesList from "@/pages/quotes/index";
 import NewQuote from "@/pages/quotes/new";
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/jobs" component={JobsList} />
         <Route path="/jobs/new" component={NewJob} />
+        <Route path="/jobs/:id/edit" component={EditJob} />
         <Route path="/jobs/:id" component={JobDetail} />
         <Route path="/quotes" component={QuotesList} />
         <Route path="/quotes/new" component={NewQuote} />
