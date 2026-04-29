@@ -2,7 +2,7 @@ import { useAppStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Link } from "wouter";
-import { Hammer, Users, FileText, Plus, ArrowRight, Map as MapIcon, Car } from "lucide-react";
+import { Hammer, Users, FileText, Plus, ArrowRight, Map as MapIcon, Car, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
@@ -32,6 +32,9 @@ export default function Dashboard() {
           </Link>
           <Link href="/mileage">
             <Button variant="outline"><Car className="mr-2 h-4 w-4" /> Mileage Tracker</Button>
+          </Link>
+          <Link href="/receipts">
+            <Button variant="outline"><Receipt className="mr-2 h-4 w-4" /> Receipts</Button>
           </Link>
         </div>
       </div>

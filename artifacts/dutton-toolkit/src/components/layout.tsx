@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Hammer, Users, FileText, DollarSign, Home, Menu, X, Map as MapIcon, Car } from "lucide-react";
+import { Hammer, Users, FileText, DollarSign, Home, Menu, X, Map as MapIcon, Car, Receipt } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/payments", label: "Payments", icon: DollarSign },
   { href: "/mileage", label: "Mileage", icon: Car },
+  { href: "/receipts", label: "Receipts", icon: Receipt },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

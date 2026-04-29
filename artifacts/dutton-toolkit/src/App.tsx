@@ -18,6 +18,7 @@ import CustomerDetail from "@/pages/customers/detail";
 import PaymentsList from "@/pages/payments/index";
 import MapView from "@/pages/map";
 import MileageTracker from "@/pages/mileage";
+import ReceiptTracker from "@/pages/receipts";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ function Router() {
         <Route path="/payments" component={PaymentsList} />
         <Route path="/map" component={MapView} />
         <Route path="/mileage" component={MileageTracker} />
+        <Route path="/receipts" component={ReceiptTracker} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

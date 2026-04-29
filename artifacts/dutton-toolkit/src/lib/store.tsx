@@ -80,12 +80,49 @@ export type Trip = {
   endedAt: string;
 };
 
+export type ReceiptCategory =
+  | "Gas"
+  | "Tools"
+  | "Materials"
+  | "Vehicle Repair"
+  | "Advertising"
+  | "Phone"
+  | "Insurance"
+  | "Supplies"
+  | "Contract Labor"
+  | "Other";
+
+export const RECEIPT_CATEGORIES: ReceiptCategory[] = [
+  "Gas",
+  "Tools",
+  "Materials",
+  "Vehicle Repair",
+  "Advertising",
+  "Phone",
+  "Insurance",
+  "Supplies",
+  "Contract Labor",
+  "Other",
+];
+
+export type Receipt = {
+  id: string;
+  vendor: string;
+  date: string;
+  amount: number;
+  category: ReceiptCategory;
+  notes: string;
+  imageDataUrl?: string;
+  createdAt: string;
+};
+
 type AppState = {
   customers: Customer[];
   jobs: Job[];
   quotes: Quote[];
   payments: Payment[];
   trips: Trip[];
+  receipts: Receipt[];
 };
 
 type AppContextType = AppState & {
@@ -106,6 +143,9 @@ type AppContextType = AppState & {
 
   addTrip: (t: Omit<Trip, "id">) => void;
   deleteTrip: (id: string) => void;
+
+  addReceipt: (r: Omit<Receipt, "id" | "createdAt">) => void;
+  deleteReceipt: (id: string) => void;
 };
 
 const SEED_DATA: AppState = {
@@ -135,7 +175,8 @@ const SEED_DATA: AppState = {
       id: "p1", jobId: "j3", amount: 270, method: "card", date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), notes: "Paid via Square"
     }
   ],
-  trips: []
+  trips: [],
+  receipts: []
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -176,6 +217,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     addTrip: (t) => setState(s => ({ ...s, trips: [...(s.trips ?? []), { ...t, id: generateId() }] })),
     deleteTrip: (id) => setState(s => ({ ...s, trips: (s.trips ?? []).filter(x => x.id !== id) })),
+
+    addReceipt: (r) => setState(s => ({ ...s, receipts: [...(s.receipts ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
+    deleteReceipt: (id) => setState(s => ({ ...s, receipts: (s.receipts ?? []).filter(x => x.id !== id) })),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
