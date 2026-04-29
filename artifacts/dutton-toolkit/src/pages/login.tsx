@@ -133,9 +133,6 @@ export default function Login() {
             </Link>
           </div>
 
-          <div className="text-center text-xs text-gray-400">
-            Dutton Solutions LLC · 706-523-1447
-          </div>
         </div>
       </main>
     </div>
