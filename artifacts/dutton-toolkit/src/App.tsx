@@ -37,6 +37,7 @@ import ChatPage from "@/pages/messages/chat";
 import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
 
+import CalendarPage from "@/pages/calendar";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 
@@ -63,6 +64,7 @@ function ProRoutes() {
         <Route path="/nearby-jobs" component={NearbyJobs} />
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
+        <Route path="/calendar" component={CalendarPage} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />
@@ -82,6 +84,7 @@ function CustomerRoutes() {
         <Route path="/find-pros" component={FindNearbyPros} />
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
+        <Route path="/calendar" component={CalendarPage} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />

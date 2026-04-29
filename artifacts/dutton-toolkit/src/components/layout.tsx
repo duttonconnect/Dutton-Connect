@@ -17,6 +17,7 @@ import {
   RefreshCw,
   LogOut,
   MessageSquare,
+  CalendarDays,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -34,6 +35,7 @@ const PRO_NAV = [
   { href: "/mileage", label: "Mileage", icon: Car },
   { href: "/receipts", label: "Receipts", icon: Receipt },
   { href: "/messages", label: "Messages", icon: MessageSquare },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
 ];
 
 const CUSTOMER_NAV = [
@@ -43,6 +45,7 @@ const CUSTOMER_NAV = [
   { href: "/my-requests", label: "My Requests", icon: ListChecks },
   { href: "/my-quotes", label: "Quotes", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: MessageSquare },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
