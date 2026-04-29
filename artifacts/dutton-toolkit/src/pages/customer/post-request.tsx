@@ -10,6 +10,8 @@ import {
   type RequestCategory,
   type Urgency,
 } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
+import { postJobRequestToFirestore } from "@/lib/matching";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +60,7 @@ async function fileToCompressedDataUrl(
 
 export default function PostJobRequest() {
   const { addJobRequest } = useAppStore();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,17 +113,36 @@ export default function PostJobRequest() {
       return;
     }
 
+    const sharedId = Math.random().toString(36).slice(2, 11);
+    const createdAt = new Date().toISOString();
+    const customerId = user?.uid ?? "";
+
+    const requestData = {
+      id: sharedId,
+      title: title.trim(),
+      category,
+      description: description.trim(),
+      address: address.trim(),
+      budget: budgetNum,
+      preferredDate: new Date(preferredDate).toISOString(),
+      urgency,
+      photoDataUrl,
+      customerId,
+      status: "open" as const,
+    };
+
     try {
-      addJobRequest({
-        title: title.trim(),
-        category,
-        description: description.trim(),
-        address: address.trim(),
-        budget: budgetNum,
-        preferredDate: new Date(preferredDate).toISOString(),
-        urgency,
-        photoDataUrl,
-      });
+      addJobRequest(requestData);
+      postJobRequestToFirestore(sharedId, {
+        title: requestData.title,
+        category: requestData.category,
+        description: requestData.description,
+        address: requestData.address,
+        budget: requestData.budget,
+        preferredDate: requestData.preferredDate,
+        urgency: requestData.urgency,
+        customerId,
+      }, createdAt);
       toast.success("Request posted! Local pros can now see it.");
       setLocation("/my-requests");
     } catch (err) {

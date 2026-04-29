@@ -31,6 +31,7 @@ import CustomerDashboard from "@/pages/customer/dashboard";
 import PostJobRequest from "@/pages/customer/post-request";
 import MyJobRequests from "@/pages/customer/my-requests";
 import FindNearbyPros from "@/pages/customer/find-pros";
+import MyQuotes from "@/pages/customer/my-quotes";
 
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -69,6 +70,7 @@ function CustomerRoutes() {
         <Route path="/" component={CustomerDashboard} />
         <Route path="/post-request" component={PostJobRequest} />
         <Route path="/my-requests" component={MyJobRequests} />
+        <Route path="/my-quotes" component={MyQuotes} />
         <Route path="/find-pros" component={FindNearbyPros} />
         <Route component={NotFound} />
       </Switch>

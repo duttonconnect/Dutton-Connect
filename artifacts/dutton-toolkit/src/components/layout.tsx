@@ -39,6 +39,7 @@ const CUSTOMER_NAV = [
   { href: "/post-request", label: "Post a Job", icon: ClipboardList },
   { href: "/find-pros", label: "Find Pros", icon: Search },
   { href: "/my-requests", label: "My Requests", icon: ListChecks },
+  { href: "/my-quotes", label: "Quotes", icon: DollarSign },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

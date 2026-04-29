@@ -147,6 +147,8 @@ export type JobRequest = {
   preferredDate: string;
   urgency: Urgency;
   photoDataUrl?: string;
+  customerId?: string;
+  status?: "open" | "closed";
   createdAt: string;
 };
 
@@ -182,7 +184,7 @@ type AppContextType = AppState & {
   addReceipt: (r: Omit<Receipt, "id" | "createdAt">) => void;
   deleteReceipt: (id: string) => void;
 
-  addJobRequest: (r: Omit<JobRequest, "id" | "createdAt">) => void;
+  addJobRequest: (r: Omit<JobRequest, "id" | "createdAt"> & { id?: string }) => void;
   deleteJobRequest: (id: string) => void;
 
   loadState: (s: Partial<AppState>) => void;
@@ -262,7 +264,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     addReceipt: (r) => setState(s => ({ ...s, receipts: [...(s.receipts ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
     deleteReceipt: (id) => setState(s => ({ ...s, receipts: (s.receipts ?? []).filter(x => x.id !== id) })),
 
-    addJobRequest: (r) => setState(s => ({ ...s, jobRequests: [...(s.jobRequests ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
+    addJobRequest: (r) => {
+      const { id: presetId, ...rest } = r as JobRequest;
+      const id = presetId && presetId !== "" ? presetId : generateId();
+      setState(s => ({ ...s, jobRequests: [...(s.jobRequests ?? []), { ...rest, id, createdAt: new Date().toISOString() }] }));
+    },
     deleteJobRequest: (id) => setState(s => ({ ...s, jobRequests: (s.jobRequests ?? []).filter(x => x.id !== id) })),
 
     loadState: (incoming) => setState(s => ({

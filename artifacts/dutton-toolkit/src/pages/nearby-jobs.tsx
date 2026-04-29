@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -8,17 +8,23 @@ import {
   Send,
   Filter,
   Inbox,
+  Loader2,
+  DollarSign,
 } from "lucide-react";
 
+import { type RequestCategory, type Urgency } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import {
-  useAppStore,
-  type JobRequest,
-  type RequestCategory,
-  type Urgency,
-} from "@/lib/store";
+  loadOpenJobRequests,
+  sendMatchQuote,
+  type FirestoreJobRequest,
+} from "@/lib/matching";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,8 +32,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
-type FeedRequest = JobRequest & { distanceMiles: number; isSample?: boolean };
+type FeedRequest = FirestoreJobRequest & {
+  distanceMiles: number;
+  isSample?: boolean;
+};
 
 const SAMPLE_FEED: FeedRequest[] = [
   {
@@ -40,6 +57,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     budget: 120,
     preferredDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
     urgency: "Normal",
+    customerId: "sample",
+    status: "open",
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
     distanceMiles: 2.4,
     isSample: true,
@@ -54,6 +73,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     budget: 200,
     preferredDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     urgency: "Urgent",
+    customerId: "sample",
+    status: "open",
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     distanceMiles: 4.1,
     isSample: true,
@@ -68,6 +89,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     budget: 275,
     preferredDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
     urgency: "Low",
+    customerId: "sample",
+    status: "open",
     createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
     distanceMiles: 7.8,
     isSample: true,
@@ -82,6 +105,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     budget: 180,
     preferredDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     urgency: "Normal",
+    customerId: "sample",
+    status: "open",
     createdAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
     distanceMiles: 12.6,
     isSample: true,
@@ -96,6 +121,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     budget: 425,
     preferredDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
     urgency: "Low",
+    customerId: "sample",
+    status: "open",
     createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
     distanceMiles: 18.3,
     isSample: true,
@@ -110,20 +137,21 @@ const SAMPLE_FEED: FeedRequest[] = [
     budget: 320,
     preferredDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     urgency: "Urgent",
+    customerId: "sample",
+    status: "open",
     createdAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
     distanceMiles: 32.1,
     isSample: true,
   },
 ];
 
-// Stable mock distance for user-posted requests, derived from the request id.
 function mockDistanceFor(id: string): number {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return Math.abs(h % 480) / 10 + 0.5; // 0.5 - 48.5 mi
+  return Math.abs(h % 480) / 10 + 0.5;
 }
 
-const urgencyStyle: Record<Urgency, string> = {
+const urgencyStyle: Record<string, string> = {
   Low: "bg-gray-100 text-gray-700",
   Normal: "bg-blue-100 text-blue-800",
   Urgent: "bg-red-100 text-red-800",
@@ -143,29 +171,38 @@ const ALL_CATEGORIES: (RequestCategory | "All")[] = [
 const DISTANCE_OPTIONS = [10, 25, 50] as const;
 
 export default function NearbyJobs() {
-  const { jobRequests } = useAppStore();
+  const { user } = useAuth();
   const [maxDistance, setMaxDistance] = useState<number>(25);
-  const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "All">(
-    "All",
-  );
+  const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "All">("All");
+  const [firestoreRequests, setFirestoreRequests] = useState<FeedRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
 
-  const customerRequests: FeedRequest[] = useMemo(
-    () =>
-      (jobRequests ?? []).map((r) => ({
-        ...r,
-        distanceMiles: mockDistanceFor(r.id),
-      })),
-    [jobRequests],
-  );
+  // Send Quote dialog state
+  const [quoting, setQuoting] = useState<FeedRequest | null>(null);
+  const [quoteAmount, setQuoteAmount] = useState("");
+  const [quoteMessage, setQuoteMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
-  const allRequests: FeedRequest[] = useMemo(
-    () =>
-      [...customerRequests, ...SAMPLE_FEED].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      ),
-    [customerRequests],
-  );
+  useEffect(() => {
+    setLoadingRequests(true);
+    loadOpenJobRequests()
+      .then((results) => {
+        const mapped: FeedRequest[] = results
+          .filter((r) => r.customerId !== user?.uid)
+          .map((r) => ({ ...r, distanceMiles: mockDistanceFor(r.id) }));
+        setFirestoreRequests(mapped);
+      })
+      .finally(() => setLoadingRequests(false));
+  }, [user?.uid]);
+
+  const allRequests: FeedRequest[] = useMemo(() => {
+    const firestoreIds = new Set(firestoreRequests.map((r) => r.id));
+    const samples = SAMPLE_FEED.filter((s) => !firestoreIds.has(s.id));
+    return [...firestoreRequests, ...samples].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }, [firestoreRequests]);
 
   const visible = useMemo(
     () =>
@@ -176,6 +213,38 @@ export default function NearbyJobs() {
       ),
     [allRequests, maxDistance, categoryFilter],
   );
+
+  const openQuoteDialog = (r: FeedRequest) => {
+    setQuoting(r);
+    setQuoteAmount("");
+    setQuoteMessage("");
+  };
+
+  const handleSendQuote = async () => {
+    if (!quoting || !user) return;
+    const amount = parseFloat(quoteAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid quote amount.");
+      return;
+    }
+    setSending(true);
+    const id = await sendMatchQuote({
+      jobRequestId: quoting.id,
+      jobRequestTitle: quoting.title,
+      proId: user.uid,
+      customerId: quoting.customerId,
+      amount,
+      message: quoteMessage.trim(),
+    });
+    setSending(false);
+    if (id) {
+      setSentIds((prev) => new Set(prev).add(quoting.id));
+      toast.success(`Quote sent for "${quoting.title}"`);
+    } else {
+      toast.error("Could not send quote. Check your connection and try again.");
+    }
+    setQuoting(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -240,15 +309,24 @@ export default function NearbyJobs() {
             </div>
             <div className="flex items-end">
               <div className="text-sm text-muted-foreground">
-                Showing <span className="font-bold text-gray-900">{visible.length}</span>{" "}
-                of {allRequests.length} requests
+                {loadingRequests ? (
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+                  </span>
+                ) : (
+                  <>
+                    Showing{" "}
+                    <span className="font-bold text-gray-900">{visible.length}</span>{" "}
+                    of {allRequests.length} requests
+                  </>
+                )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {visible.length === 0 ? (
+      {visible.length === 0 && !loadingRequests ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Inbox className="h-10 w-10 mx-auto mb-3 opacity-30" />
@@ -274,7 +352,7 @@ export default function NearbyJobs() {
                       </Badge>
                       <Badge
                         variant="secondary"
-                        className={`text-xs ${urgencyStyle[r.urgency]}`}
+                        className={`text-xs ${urgencyStyle[r.urgency] ?? ""}`}
                       >
                         {r.urgency === "Urgent" && (
                           <AlertCircle className="h-3 w-3 mr-1" />
@@ -286,7 +364,7 @@ export default function NearbyJobs() {
                           variant="secondary"
                           className="text-xs bg-emerald-100 text-emerald-800"
                         >
-                          Posted by you
+                          Live request
                         </Badge>
                       )}
                     </div>
@@ -315,20 +393,84 @@ export default function NearbyJobs() {
                 </div>
 
                 <div className="mt-auto pt-3 border-t">
-                  <Button
-                    className="w-full"
-                    onClick={() =>
-                      toast.success(`Quote sent for "${r.title}"`)
-                    }
-                  >
-                    <Send className="mr-2 h-4 w-4" /> Send Quote
-                  </Button>
+                  {sentIds.has(r.id) ? (
+                    <Button className="w-full" variant="outline" disabled>
+                      Quote sent
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={() => openQuoteDialog(r)}
+                    >
+                      <Send className="mr-2 h-4 w-4" /> Send Quote
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Send Quote Dialog */}
+      <Dialog open={!!quoting} onOpenChange={(open) => { if (!open) setQuoting(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send a Quote</DialogTitle>
+            <DialogDescription className="truncate">
+              {quoting?.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="quote-amount">Your Quote Amount ($)</Label>
+              <div className="relative mt-1">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="quote-amount"
+                  type="number"
+                  inputMode="decimal"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 175"
+                  className="pl-8"
+                  value={quoteAmount}
+                  onChange={(e) => setQuoteAmount(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              {quoting && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Customer budget: ${quoting.budget.toFixed(0)}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="quote-message">Message (optional)</Label>
+              <Textarea
+                id="quote-message"
+                placeholder="Briefly describe your approach, availability, or any questions."
+                rows={3}
+                className="mt-1"
+                value={quoteMessage}
+                onChange={(e) => setQuoteMessage(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setQuoting(null)} disabled={sending}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendQuote} disabled={sending}>
+              {sending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
+              ) : (
+                <><Send className="mr-2 h-4 w-4" /> Send Quote</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

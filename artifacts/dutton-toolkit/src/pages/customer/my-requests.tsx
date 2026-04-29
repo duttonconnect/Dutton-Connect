@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -9,9 +10,13 @@ import {
   Calendar,
   Trash2,
   AlertCircle,
+  MessageSquare,
+  DollarSign,
 } from "lucide-react";
 
 import { useAppStore, type Urgency } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
+import { loadQuotesForRequest, type MatchQuote } from "@/lib/matching";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +29,21 @@ const urgencyStyle: Record<Urgency, string> = {
 
 export default function MyJobRequests() {
   const { jobRequests, deleteJobRequest } = useAppStore();
+  const { user } = useAuth();
+  const [quotesMap, setQuotesMap] = useState<Record<string, MatchQuote[]>>({});
   const list = jobRequests ?? [];
+
+  useEffect(() => {
+    if (!list.length) return;
+    list.forEach((r) => {
+      loadQuotesForRequest(r.id).then((quotes) => {
+        if (quotes.length > 0) {
+          setQuotesMap((prev) => ({ ...prev, [r.id]: quotes }));
+        }
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list.length, user?.uid]);
 
   const sorted = [...list].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -127,6 +146,36 @@ export default function MyJobRequests() {
                       Posted {format(new Date(r.createdAt), "MMM d, h:mm a")}
                     </span>
                   </div>
+
+                  {quotesMap[r.id]?.length > 0 && (
+                    <div className="pt-3 border-t space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        {quotesMap[r.id].length} Quote{quotesMap[r.id].length > 1 ? "s" : ""} Received
+                      </div>
+                      {quotesMap[r.id].map((q) => (
+                        <div
+                          key={q.id}
+                          className="rounded-md bg-gray-50 border p-3 text-sm"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium flex items-center gap-1">
+                              <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+                              ${q.amount.toFixed(0)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(q.createdAt), "MMM d")}
+                            </span>
+                          </div>
+                          {q.message && (
+                            <p className="text-xs text-gray-600 line-clamp-2">
+                              {q.message}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex justify-end pt-2 border-t">
                     <Button
