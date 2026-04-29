@@ -55,11 +55,11 @@ export function FirestoreSyncBridge() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const stateToSave = {
-        customers: store.customers,
-        jobs: store.jobs,
-        quotes: store.quotes,
-        payments: store.payments,
-        trips: store.trips,
+        customers: store.customers ?? [],
+        jobs: store.jobs ?? [],
+        quotes: store.quotes ?? [],
+        payments: store.payments ?? [],
+        trips: store.trips ?? [],
         receipts: stripImages(store.receipts ?? []),
         jobRequests: stripImages(store.jobRequests ?? []),
       };
