@@ -69,11 +69,23 @@ export type Payment = {
   notes: string;
 };
 
+export type Trip = {
+  id: string;
+  purpose: string;
+  startLocation: string;
+  endLocation: string;
+  jobCustomer: string;
+  miles: number;
+  startedAt: string;
+  endedAt: string;
+};
+
 type AppState = {
   customers: Customer[];
   jobs: Job[];
   quotes: Quote[];
   payments: Payment[];
+  trips: Trip[];
 };
 
 type AppContextType = AppState & {
@@ -91,6 +103,9 @@ type AppContextType = AppState & {
   
   addPayment: (p: Omit<Payment, "id">) => void;
   deletePayment: (id: string) => void;
+
+  addTrip: (t: Omit<Trip, "id">) => void;
+  deleteTrip: (id: string) => void;
 };
 
 const SEED_DATA: AppState = {
@@ -119,7 +134,8 @@ const SEED_DATA: AppState = {
     {
       id: "p1", jobId: "j3", amount: 270, method: "card", date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), notes: "Paid via Square"
     }
-  ]
+  ],
+  trips: []
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -157,6 +173,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     addPayment: (p) => setState(s => ({ ...s, payments: [...s.payments, { ...p, id: generateId() }] })),
     deletePayment: (id) => setState(s => ({ ...s, payments: s.payments.filter(x => x.id !== id) })),
+
+    addTrip: (t) => setState(s => ({ ...s, trips: [...(s.trips ?? []), { ...t, id: generateId() }] })),
+    deleteTrip: (id) => setState(s => ({ ...s, trips: (s.trips ?? []).filter(x => x.id !== id) })),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
