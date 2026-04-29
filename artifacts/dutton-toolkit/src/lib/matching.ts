@@ -120,6 +120,46 @@ export async function loadQuotesForCustomer(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Quote Requests — customer-initiated "please quote me" messages to a pro
+// Firestore rule needed:
+//   match /quoteRequests/{id} { allow read, write: if request.auth != null; }
+// ---------------------------------------------------------------------------
+
+export type QuoteRequest = {
+  id: string;
+  proId: string;
+  customerId: string;
+  service: string;
+  message: string;
+  status: "pending" | "responded";
+  createdAt: string;
+};
+
+/**
+ * Save a customer-initiated quote request to a pro.
+ * Returns the new doc ID on success, or null on failure.
+ */
+export async function sendQuoteRequest(
+  data: Omit<QuoteRequest, "id" | "status" | "createdAt">,
+): Promise<string | null> {
+  if (!isFirebaseConfigured || !db) {
+    console.error("[Matching] sendQuoteRequest: Firebase is not configured.");
+    return null;
+  }
+  try {
+    const ref = await addDoc(collection(db, "quoteRequests"), {
+      ...data,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.error("[Matching] sendQuoteRequest failed:", err);
+    return null;
+  }
+}
+
 /** Load all quotes for a specific job request. */
 export async function loadQuotesForRequest(
   jobRequestId: string,

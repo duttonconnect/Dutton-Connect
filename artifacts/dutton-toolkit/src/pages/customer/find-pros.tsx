@@ -1,4 +1,5 @@
-import { Link } from "wouter";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -7,11 +8,14 @@ import {
   Star,
   Hammer,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/auth";
+import { sendQuoteRequest } from "@/lib/matching";
 
 type Pro = {
   id: string;
@@ -70,6 +74,41 @@ const SAMPLE_PROS: Pro[] = [
 ];
 
 export default function FindNearbyPros() {
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
+  const handleRequestQuote = async (pro: Pro) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setRequestingId(pro.id);
+    try {
+      const docId = await sendQuoteRequest({
+        proId: pro.id,
+        customerId: user.uid,
+        service: pro.services[0] ?? "General",
+        message: "Requesting quote",
+      });
+
+      if (docId) {
+        setSentIds((prev) => new Set(prev).add(pro.id));
+        toast.success("Quote request sent");
+        navigate("/messages");
+      } else {
+        toast.error("Could not send request. Check your connection and try again.");
+      }
+    } catch (err) {
+      console.error("[FindPros] handleRequestQuote error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setRequestingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -160,13 +199,16 @@ export default function FindNearbyPros() {
                 </Button>
                 <Button
                   className="flex-1"
-                  onClick={() =>
-                    toast.success(
-                      `Quote request sent to ${pro.business}. They'll be in touch.`,
-                    )
-                  }
+                  disabled={requestingId === pro.id || sentIds.has(pro.id)}
+                  onClick={() => handleRequestQuote(pro)}
                 >
-                  Request Quote
+                  {requestingId === pro.id ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
+                  ) : sentIds.has(pro.id) ? (
+                    "Request sent"
+                  ) : (
+                    "Request Quote"
+                  )}
                 </Button>
               </div>
             </CardContent>
