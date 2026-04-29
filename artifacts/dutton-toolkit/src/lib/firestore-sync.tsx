@@ -16,10 +16,15 @@ import { useAppStore } from "./store";
 function stripImages<T>(items: T[]): T[] {
   return items.map((item) => {
     const copy = { ...item } as Record<string, unknown>;
-    if ("imageDataUrl" in copy) copy.imageDataUrl = undefined;
-    if ("photoDataUrl" in copy) copy.photoDataUrl = undefined;
+    delete copy.imageDataUrl;
+    delete copy.photoDataUrl;
     return copy as T;
   });
+}
+
+// Remove all undefined values (Firestore rejects them).
+function stripUndefined<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj)) as T;
 }
 
 export function FirestoreSyncBridge() {
@@ -54,7 +59,7 @@ export function FirestoreSyncBridge() {
     if (!isFirebaseConfigured || !db || !user) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const stateToSave = {
+      const stateToSave = stripUndefined({
         customers: store.customers ?? [],
         jobs: store.jobs ?? [],
         quotes: store.quotes ?? [],
@@ -62,7 +67,7 @@ export function FirestoreSyncBridge() {
         trips: store.trips ?? [],
         receipts: stripImages(store.receipts ?? []),
         jobRequests: stripImages(store.jobRequests ?? []),
-      };
+      });
       setDoc(
         doc(db!, "users", user.uid, "private", "appState"),
         { state: stateToSave, updatedAt: new Date().toISOString() },
