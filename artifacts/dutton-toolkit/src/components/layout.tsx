@@ -119,10 +119,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Button>
               </div>
             )}
-            <div>
-              <div className="text-sm font-semibold text-gray-900 mb-0.5">Dutton Solutions LLC</div>
-              <a href="tel:7065231447" className="text-sm text-gray-600 hover:underline">706-523-1447</a>
-              <div className="text-sm text-gray-600">duttonsolutionsllc.com</div>
+            <div className="flex gap-3 text-xs text-gray-500">
+              <Link href="/privacy">
+                <span className="hover:underline cursor-pointer">Privacy</span>
+              </Link>
+              <Link href="/terms">
+                <span className="hover:underline cursor-pointer">Terms</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -180,6 +183,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Switch account
           </Button>
+          <div className="flex gap-3 pt-1">
+            <Link href="/privacy">
+              <span className="text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground cursor-pointer">
+                Privacy
+              </span>
+            </Link>
+            <Link href="/terms">
+              <span className="text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground cursor-pointer">
+                Terms
+              </span>
+            </Link>
+          </div>
         </div>
       </aside>
 
@@ -190,6 +205,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </div>
+        <footer className="print:hidden text-center py-3 border-t text-xs text-gray-400 flex items-center justify-center gap-3">
+          <Link href="/privacy">
+            <span className="hover:text-gray-600 cursor-pointer">Privacy Policy</span>
+          </Link>
+          <span>·</span>
+          <Link href="/terms">
+            <span className="hover:text-gray-600 cursor-pointer">Terms of Service</span>
+          </Link>
+        </footer>
       </main>
     </div>
   );
