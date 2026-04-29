@@ -2,7 +2,7 @@ import { useAppStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Link } from "wouter";
-import { Hammer, Users, FileText, Plus, ArrowRight, Map as MapIcon, Car, Receipt, Inbox } from "lucide-react";
+import { Hammer, Users, FileText, Plus, ArrowRight, Map as MapIcon, Car, Receipt, Inbox, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
@@ -135,6 +135,30 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Pro Features Coming Soon */}
+      <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Zap className="h-4 w-4 text-gray-400" />
+          <span className="text-sm font-semibold text-gray-500 tracking-wide">
+            Pro Features Coming Soon
+          </span>
+        </div>
+        <ul className="space-y-1.5 pl-6">
+          {[
+            "Priority job placement",
+            "Unlimited quotes",
+            "Advanced business tools — mileage & receipts reports",
+          ].map((item) => (
+            <li key={item} className="text-sm text-gray-400 list-disc">
+              {item}
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-gray-400 mt-3">
+          All features are free during the current preview period.
+        </p>
       </div>
     </div>
   );
