@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -10,6 +11,7 @@ import {
   Inbox,
   Loader2,
   DollarSign,
+  MessageSquare,
 } from "lucide-react";
 
 import { type RequestCategory, type Urgency } from "@/lib/store";
@@ -19,6 +21,7 @@ import {
   sendMatchQuote,
   type FirestoreJobRequest,
 } from "@/lib/matching";
+import { getOrCreateConversation } from "@/lib/messaging";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -183,6 +186,24 @@ export default function NearbyJobs() {
   const [quoteMessage, setQuoteMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [messagingId, setMessagingId] = useState<string | null>(null);
+  const [, navigate] = useLocation();
+
+  const handleMessageCustomer = async (r: FeedRequest) => {
+    if (!user) return;
+    setMessagingId(r.id);
+    try {
+      const convId = await getOrCreateConversation(
+        [user.uid, r.customerId],
+        r.id,
+        r.title,
+      );
+      if (convId) navigate(`/messages/${convId}`);
+      else toast.error("Could not start conversation. Try again.");
+    } finally {
+      setMessagingId(null);
+    }
+  };
 
   useEffect(() => {
     setLoadingRequests(true);
@@ -392,7 +413,7 @@ export default function NearbyJobs() {
                   </span>
                 </div>
 
-                <div className="mt-auto pt-3 border-t">
+                <div className="mt-auto pt-3 border-t space-y-2">
                   {sentIds.has(r.id) ? (
                     <Button className="w-full" variant="outline" disabled>
                       Quote sent
@@ -403,6 +424,21 @@ export default function NearbyJobs() {
                       onClick={() => openQuoteDialog(r)}
                     >
                       <Send className="mr-2 h-4 w-4" /> Send Quote
+                    </Button>
+                  )}
+                  {!r.isSample && (
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      disabled={messagingId === r.id}
+                      onClick={() => handleMessageCustomer(r)}
+                    >
+                      {messagingId === r.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                      )}
+                      Message Customer
                     </Button>
                   )}
                 </div>

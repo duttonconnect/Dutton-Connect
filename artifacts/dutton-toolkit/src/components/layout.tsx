@@ -16,6 +16,7 @@ import {
   Inbox,
   RefreshCw,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -32,6 +33,7 @@ const PRO_NAV = [
   { href: "/payments", label: "Payments", icon: DollarSign },
   { href: "/mileage", label: "Mileage", icon: Car },
   { href: "/receipts", label: "Receipts", icon: Receipt },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
 ];
 
 const CUSTOMER_NAV = [
@@ -40,6 +42,7 @@ const CUSTOMER_NAV = [
   { href: "/find-pros", label: "Find Pros", icon: Search },
   { href: "/my-requests", label: "My Requests", icon: ListChecks },
   { href: "/my-quotes", label: "Quotes", icon: DollarSign },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

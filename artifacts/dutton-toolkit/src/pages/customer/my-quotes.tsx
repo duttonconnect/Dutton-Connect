@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { ArrowLeft, Inbox, DollarSign, Loader2, Calendar } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, Inbox, DollarSign, Loader2, Calendar, MessageSquare } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { loadQuotesForCustomer, type MatchQuote } from "@/lib/matching";
+import { getOrCreateConversation } from "@/lib/messaging";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +15,24 @@ export default function MyQuotes() {
   const { user } = useAuth();
   const [quotes, setQuotes] = useState<MatchQuote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [messagingId, setMessagingId] = useState<string | null>(null);
+  const [, navigate] = useLocation();
+
+  const handleMessagePro = async (q: MatchQuote) => {
+    if (!user) return;
+    setMessagingId(q.id);
+    try {
+      const convId = await getOrCreateConversation(
+        [user.uid, q.proId],
+        q.jobRequestId,
+        q.jobRequestTitle,
+      );
+      if (convId) navigate(`/messages/${convId}`);
+      else toast.error("Could not start conversation. Try again.");
+    } finally {
+      setMessagingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -116,6 +136,22 @@ export default function MyQuotes() {
                       {q.amount.toFixed(0)}
                     </div>
                   </div>
+                </div>
+                <div className="mt-3 pt-3 border-t">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={messagingId === q.id}
+                    onClick={() => handleMessagePro(q)}
+                  >
+                    {messagingId === q.id ? (
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <MessageSquare className="mr-2 h-3.5 w-3.5" />
+                    )}
+                    Message Pro
+                  </Button>
                 </div>
               </CardContent>
             </Card>

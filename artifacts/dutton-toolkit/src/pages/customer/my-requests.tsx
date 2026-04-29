@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -12,11 +12,13 @@ import {
   AlertCircle,
   MessageSquare,
   DollarSign,
+  Loader2,
 } from "lucide-react";
 
 import { useAppStore, type Urgency } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { loadQuotesForRequest, type MatchQuote } from "@/lib/matching";
+import { getOrCreateConversation } from "@/lib/messaging";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +33,25 @@ export default function MyJobRequests() {
   const { jobRequests, deleteJobRequest } = useAppStore();
   const { user } = useAuth();
   const [quotesMap, setQuotesMap] = useState<Record<string, MatchQuote[]>>({});
+  const [messagingId, setMessagingId] = useState<string | null>(null);
+  const [, navigate] = useLocation();
   const list = jobRequests ?? [];
+
+  const handleMessagePro = async (q: MatchQuote, requestTitle: string) => {
+    if (!user) return;
+    setMessagingId(q.id);
+    try {
+      const convId = await getOrCreateConversation(
+        [user.uid, q.proId],
+        q.jobRequestId,
+        requestTitle,
+      );
+      if (convId) navigate(`/messages/${convId}`);
+      else toast.error("Could not start conversation. Try again.");
+    } finally {
+      setMessagingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!list.length) return;
@@ -172,6 +192,20 @@ export default function MyJobRequests() {
                               {q.message}
                             </p>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full mt-2 h-7 text-xs"
+                            disabled={messagingId === q.id}
+                            onClick={() => handleMessagePro(q, r.title)}
+                          >
+                            {messagingId === q.id ? (
+                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            ) : (
+                              <MessageSquare className="mr-1 h-3 w-3" />
+                            )}
+                            Message Pro
+                          </Button>
                         </div>
                       ))}
                     </div>
