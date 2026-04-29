@@ -28,7 +28,7 @@ type AuthContextValue = {
   loading: boolean;
   isConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, role?: "customer" | "pro") => Promise<void>;
   logout: () => Promise<void>;
   saveRoleToCloud: (role: Role) => Promise<void>;
   loadRoleFromCloud: () => Promise<Role | null>;
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, role: "customer" | "pro" = "customer") => {
     if (!auth) throw new Error("Firebase is not configured.");
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     if (name.trim()) {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (db) {
       await setDoc(
         doc(db, "users", cred.user.uid),
-        { email: cred.user.email, displayName: name.trim(), createdAt: new Date().toISOString() },
+        { email: cred.user.email, displayName: name.trim(), role, createdAt: new Date().toISOString() },
         { merge: true },
       );
     }

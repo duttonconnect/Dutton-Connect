@@ -19,6 +19,7 @@ export default function Signup() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<"customer" | "pro">("customer");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +34,7 @@ export default function Signup() {
     }
     setLoading(true);
     try {
-      await signup(email.trim(), password, name.trim());
+      await signup(email.trim(), password, name.trim(), role);
       setLocation("/");
     } catch (err: unknown) {
       const msg =
@@ -96,6 +97,34 @@ export default function Signup() {
                     autoFocus
                   />
                 </div>
+                <div>
+                  <Label>I am a</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {(["customer", "pro"] as const).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setRole(option)}
+                        className={[
+                          "rounded-md border px-3 py-3 text-left transition-colors",
+                          role === option
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300",
+                        ].join(" ")}
+                      >
+                        <div className="font-medium text-sm">
+                          {option === "customer" ? "Customer" : "Pro"}
+                        </div>
+                        <div className="text-xs mt-0.5 text-gray-500">
+                          {option === "customer"
+                            ? "I need work done"
+                            : "I provide services"}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
