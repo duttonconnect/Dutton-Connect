@@ -176,11 +176,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Switch account
           </Button>
-          <div className="pt-1">
-            <div className="text-xs font-bold text-sidebar-foreground/60 mb-1 uppercase tracking-wider">Contact</div>
-            <div className="text-sm font-medium text-sidebar-foreground/80">706-523-1447</div>
-            <div className="text-xs text-sidebar-foreground/60 mt-0.5">duttonsolutionsllc.com</div>
-          </div>
         </div>
       </aside>
 
