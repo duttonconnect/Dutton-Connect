@@ -60,7 +60,7 @@ export function FirestoreSyncBridge() {
         quotes: store.quotes,
         payments: store.payments,
         trips: store.trips,
-        receipts: stripImages(store.receipts),
+        receipts: stripImages(store.receipts ?? []),
         jobRequests: stripImages(store.jobRequests ?? []),
       };
       setDoc(
