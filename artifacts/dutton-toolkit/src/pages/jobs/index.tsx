@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { Plus, Search, Navigation } from "lucide-react";
+import { Plus, Search, Navigation, Hammer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,11 +60,27 @@ export default function JobsList() {
 
           <div className="space-y-4">
             {filteredJobs.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No jobs found matching your criteria.
-              </div>
+              jobs.length === 0 ? (
+                <div className="text-center py-14 text-muted-foreground">
+                  <Hammer className="h-10 w-10 mx-auto mb-3 opacity-25" />
+                  <p className="font-medium text-gray-700">No jobs yet</p>
+                  <p className="text-sm mt-1">Post your first job to get started.</p>
+                  <Link href="/jobs/new">
+                    <Button className="mt-4" size="sm">
+                      <Plus className="mr-2 h-4 w-4" /> New Job
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-14 text-muted-foreground">
+                  <Search className="h-10 w-10 mx-auto mb-3 opacity-25" />
+                  <p className="font-medium text-gray-700">No matching jobs</p>
+                  <p className="text-sm mt-1">Try adjusting your search or status filter.</p>
+                </div>
+              )
             ) : (
               filteredJobs.map(job => {
+
                 const customer = customers.find(c => c.id === job.customerId);
                 const directionsHref =
                   typeof job.latitude === "number" && typeof job.longitude === "number"

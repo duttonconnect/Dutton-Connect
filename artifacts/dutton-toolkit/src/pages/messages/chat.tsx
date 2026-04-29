@@ -52,6 +52,7 @@ export default function ChatPage() {
     setSending(true);
     try {
       await sendMessage(conversationId, user.uid, trimmed);
+      toast.success("Message sent");
     } catch {
       toast.error("Failed to send. Try again.");
       setText(trimmed);

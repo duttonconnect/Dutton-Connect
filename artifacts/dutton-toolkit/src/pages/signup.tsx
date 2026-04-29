@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { UserPlus, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { UserPlus, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export default function Signup() {
     setLoading(true);
     try {
       await signup(email.trim(), password, name.trim(), role);
+      toast.success("Account created");
       setLocation("/");
     } catch (err: unknown) {
       const msg =
@@ -186,11 +188,9 @@ export default function Signup() {
                   disabled={loading || !isConfigured}
                 >
                   {loading ? (
-                    "Creating account..."
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account…</>
                   ) : (
-                    <>
-                      <UserPlus className="mr-2 h-4 w-4" /> Create account
-                    </>
+                    <><UserPlus className="mr-2 h-4 w-4" /> Create account</>
                   )}
                 </Button>
               </form>

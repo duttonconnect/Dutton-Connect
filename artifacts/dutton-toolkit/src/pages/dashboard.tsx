@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { Hammer, Users, FileText, Plus, ArrowRight, Map as MapIcon, Car, Receipt, Inbox, Zap } from "lucide-react";
+import { OnboardingBanner } from "@/components/onboarding-banner";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
@@ -15,6 +16,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <OnboardingBanner />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>

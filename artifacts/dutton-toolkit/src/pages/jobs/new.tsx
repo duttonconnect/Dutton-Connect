@@ -117,7 +117,7 @@ export default function NewJob() {
       notes: "",
     };
     addJob(newJob);
-    toast.success("Job created successfully");
+    toast.success("Job posted");
     setLocation("/jobs");
   }
 

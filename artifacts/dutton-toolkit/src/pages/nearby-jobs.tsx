@@ -260,7 +260,7 @@ export default function NearbyJobs() {
     setSending(false);
     if (id) {
       setSentIds((prev) => new Set(prev).add(quoting.id));
-      toast.success(`Quote sent for "${quoting.title}"`);
+      toast.success("Quote sent");
     } else {
       toast.error("Could not send quote. Check your connection and try again.");
     }

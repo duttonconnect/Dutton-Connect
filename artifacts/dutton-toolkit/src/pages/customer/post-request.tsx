@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, X, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import {
   REQUEST_CATEGORIES,
@@ -75,6 +75,7 @@ export default function PostJobRequest() {
   const [urgency, setUrgency] = useState<Urgency>("Normal");
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
@@ -93,7 +94,7 @@ export default function PostJobRequest() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Job title is required.");
@@ -131,6 +132,7 @@ export default function PostJobRequest() {
       status: "open" as const,
     };
 
+    setSubmitting(true);
     try {
       addJobRequest(requestData);
       postJobRequestToFirestore(sharedId, {
@@ -143,13 +145,15 @@ export default function PostJobRequest() {
         urgency: requestData.urgency,
         customerId,
       }, createdAt);
-      toast.success("Request posted! Local pros can now see it.");
+      toast.success("Job posted");
       setLocation("/my-requests");
     } catch (err) {
       toast.error(
         "Couldn't save — your device storage may be full. Try removing the photo.",
       );
       console.error(err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -324,8 +328,12 @@ export default function PostJobRequest() {
             </div>
 
             <div className="flex gap-2 pt-2 border-t">
-              <Button type="submit" className="flex-1">
-                Post Request
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Posting…</>
+                ) : (
+                  "Post Request"
+                )}
               </Button>
               <Button
                 type="button"

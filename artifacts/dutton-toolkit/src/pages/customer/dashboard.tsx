@@ -3,6 +3,7 @@ import { ClipboardList, Search, ListChecks, ArrowRight, Phone } from "lucide-rea
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
+import { OnboardingBanner } from "@/components/onboarding-banner";
 
 export default function CustomerDashboard() {
   const { jobRequests } = useAppStore();
@@ -11,6 +12,7 @@ export default function CustomerDashboard() {
 
   return (
     <div className="space-y-6">
+      <OnboardingBanner />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Welcome to Dutton Connect</h1>
         <p className="text-gray-500">

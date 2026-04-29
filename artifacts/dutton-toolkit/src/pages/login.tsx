@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -115,11 +115,9 @@ export default function Login() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? (
-                    "Signing in..."
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…</>
                   ) : (
-                    <>
-                      <LogIn className="mr-2 h-4 w-4" /> Sign in
-                    </>
+                    <><LogIn className="mr-2 h-4 w-4" /> Sign in</>
                   )}
                 </Button>
               </form>
