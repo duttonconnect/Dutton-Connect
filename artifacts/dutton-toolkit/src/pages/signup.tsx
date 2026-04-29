@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { toast } from "sonner";
-import { UserPlus, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,31 +18,27 @@ export default function Signup() {
   const [confirm, setConfirm] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (password !== confirm) {
-      toast.error("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
+      setError("Password must be at least 6 characters.");
       return;
     }
     setLoading(true);
     try {
       await signup(email.trim(), password, name.trim());
-      toast.success("Account created! Welcome to Dutton Connect.");
       setLocation("/");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Could not create account.";
-      if (msg.includes("email-already-in-use")) {
-        toast.error("That email is already registered. Try signing in.");
-      } else if (msg.includes("invalid-email")) {
-        toast.error("Please enter a valid email address.");
-      } else {
-        toast.error(msg);
-      }
+      const msg =
+        err instanceof Error ? err.message : "Could not create account.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -149,6 +144,13 @@ export default function Signup() {
                     required
                   />
                 </div>
+                {error && (
+                  <div className="flex items-start gap-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                    <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full"
