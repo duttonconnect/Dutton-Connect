@@ -1,9 +1,12 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/lib/store";
 import { RoleProvider, useRole } from "@/lib/role";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { FirestoreSyncBridge } from "@/lib/firestore-sync";
 import { Layout } from "@/components/layout";
 
 import Dashboard from "@/pages/dashboard";
@@ -28,6 +31,9 @@ import CustomerDashboard from "@/pages/customer/dashboard";
 import PostJobRequest from "@/pages/customer/post-request";
 import MyJobRequests from "@/pages/customer/my-requests";
 import FindNearbyPros from "@/pages/customer/find-pros";
+
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +76,25 @@ function CustomerRoutes() {
   );
 }
 
+// Syncs role to/from Firestore whenever the user or role changes.
+function RoleCloudBridge() {
+  const { user, loadRoleFromCloud, saveRoleToCloud } = useAuth();
+  const { role, setRole } = useRole();
+
+  useEffect(() => {
+    if (!user) return;
+    loadRoleFromCloud().then((cloudRole) => {
+      if (cloudRole && !role) setRole(cloudRole);
+    });
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (user && role) saveRoleToCloud(role);
+  }, [user?.uid, role]);
+
+  return null;
+}
+
 function RoleGate() {
   const { role } = useRole();
   if (!role) return <ChooseAccountType />;
@@ -77,17 +102,59 @@ function RoleGate() {
   return <ProRoutes />;
 }
 
+function AuthGate() {
+  const { user, loading, isConfigured } = useAuth();
+  const [location] = useLocation();
+
+  // While Firebase is resolving auth state, show a minimal loading screen.
+  if (isConfigured && loading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <div className="text-xl font-bold text-primary">Dutton Connect</div>
+          <div className="text-sm text-gray-500">Loading…</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If Firebase is configured and user is NOT logged in → auth pages.
+  if (isConfigured && !user) {
+    return (
+      <Switch>
+        <Route path="/signup" component={Signup} />
+        <Route component={Login} />
+      </Switch>
+    );
+  }
+
+  // Redirect /login and /signup away once logged in (or in offline mode).
+  if (location === "/login" || location === "/signup") {
+    return <RoleGate />;
+  }
+
+  return (
+    <>
+      <RoleCloudBridge />
+      <FirestoreSyncBridge />
+      <RoleGate />
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AppProvider>
-          <RoleProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <RoleGate />
-            </WouterRouter>
-            <Toaster />
-          </RoleProvider>
+          <AuthProvider>
+            <RoleProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <AuthGate />
+              </WouterRouter>
+              <Toaster />
+            </RoleProvider>
+          </AuthProvider>
         </AppProvider>
       </TooltipProvider>
     </QueryClientProvider>

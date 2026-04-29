@@ -11,9 +11,9 @@ export default function ChooseAccountType() {
       <header className="bg-primary text-white px-6 py-5 shadow">
         <div className="mx-auto max-w-5xl">
           <div className="text-xs font-semibold tracking-widest uppercase opacity-80">
-            Dutton Solutions LLC
+            Local jobs. Trusted pros.
           </div>
-          <div className="text-xl font-bold tracking-tight">Field Toolkit</div>
+          <div className="text-xl font-bold tracking-tight">Dutton Connect</div>
         </div>
       </header>
 

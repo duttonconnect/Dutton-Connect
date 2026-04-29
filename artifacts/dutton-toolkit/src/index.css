@@ -82,18 +82,18 @@
   --card: 0 0% 100%;
   --card-foreground: 224 71.4% 4.1%;
   --card-border: 220 13% 91%;
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-primary: 240 5.9% 10%;
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 210 40% 92%;
+  --sidebar-border: 222 47% 18%;
+  --sidebar-primary: 221 90% 53%;
   --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
+  --sidebar-accent: 222 47% 17%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-ring: 221 90% 53%;
   --popover: 0 0% 100%;
   --popover-foreground: 224 71.4% 4.1%;
   --popover-border: 220 13% 91%;
-  --primary: 221 83% 53%; /* Confident professional blue */
+  --primary: 221 90% 53%; /* #2563EB Dutton Connect blue */
   --primary-foreground: 210 40% 98%;
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 47.4% 11.2%;
@@ -104,8 +104,8 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
   --input: 220 13% 91%;
-  --ring: 221 83% 53%;
-  --chart-1: 221 83% 53%;
+  --ring: 221 90% 53%;
+  --chart-1: 221 90% 53%;
   --chart-2: 212 95% 68%;
   --chart-3: 216 92% 60%;
   --chart-4: 210 98% 78%;
@@ -161,7 +161,7 @@
   --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
   --popover-border: 217.2 32.6% 17.5%;
-  --primary: 221 83% 53%;
+  --primary: 221 90% 53%;
   --primary-foreground: 210 40% 98%;
   --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
@@ -172,8 +172,8 @@
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
   --input: 217.2 32.6% 17.5%;
-  --ring: 221 83% 53%;
-  --chart-1: 221 83% 53%;
+  --ring: 221 90% 53%;
+  --chart-1: 221 90% 53%;
   --chart-2: 212 95% 68%;
   --chart-3: 216 92% 60%;
   --chart-4: 210 98% 78%;

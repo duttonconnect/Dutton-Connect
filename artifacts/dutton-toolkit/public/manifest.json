@@ -1,7 +1,7 @@
 {
-  "name": "Dutton Solutions Toolkit",
-  "short_name": "Dutton Toolkit",
-  "description": "Field toolkit for Dutton Solutions LLC — manage jobs, customers, quotes, payments, and the job map on the go.",
+  "name": "Dutton Connect",
+  "short_name": "Dutton Connect",
+  "description": "Local jobs. Trusted pros. Powered by Dutton Solutions LLC.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

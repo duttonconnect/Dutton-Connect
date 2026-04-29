@@ -12,9 +12,9 @@ export default function CustomerDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Welcome</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Welcome to Dutton Connect</h1>
         <p className="text-gray-500">
-          Find a trusted local pro for your project.
+          Local jobs. Trusted pros.
         </p>
       </div>
 

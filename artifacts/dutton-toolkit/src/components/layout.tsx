@@ -15,10 +15,12 @@ import {
   ListChecks,
   Inbox,
   RefreshCw,
+  LogOut,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { useRole } from "@/lib/role";
+import { useAuth } from "@/lib/auth";
 
 const PRO_NAV = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -43,6 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, clearRole } = useRole();
+  const { user, logout, isConfigured } = useAuth();
 
   const navItems = role === "customer" ? CUSTOMER_NAV : PRO_NAV;
   const subtitle = role === "customer" ? "Customer Portal" : "Field Toolkit";
@@ -66,7 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col bg-gray-50 md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 bg-primary text-white sticky top-0 z-50 print:hidden shadow-md">
-        <div className="font-bold text-lg tracking-tight">Dutton Solutions LLC</div>
+        <div className="font-bold text-lg tracking-tight">Dutton Connect</div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 -mr-2">
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -98,10 +101,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
               Switch account type
             </button>
           </nav>
-          <div className="mt-auto p-6 border-t bg-gray-50">
-            <div className="text-sm font-semibold text-gray-900 mb-1">Dutton Solutions LLC</div>
-            <div className="text-sm text-gray-600">706-523-1447</div>
-            <div className="text-sm text-gray-600">www.duttonsolutionsllc.com</div>
+          <div className="mt-auto p-6 border-t bg-gray-50 space-y-3">
+            {isConfigured && user && (
+              <div className="space-y-2">
+                <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => logout()}
+                >
+                  <LogOut className="mr-2 h-3.5 w-3.5" /> Sign out
+                </Button>
+              </div>
+            )}
+            <div>
+              <div className="text-sm font-semibold text-gray-900 mb-0.5">Dutton Solutions LLC</div>
+              <a href="tel:7065231447" className="text-sm text-gray-600 hover:underline">706-523-1447</a>
+              <div className="text-sm text-gray-600">duttonsolutionsllc.com</div>
+            </div>
           </div>
         </div>
       )}
@@ -109,7 +127,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-sidebar border-r border-sidebar-border sticky top-0 h-screen print:hidden">
         <div className="p-6 bg-primary text-white">
-          <h1 className="font-bold text-xl tracking-tight leading-tight">Dutton Solutions</h1>
+          <h1 className="font-bold text-xl tracking-tight leading-tight">Dutton Connect</h1>
           <div className="text-primary-foreground/80 text-xs mt-1 font-medium tracking-wider uppercase">
             {subtitle}
           </div>
@@ -135,18 +153,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/50 space-y-3">
+        <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/50 space-y-2">
+          {isConfigured && user && (
+            <div className="space-y-1.5 pb-2 border-b border-sidebar-border">
+              <div className="text-xs text-sidebar-foreground/60 truncate">{user.email}</div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent"
+                onClick={() => logout()}
+              >
+                <LogOut className="mr-2 h-3.5 w-3.5" /> Sign out
+              </Button>
+            </div>
+          )}
           <Button
             variant="outline"
             size="sm"
-            className="w-full"
+            className="w-full text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent"
             onClick={handleSwitch}
           >
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Switch account
           </Button>
-          <div>
-            <div className="text-xs font-bold text-sidebar-foreground mb-1 uppercase tracking-wider">Contact</div>
+          <div className="pt-1">
+            <div className="text-xs font-bold text-sidebar-foreground/60 mb-1 uppercase tracking-wider">Contact</div>
             <div className="text-sm font-medium text-sidebar-foreground/80">706-523-1447</div>
             <div className="text-xs text-sidebar-foreground/60 mt-0.5">duttonsolutionsllc.com</div>
           </div>

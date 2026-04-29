@@ -184,6 +184,8 @@ type AppContextType = AppState & {
 
   addJobRequest: (r: Omit<JobRequest, "id" | "createdAt">) => void;
   deleteJobRequest: (id: string) => void;
+
+  loadState: (s: Partial<AppState>) => void;
 };
 
 const SEED_DATA: AppState = {
@@ -262,6 +264,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     addJobRequest: (r) => setState(s => ({ ...s, jobRequests: [...(s.jobRequests ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
     deleteJobRequest: (id) => setState(s => ({ ...s, jobRequests: (s.jobRequests ?? []).filter(x => x.id !== id) })),
+
+    loadState: (incoming) => setState(s => ({
+      customers: incoming.customers ?? s.customers,
+      jobs: incoming.jobs ?? s.jobs,
+      quotes: incoming.quotes ?? s.quotes,
+      payments: incoming.payments ?? s.payments,
+      trips: incoming.trips ?? s.trips,
+      receipts: incoming.receipts ?? s.receipts,
+      jobRequests: incoming.jobRequests ?? s.jobRequests,
+    })),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
