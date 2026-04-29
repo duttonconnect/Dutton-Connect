@@ -55,10 +55,6 @@ export default function ChooseAccountType() {
               onClick={() => setRole("customer")}
             />
           </div>
-
-          <div className="text-center text-xs text-gray-500">
-            706-523-1447 · duttonsolutionsllc.com
-          </div>
         </div>
       </main>
     </div>
