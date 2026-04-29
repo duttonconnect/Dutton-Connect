@@ -116,6 +116,40 @@ export type Receipt = {
   createdAt: string;
 };
 
+export type RequestCategory =
+  | "Handyman"
+  | "Plumbing"
+  | "Automotive"
+  | "Pressure Washing"
+  | "Yard Work"
+  | "Appliance Installation"
+  | "Other";
+
+export const REQUEST_CATEGORIES: RequestCategory[] = [
+  "Handyman",
+  "Plumbing",
+  "Automotive",
+  "Pressure Washing",
+  "Yard Work",
+  "Appliance Installation",
+  "Other",
+];
+
+export type Urgency = "Low" | "Normal" | "Urgent";
+
+export type JobRequest = {
+  id: string;
+  title: string;
+  category: RequestCategory;
+  description: string;
+  address: string;
+  budget: number;
+  preferredDate: string;
+  urgency: Urgency;
+  photoDataUrl?: string;
+  createdAt: string;
+};
+
 type AppState = {
   customers: Customer[];
   jobs: Job[];
@@ -123,6 +157,7 @@ type AppState = {
   payments: Payment[];
   trips: Trip[];
   receipts: Receipt[];
+  jobRequests: JobRequest[];
 };
 
 type AppContextType = AppState & {
@@ -146,6 +181,9 @@ type AppContextType = AppState & {
 
   addReceipt: (r: Omit<Receipt, "id" | "createdAt">) => void;
   deleteReceipt: (id: string) => void;
+
+  addJobRequest: (r: Omit<JobRequest, "id" | "createdAt">) => void;
+  deleteJobRequest: (id: string) => void;
 };
 
 const SEED_DATA: AppState = {
@@ -176,7 +214,8 @@ const SEED_DATA: AppState = {
     }
   ],
   trips: [],
-  receipts: []
+  receipts: [],
+  jobRequests: []
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -220,6 +259,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     addReceipt: (r) => setState(s => ({ ...s, receipts: [...(s.receipts ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
     deleteReceipt: (id) => setState(s => ({ ...s, receipts: (s.receipts ?? []).filter(x => x.id !== id) })),
+
+    addJobRequest: (r) => setState(s => ({ ...s, jobRequests: [...(s.jobRequests ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
+    deleteJobRequest: (id) => setState(s => ({ ...s, jobRequests: (s.jobRequests ?? []).filter(x => x.id !== id) })),
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

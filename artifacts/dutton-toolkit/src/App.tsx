@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/lib/store";
+import { RoleProvider, useRole } from "@/lib/role";
 import { Layout } from "@/components/layout";
 
 import Dashboard from "@/pages/dashboard";
@@ -19,11 +20,18 @@ import PaymentsList from "@/pages/payments/index";
 import MapView from "@/pages/map";
 import MileageTracker from "@/pages/mileage";
 import ReceiptTracker from "@/pages/receipts";
+import NearbyJobs from "@/pages/nearby-jobs";
 import NotFound from "@/pages/not-found";
+
+import ChooseAccountType from "@/pages/choose-account-type";
+import CustomerDashboard from "@/pages/customer/dashboard";
+import PostJobRequest from "@/pages/customer/post-request";
+import MyJobRequests from "@/pages/customer/my-requests";
+import FindNearbyPros from "@/pages/customer/find-pros";
 
 const queryClient = new QueryClient();
 
-function Router() {
+function ProRoutes() {
   return (
     <Layout>
       <Switch>
@@ -41,10 +49,32 @@ function Router() {
         <Route path="/map" component={MapView} />
         <Route path="/mileage" component={MileageTracker} />
         <Route path="/receipts" component={ReceiptTracker} />
+        <Route path="/nearby-jobs" component={NearbyJobs} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
   );
+}
+
+function CustomerRoutes() {
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/" component={CustomerDashboard} />
+        <Route path="/post-request" component={PostJobRequest} />
+        <Route path="/my-requests" component={MyJobRequests} />
+        <Route path="/find-pros" component={FindNearbyPros} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
+  );
+}
+
+function RoleGate() {
+  const { role } = useRole();
+  if (!role) return <ChooseAccountType />;
+  if (role === "customer") return <CustomerRoutes />;
+  return <ProRoutes />;
 }
 
 function App() {
@@ -52,10 +82,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AppProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
+          <RoleProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <RoleGate />
+            </WouterRouter>
+            <Toaster />
+          </RoleProvider>
         </AppProvider>
       </TooltipProvider>
     </QueryClientProvider>
