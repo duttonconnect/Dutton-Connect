@@ -27,6 +27,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   loading: boolean;
   isConfigured: boolean;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role?: "customer" | "pro") => Promise<void>;
   logout: () => Promise<void>;
@@ -43,6 +44,7 @@ function toAuthUser(u: User): AuthUser {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(isFirebaseConfigured);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
@@ -55,6 +57,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsub;
   }, []);
+
+  // Load isAdmin flag whenever the logged-in user changes.
+  useEffect(() => {
+    if (!user || !db) {
+      setIsAdmin(false);
+      return;
+    }
+    getDoc(doc(db, "users", user.uid))
+      .then((snap) => {
+        setIsAdmin(snap.exists() ? Boolean(snap.data()?.isAdmin) : false);
+      })
+      .catch(() => setIsAdmin(false));
+  }, [user?.uid]);
 
   const login = async (email: string, password: string) => {
     if (!auth) throw new Error("Firebase is not configured.");
@@ -103,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     isConfigured: isFirebaseConfigured,
+    isAdmin,
     login,
     signup,
     logout,

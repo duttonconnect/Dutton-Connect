@@ -38,6 +38,7 @@ import PrivacyPolicy from "@/pages/privacy";
 import TermsOfService from "@/pages/terms";
 
 import CalendarPage from "@/pages/calendar";
+import AdminPanel from "@/pages/admin/index";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 
@@ -65,6 +66,7 @@ function ProRoutes() {
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
         <Route path="/calendar" component={CalendarPage} />
+        <Route path="/admin" component={AdminPanel} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />
@@ -85,6 +87,7 @@ function CustomerRoutes() {
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
         <Route path="/calendar" component={CalendarPage} />
+        <Route path="/admin" component={AdminPanel} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />

@@ -18,6 +18,7 @@ import {
   LogOut,
   MessageSquare,
   CalendarDays,
+  Shield,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -52,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, clearRole } = useRole();
-  const { user, logout, isConfigured } = useAuth();
+  const { user, logout, isConfigured, isAdmin } = useAuth();
 
   const navItems = role === "customer" ? CUSTOMER_NAV : PRO_NAV;
   const subtitle = role === "customer" ? "Customer Portal" : "Field Toolkit";
@@ -100,6 +101,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               </Link>
             ))}
+            {isAdmin && (
+              <Link href="/admin">
+                <div
+                  className={`flex items-center gap-3 p-4 rounded-lg font-medium transition-colors ${
+                    location.startsWith("/admin")
+                      ? "bg-primary/10 text-primary"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <Shield size={20} />
+                  Admin
+                </div>
+              </Link>
+            )}
             <button
               onClick={handleSwitch}
               className="flex items-center gap-3 p-4 rounded-lg font-medium text-gray-700 hover:bg-gray-100 text-left"
@@ -161,6 +176,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link href="/admin">
+              <div
+                className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium transition-colors cursor-pointer ${
+                  location.startsWith("/admin")
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                }`}
+              >
+                <Shield size={18} />
+                Admin
+              </div>
+            </Link>
+          )}
         </nav>
 
         <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/50 space-y-2">
