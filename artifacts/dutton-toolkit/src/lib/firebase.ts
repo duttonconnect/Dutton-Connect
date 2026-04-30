@@ -1,3 +1,34 @@
+/**
+ * Firebase client configuration.
+ *
+ * Firestore Security Rules
+ * ─────────────────────────
+ * The rules for this project live in `firestore.rules` (project root).
+ * Key rule for the `routes` collection:
+ *
+ *   match /routes/{routeId} {
+ *     // Read / delete: caller must own the existing document.
+ *     allow read, delete: if request.auth != null
+ *                         && request.auth.uid == resource.data.userId;
+ *
+ *     // Create: caller must set userId to their own UID (prevents spoofing).
+ *     allow create: if request.auth != null
+ *                   && request.auth.uid == request.resource.data.userId;
+ *
+ *     // Update: caller must own the doc AND must not transfer ownership.
+ *     allow update: if request.auth != null
+ *                   && request.auth.uid == resource.data.userId
+ *                   && request.auth.uid == request.resource.data.userId;
+ *   }
+ *
+ *   // Per-user app-state (firestore-sync.tsx)
+ *   match /users/{userId}/private/appState {
+ *     allow read, write: if request.auth != null
+ *                        && request.auth.uid == userId;
+ *   }
+ *
+ * Deploy rules with: firebase deploy --only firestore:rules
+ */
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import {

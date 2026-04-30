@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── routes ────────────────────────────────────────────────────────────
+    // Each route document stores the owning user's UID in a `userId` field.
+    // Users may only access their own route documents.
+    match /routes/{routeId} {
+      // Read and delete: caller must own the existing document.
+      allow read, delete: if request.auth != null
+                          && request.auth.uid == resource.data.userId;
+
+      // Create: caller must set userId to their own UID (prevents spoofing).
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+
+      // Update: caller must own the existing document AND must not change
+      // the userId field (prevents ownership transfer to another user).
+      allow update: if request.auth != null
+                    && request.auth.uid == resource.data.userId
+                    && request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── users/{uid}/private/appState ──────────────────────────────────────
+    // Used by src/lib/firestore-sync.tsx to persist per-user app state.
+    // Each document is keyed under the user's own UID — only that user may
+    // read or write it.
+    match /users/{userId}/private/appState {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // ── catch-all ─────────────────────────────────────────────────────────
+    // Deny access to any collection not explicitly listed above.
+    // Remove or extend this block as more collections are secured.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
