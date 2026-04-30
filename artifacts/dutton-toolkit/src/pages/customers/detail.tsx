@@ -94,11 +94,7 @@ export default function CustomerDetail() {
   const totalPaid = customerPayments.reduce((sum, p) => sum + p.amount, 0);
 
   const handleDelete = () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this customer? This will NOT delete their jobs or quotes, but they will be orphaned.",
-      )
-    ) {
+    if (confirm("Are you sure you want to delete this customer?")) {
       deleteCustomer(customer.id);
       setLocation("/customers");
       toast.success("Customer deleted");
