@@ -9,11 +9,15 @@ import {
   Hammer,
   CheckCircle2,
   Loader2,
+  Search,
+  LocateFixed,
+  X,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { sendQuoteRequest } from "@/lib/matching";
 
@@ -74,6 +78,67 @@ export default function FindNearbyPros() {
   const [, navigate] = useLocation();
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [locating, setLocating] = useState(false);
+
+  const handleSearch = () => {
+    const trimmed = searchInput.trim();
+    if (!trimmed) return;
+    setSelectedLocation(trimmed);
+  };
+
+  const handleClearLocation = () => {
+    setSelectedLocation("");
+    setSearchInput("");
+  };
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } },
+          );
+          const data = await res.json();
+          const city =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.county ||
+            "Current Location";
+          const state = data.address?.state_code ?? "";
+          const label = state ? `${city}, ${state}` : city;
+          setSearchInput(label);
+          setSelectedLocation(label);
+        } catch {
+          setSearchInput("Current Location");
+          setSelectedLocation("Current Location");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        toast.error("Could not get your location. Please enter it manually.");
+        setLocating(false);
+      },
+    );
+  };
+
+  const filteredPros = selectedLocation
+    ? SAMPLE_PROS.filter((p) =>
+        p.location.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+        p.services.some((s) =>
+          s.toLowerCase().includes(selectedLocation.toLowerCase()),
+        ),
+      )
+    : SAMPLE_PROS;
 
   const handleRequestQuote = async (pro: Pro) => {
     if (!user) {
@@ -118,13 +183,74 @@ export default function FindNearbyPros() {
             Find Nearby Pros
           </h1>
           <p className="text-gray-500 text-sm">
-            Trusted local pros serving the Athens area.
+            Trusted local pros serving your area.
           </p>
         </div>
       </div>
 
+      {/* Location search bar */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9 pr-9"
+            placeholder="Enter city or zip code"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          {searchInput && (
+            <button
+              onClick={handleClearLocation}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button onClick={handleSearch} disabled={!searchInput.trim()}>
+          <Search className="mr-2 h-4 w-4" /> Search
+        </Button>
+        <Button variant="outline" onClick={handleUseMyLocation} disabled={locating}>
+          {locating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <LocateFixed className="mr-2 h-4 w-4" />
+          )}
+          Use my location
+        </Button>
+      </div>
+
+      {/* Active location banner */}
+      {selectedLocation && (
+        <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-800">
+          <span>
+            Showing results near <span className="font-semibold">{selectedLocation}</span>
+            {" "}— {filteredPros.length} {filteredPros.length === 1 ? "pro" : "pros"} found
+          </span>
+          <button
+            onClick={handleClearLocation}
+            className="ml-3 text-blue-500 hover:text-blue-700 shrink-0"
+            aria-label="Clear location"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {filteredPros.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-muted-foreground">
+          <MapPin className="h-9 w-9 mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">No pros found near "{selectedLocation}"</p>
+          <p className="text-xs mt-1">Try a nearby city or a broader search term.</p>
+          <Button variant="ghost" size="sm" className="mt-3" onClick={handleClearLocation}>
+            Clear search
+          </Button>
+        </div>
+      ) : (
       <div className="grid gap-4 md:grid-cols-2">
-        {SAMPLE_PROS.map((pro) => (
+        {filteredPros.map((pro) => (
           <Card key={pro.id} className="flex flex-col">
             <CardContent className="p-5 flex flex-col gap-3 flex-1">
               <div className="flex items-start justify-between gap-3">
@@ -215,6 +341,7 @@ export default function FindNearbyPros() {
           </Card>
         ))}
       </div>
+      )}
 
       <div className="text-center">
         <Link href="/post-request">

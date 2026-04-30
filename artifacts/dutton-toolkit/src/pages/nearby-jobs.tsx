@@ -12,6 +12,9 @@ import {
   Loader2,
   DollarSign,
   MessageSquare,
+  Search,
+  LocateFixed,
+  X,
 } from "lucide-react";
 
 import { type RequestCategory, type Urgency } from "@/lib/store";
@@ -181,6 +184,9 @@ export default function NearbyJobs() {
   const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "All">("All");
   const [firestoreRequests, setFirestoreRequests] = useState<FeedRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [locating, setLocating] = useState(false);
 
   // Send Quote dialog state
   const [quoting, setQuoting] = useState<FeedRequest | null>(null);
@@ -190,6 +196,55 @@ export default function NearbyJobs() {
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [messagingId, setMessagingId] = useState<string | null>(null);
   const [, navigate] = useLocation();
+
+  const handleSearch = () => {
+    const trimmed = searchInput.trim();
+    if (!trimmed) return;
+    setSelectedLocation(trimmed);
+  };
+
+  const handleClearLocation = () => {
+    setSelectedLocation("");
+    setSearchInput("");
+  };
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } },
+          );
+          const data = await res.json();
+          const city =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.county ||
+            "Current Location";
+          const state = data.address?.state_code ?? "";
+          const label = state ? `${city}, ${state}` : city;
+          setSearchInput(label);
+          setSelectedLocation(label);
+        } catch {
+          setSearchInput("Current Location");
+          setSelectedLocation("Current Location");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        toast.error("Could not get your location. Please enter it manually.");
+        setLocating(false);
+      },
+    );
+  };
 
   const handleMessageCustomer = async (r: FeedRequest) => {
     if (!user) return;
@@ -232,9 +287,11 @@ export default function NearbyJobs() {
       allRequests.filter(
         (r) =>
           r.distanceMiles <= maxDistance &&
-          (categoryFilter === "All" || r.category === categoryFilter),
+          (categoryFilter === "All" || r.category === categoryFilter) &&
+          (selectedLocation === "" ||
+            r.address.toLowerCase().includes(selectedLocation.toLowerCase())),
       ),
-    [allRequests, maxDistance, categoryFilter],
+    [allRequests, maxDistance, categoryFilter, selectedLocation],
   );
 
   const openQuoteDialog = (r: FeedRequest) => {
@@ -279,6 +336,56 @@ export default function NearbyJobs() {
           </p>
         </div>
       </div>
+
+      {/* Location search bar */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9 pr-9"
+            placeholder="Enter city or zip code"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          {searchInput && (
+            <button
+              onClick={handleClearLocation}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button onClick={handleSearch} disabled={!searchInput.trim()}>
+          <Search className="mr-2 h-4 w-4" /> Search
+        </Button>
+        <Button variant="outline" onClick={handleUseMyLocation} disabled={locating}>
+          {locating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <LocateFixed className="mr-2 h-4 w-4" />
+          )}
+          Use my location
+        </Button>
+      </div>
+
+      {/* Active location banner */}
+      {selectedLocation && (
+        <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-800">
+          <span>
+            Showing results near <span className="font-semibold">{selectedLocation}</span>
+          </span>
+          <button
+            onClick={handleClearLocation}
+            className="ml-3 text-blue-500 hover:text-blue-700 shrink-0"
+            aria-label="Clear location"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <Card className="rounded-2xl border-gray-100">
         <CardHeader className="pb-3">
