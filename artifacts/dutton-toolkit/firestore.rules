@@ -3,37 +3,284 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Helper functions ───────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function isParticipant(convId) {
+      return isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+    }
+
     // ── routes ────────────────────────────────────────────────────────────
     // Each route document stores the owning user's UID in a `userId` field.
     // Users may only access their own route documents.
     match /routes/{routeId} {
       // Read and delete: caller must own the existing document.
-      allow read, delete: if request.auth != null
+      allow read, delete: if isSignedIn()
                           && request.auth.uid == resource.data.userId;
 
       // Create: caller must set userId to their own UID (prevents spoofing).
-      allow create: if request.auth != null
+      allow create: if isSignedIn()
                     && request.auth.uid == request.resource.data.userId;
 
       // Update: caller must own the existing document AND must not change
       // the userId field (prevents ownership transfer to another user).
-      allow update: if request.auth != null
+      allow update: if isSignedIn()
                     && request.auth.uid == resource.data.userId
                     && request.auth.uid == request.resource.data.userId;
     }
 
-    // ── users/{uid}/private/appState ──────────────────────────────────────
-    // Used by src/lib/firestore-sync.tsx to persist per-user app state.
-    // Each document is keyed under the user's own UID — only that user may
-    // read or write it.
-    match /users/{userId}/private/appState {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+    // ── users ─────────────────────────────────────────────────────────────
+    // Document ID is the user's own UID.
+    // Any authenticated user may read user documents so that customers can
+    // browse pro profiles (businessName, services, serviceArea, publicPhone, etc.).
+    // Write rules are split to prevent privilege escalation:
+    //   - Admins may write any field freely (needed to set/revoke isAdmin).
+    //   - Owners may create their own profile but must not claim isAdmin.
+    //   - Owners may update their own profile but cannot change isAdmin or role
+    //     (those fields are privileged and can only be changed by an admin).
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      // Admins may create, update, or delete any user document without restriction.
+      allow write: if isAdmin();
+
+      // Owners may create their own profile document (first sign-up).
+      // The isAdmin field must be absent or explicitly false to prevent self-elevation.
+      allow create: if isSignedIn()
+                    && request.auth.uid == userId
+                    && (!('isAdmin' in request.resource.data)
+                        || request.resource.data.isAdmin == false);
+
+      // Owners may update their own profile but privileged fields must not change.
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId
+                    && request.resource.data.isAdmin == resource.data.isAdmin
+                    && request.resource.data.role == resource.data.role;
+
+      // ── users/{uid}/private/appState ──────────────────────────────────
+      // Used by src/lib/firestore-sync.tsx to persist per-user app state.
+      // Only the owning user may read or write this sub-document.
+      match /private/appState {
+        allow read, write: if isSignedIn()
+                           && request.auth.uid == userId;
+      }
+    }
+
+    // ── notifications ─────────────────────────────────────────────────────
+    // Each notification targets one user via `userId`.
+    // Only that user may read or delete their notifications.
+    // Notifications are created by server-side logic or by the app on behalf
+    // of the owning user — writes are limited to the owner's uid.
+    match /notifications/{notificationId} {
+      allow read, delete: if isSignedIn()
+                          && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == resource.data.userId
+                    && request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── jobRequests ───────────────────────────────────────────────────────
+    // Customers create job requests (`customerId` = caller's UID).
+    // Any authenticated user (pros) may read job requests to browse and bid.
+    // Only the owning customer or the accepted pro may update the request;
+    // customerId must not change on updates to prevent ownership reassignment.
+    match /jobRequests/{jobRequestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.customerId;
+      allow update: if isSignedIn()
+                    && (request.auth.uid == resource.data.customerId
+                        || request.auth.uid == resource.data.acceptedProId)
+                    && request.resource.data.customerId == resource.data.customerId;
+      allow delete: if isSignedIn()
+                    && request.auth.uid == resource.data.customerId;
+    }
+
+    // ── matchQuotes ───────────────────────────────────────────────────────
+    // Pros submit quotes against job requests (`proId` = caller's UID).
+    // Both the pro and the customer for that quote may read it.
+    // The pro may update their own quote; the customer may update status
+    // (accept / decline). proId and customerId are immutable on updates.
+    match /matchQuotes/{quoteId} {
+      allow read: if isSignedIn()
+                  && (request.auth.uid == resource.data.proId
+                      || request.auth.uid == resource.data.customerId);
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.proId;
+      allow update: if isSignedIn()
+                    && (request.auth.uid == resource.data.proId
+                        || request.auth.uid == resource.data.customerId)
+                    && request.resource.data.proId == resource.data.proId
+                    && request.resource.data.customerId == resource.data.customerId;
+      allow delete: if isSignedIn()
+                    && request.auth.uid == resource.data.proId;
+    }
+
+    // ── quoteRequests ─────────────────────────────────────────────────────
+    // Customers initiate quote requests to a specific pro (`customerId` = caller).
+    // Both the sending customer and the receiving pro may read the request.
+    // The customer may create; either party may update (e.g. pro responds,
+    // customer cancels). proId and customerId are immutable on updates.
+    match /quoteRequests/{quoteRequestId} {
+      allow read: if isSignedIn()
+                  && (request.auth.uid == resource.data.customerId
+                      || request.auth.uid == resource.data.proId);
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.customerId;
+      allow update: if isSignedIn()
+                    && (request.auth.uid == resource.data.proId
+                        || request.auth.uid == resource.data.customerId)
+                    && request.resource.data.proId == resource.data.proId
+                    && request.resource.data.customerId == resource.data.customerId;
+      allow delete: if isSignedIn()
+                    && request.auth.uid == resource.data.customerId;
+    }
+
+    // ── reviews ───────────────────────────────────────────────────────────
+    // Customers leave reviews after a job (`customerId` = reviewer).
+    // Any authenticated user may read reviews so that customers browsing a
+    // pro's profile can see their rating history.
+    // Reviews are immutable once submitted — no updates or deletes.
+    match /reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.customerId;
+    }
+
+    // ── declinedLeads ─────────────────────────────────────────────────────
+    // Pros mark job requests they have declined (`proId` = caller).
+    // Only the pro who declined can read and manage these records.
+    match /declinedLeads/{declinedLeadId} {
+      allow read, delete: if isSignedIn()
+                          && request.auth.uid == resource.data.proId;
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.proId;
+    }
+
+    // ── conversations ─────────────────────────────────────────────────────
+    // Each conversation has a `participants` array of two UIDs.
+    // Only participants may read or update a conversation.
+    // Any authenticated user may start a conversation, but must include
+    // themselves in the participants array.
+    // Updates are restricted to metadata fields (lastMessage, lastMessageAt);
+    // the participants list and jobRequestId must remain immutable to prevent
+    // a participant from adding arbitrary UIDs and gaining message access.
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn()
+                  && request.auth.uid in resource.data.participants;
+      allow update: if isSignedIn()
+                    && request.auth.uid in resource.data.participants
+                    && request.resource.data.participants == resource.data.participants
+                    && request.resource.data.jobRequestId == resource.data.jobRequestId;
+      allow create: if isSignedIn()
+                    && request.auth.uid in request.resource.data.participants;
+
+      // ── conversations/{cid}/messages ──────────────────────────────────
+      // Messages are a subcollection; participants of the parent conversation
+      // may read all messages. Any participant may create a new message, and
+      // the senderId must match the caller.
+      match /messages/{messageId} {
+        allow read: if isParticipant(conversationId);
+        allow create: if isParticipant(conversationId)
+                      && request.auth.uid == request.resource.data.senderId;
+      }
+    }
+
+    // ── estimates ─────────────────────────────────────────────────────────
+    // Pros create estimates/invoices (`proId` = caller).
+    // Both the pro and the customer may read.
+    // Only the pro may update or delete.
+    match /estimates/{estimateId} {
+      allow read: if isSignedIn()
+                  && (request.auth.uid == resource.data.proId
+                      || request.auth.uid == resource.data.customerId);
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.proId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == resource.data.proId
+                    && request.auth.uid == request.resource.data.proId;
+      allow delete: if isSignedIn()
+                    && request.auth.uid == resource.data.proId;
+    }
+
+    // ── calendarEvents ────────────────────────────────────────────────────
+    // Each event belongs to one user (`userId` = caller).
+    // Only that user may read, create, update, or delete their events.
+    match /calendarEvents/{eventId} {
+      allow read, delete: if isSignedIn()
+                          && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == resource.data.userId
+                    && request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── jobTemplates ──────────────────────────────────────────────────────
+    // Each template belongs to one user (`userId` = caller).
+    // Only that user may read, create, update, or delete their templates.
+    match /jobTemplates/{templateId} {
+      allow read, delete: if isSignedIn()
+                          && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == resource.data.userId
+                    && request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── savedAddresses ────────────────────────────────────────────────────
+    // Each saved address belongs to one user (`userId` = caller).
+    // Only that user may read, create, update, or delete their addresses.
+    match /savedAddresses/{addressId} {
+      allow read, delete: if isSignedIn()
+                          && request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == resource.data.userId
+                    && request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── savedPros ─────────────────────────────────────────────────────────
+    // Customers save pros they like (`customerId` = caller).
+    // The saved pro (`proId`) may also read the record to know they were saved.
+    // Only the customer may create or delete.
+    match /savedPros/{savedProId} {
+      allow read: if isSignedIn()
+                  && (request.auth.uid == resource.data.customerId
+                      || request.auth.uid == resource.data.proId);
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.customerId;
+      allow delete: if isSignedIn()
+                    && request.auth.uid == resource.data.customerId;
+    }
+
+    // ── reports ───────────────────────────────────────────────────────────
+    // Users submit reports about issues (`reporterId` = caller).
+    // Reporters may read their own submitted reports.
+    // Admins may read all reports and update their status.
+    // Reports are immutable once created — no updates by reporters.
+    match /reports/{reportId} {
+      allow read: if isSignedIn()
+                  && (request.auth.uid == resource.data.reporterId || isAdmin());
+      allow create: if isSignedIn()
+                    && request.auth.uid == request.resource.data.reporterId;
+      allow update: if isAdmin();
     }
 
     // ── catch-all ─────────────────────────────────────────────────────────
     // Deny access to any collection not explicitly listed above.
-    // Remove or extend this block as more collections are secured.
     match /{document=**} {
       allow read, write: if false;
     }
