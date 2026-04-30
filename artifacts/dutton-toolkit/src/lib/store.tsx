@@ -117,6 +117,7 @@ export type Receipt = {
 };
 
 export type RequestCategory =
+  | "House Cleaning"
   | "Handyman"
   | "Plumbing"
   | "Automotive"
@@ -126,6 +127,7 @@ export type RequestCategory =
   | "Other";
 
 export const REQUEST_CATEGORIES: RequestCategory[] = [
+  "House Cleaning",
   "Handyman",
   "Plumbing",
   "Automotive",
@@ -135,7 +137,7 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
   "Other",
 ];
 
-export type Urgency = "Low" | "Normal" | "Urgent";
+export type Urgency = "Low" | "Normal" | "Urgent" | "Soon" | "Emergency";
 
 export type JobRequest = {
   id: string;

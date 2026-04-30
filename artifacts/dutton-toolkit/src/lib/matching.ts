@@ -317,6 +317,72 @@ export async function loadReviewsForPro(proId: string): Promise<Review[]> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Declined Leads — pro declines a job request lead
+// ---------------------------------------------------------------------------
+
+export type DeclinedLead = {
+  id: string;
+  proId: string;
+  jobRequestId: string;
+  createdAt: string;
+};
+
+export async function declineLead(
+  proId: string,
+  jobRequestId: string,
+): Promise<void> {
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    await addDoc(collection(db, "declinedLeads"), {
+      proId,
+      jobRequestId,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn("[Matching] declineLead failed:", err);
+  }
+}
+
+export async function loadDeclinedLeadIds(proId: string): Promise<string[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, "declinedLeads"), where("proId", "==", proId)),
+    );
+    return snap.docs.map((d) => d.data().jobRequestId as string);
+  } catch {
+    return [];
+  }
+}
+
+/** Load all quotes sent by a specific pro. */
+export async function loadQuotesByPro(proId: string): Promise<MatchQuote[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, "matchQuotes"), where("proId", "==", proId)),
+    );
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as MatchQuote));
+  } catch (err) {
+    console.warn("[Matching] loadQuotesByPro failed:", err);
+    return [];
+  }
+}
+
+/** Load all messages sent or received involving a pro (by proId field). */
+export async function loadConversationIdsByPro(proId: string): Promise<string[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, "conversations"), where("proId", "==", proId)),
+    );
+    return snap.docs.map((d) => d.data().jobRequestId as string).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 /** Check whether a customer has already reviewed a specific job request. */
 export async function loadExistingReview(
   jobRequestId: string,
