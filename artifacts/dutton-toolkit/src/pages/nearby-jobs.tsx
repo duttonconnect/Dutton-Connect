@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { calculateDistanceMiles } from "@/lib/distance";
+import { matchesKeyword } from "@/lib/search";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -197,6 +198,8 @@ export default function NearbyJobs() {
   const [categoryFilter, setCategoryFilter] = useState<RequestCategory | "All">("All");
   const [firestoreRequests, setFirestoreRequests] = useState<FeedRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [appliedKeyword, setAppliedKeyword] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -210,6 +213,15 @@ export default function NearbyJobs() {
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [messagingId, setMessagingId] = useState<string | null>(null);
   const [, navigate] = useLocation();
+
+  const handleKeywordSearch = () => {
+    setAppliedKeyword(keywordInput.trim());
+  };
+
+  const handleClearKeyword = () => {
+    setKeywordInput("");
+    setAppliedKeyword("");
+  };
 
   const handleSearch = () => {
     const trimmed = searchInput.trim();
@@ -302,15 +314,28 @@ export default function NearbyJobs() {
   const visible = useMemo(
     () =>
       allRequests.filter((r) => {
+        // --- Category filter ---
         if (categoryFilter !== "All" && r.category !== categoryFilter) return false;
 
+        // --- Keyword filter ---
+        if (
+          appliedKeyword &&
+          !matchesKeyword(appliedKeyword, [
+            r.title,
+            r.category,
+            r.description,
+            r.address,
+          ])
+        ) {
+          return false;
+        }
+
+        // --- Location / distance filter ---
         if (userCoords) {
           if (r.latitude != null && r.longitude != null) {
-            // Real Haversine distance
             const d = calculateDistanceMiles(userCoords.lat, userCoords.lng, r.latitude, r.longitude);
             return d <= maxDistance;
           }
-          // Has user coords but job has no lat/lng — text fallback
           return (
             selectedLocation === "" ||
             r.address.toLowerCase().includes(selectedLocation.toLowerCase())
@@ -324,7 +349,7 @@ export default function NearbyJobs() {
             r.address.toLowerCase().includes(selectedLocation.toLowerCase()))
         );
       }),
-    [allRequests, maxDistance, categoryFilter, userCoords, selectedLocation],
+    [allRequests, maxDistance, categoryFilter, userCoords, selectedLocation, appliedKeyword],
   );
 
   const openQuoteDialog = (r: FeedRequest) => {
@@ -369,6 +394,50 @@ export default function NearbyJobs() {
           </p>
         </div>
       </div>
+
+      {/* Keyword search bar */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9 pr-9"
+            placeholder="Search by service, keyword, or location"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleKeywordSearch()}
+          />
+          {keywordInput && (
+            <button
+              onClick={handleClearKeyword}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear keyword"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button onClick={handleKeywordSearch}>
+          <Search className="mr-2 h-4 w-4" /> Search
+        </Button>
+      </div>
+
+      {/* Active keyword badge */}
+      {appliedKeyword && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Showing{" "}
+            <span className="font-semibold text-gray-900">{visible.length}</span>{" "}
+            {visible.length === 1 ? "result" : "results"} matching{" "}
+            <span className="font-medium text-gray-700">"{appliedKeyword}"</span>
+          </span>
+          <button
+            onClick={handleClearKeyword}
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+          >
+            <X className="h-3.5 w-3.5" /> Clear search
+          </button>
+        </div>
+      )}
 
       {/* Location search bar */}
       <div className="flex flex-col sm:flex-row gap-2">
@@ -493,8 +562,13 @@ export default function NearbyJobs() {
                 ) : (
                   <>
                     Showing{" "}
-                    <span className="font-bold text-gray-900">{visible.length}</span>{" "}
-                    of {allRequests.length} requests
+                    <span className="font-bold text-gray-900">{visible.length}</span>
+                    {" "}of {allRequests.length} requests
+                    {appliedKeyword && (
+                      <span className="block text-xs mt-0.5">
+                        Keyword: <span className="font-medium">"{appliedKeyword}"</span>
+                      </span>
+                    )}
                   </>
                 )}
               </div>

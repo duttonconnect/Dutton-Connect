@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { calculateDistanceMiles } from "@/lib/distance";
+import { matchesKeyword } from "@/lib/search";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -97,11 +98,22 @@ export default function FindNearbyPros() {
   const [, navigate] = useLocation();
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [keywordInput, setKeywordInput] = useState("");
+  const [appliedKeyword, setAppliedKeyword] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [distanceMiles, setDistanceMiles] = useState<number>(25);
   const [locating, setLocating] = useState(false);
+
+  const handleKeywordSearch = () => {
+    setAppliedKeyword(keywordInput.trim());
+  };
+
+  const handleClearKeyword = () => {
+    setKeywordInput("");
+    setAppliedKeyword("");
+  };
 
   const handleSearch = () => {
     const trimmed = searchInput.trim();
@@ -157,13 +169,24 @@ export default function FindNearbyPros() {
 
   const filteredPros = useMemo(() => {
     return SAMPLE_PROS.filter((p) => {
+      // --- Keyword filter (AND) ---
+      if (
+        appliedKeyword &&
+        !matchesKeyword(appliedKeyword, [
+          p.business,
+          ...p.services,
+          p.location,
+        ])
+      ) {
+        return false;
+      }
+
+      // --- Location / distance filter ---
       if (userCoords && p.lat != null && p.lng != null) {
-        // Real Haversine distance
         const d = calculateDistanceMiles(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return d <= distanceMiles;
       }
       if (selectedLocation) {
-        // Text fallback when no GPS coords
         return (
           p.location.toLowerCase().includes(selectedLocation.toLowerCase()) ||
           p.services.some((s) =>
@@ -173,7 +196,7 @@ export default function FindNearbyPros() {
       }
       return true;
     });
-  }, [userCoords, distanceMiles, selectedLocation]);
+  }, [userCoords, distanceMiles, selectedLocation, appliedKeyword]);
 
   const handleRequestQuote = async (pro: Pro) => {
     if (!user) {
@@ -221,6 +244,52 @@ export default function FindNearbyPros() {
             Trusted local pros serving your area.
           </p>
         </div>
+      </div>
+
+      {/* Keyword search bar */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            className="pl-9 pr-9"
+            placeholder="Search by service, keyword, or location"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleKeywordSearch()}
+          />
+          {keywordInput && (
+            <button
+              onClick={handleClearKeyword}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear keyword"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button onClick={handleKeywordSearch}>
+          <Search className="mr-2 h-4 w-4" /> Search
+        </Button>
+      </div>
+
+      {/* Active keyword badge + result count */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          Showing{" "}
+          <span className="font-semibold text-gray-900">{filteredPros.length}</span>{" "}
+          {filteredPros.length === 1 ? "pro" : "pros"}
+          {appliedKeyword && (
+            <> matching <span className="font-medium text-gray-700">"{appliedKeyword}"</span></>
+          )}
+        </span>
+        {appliedKeyword && (
+          <button
+            onClick={handleClearKeyword}
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+          >
+            <X className="h-3.5 w-3.5" /> Clear search
+          </button>
+        )}
       </div>
 
       {/* Location search + distance row */}
