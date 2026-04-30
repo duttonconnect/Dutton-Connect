@@ -90,9 +90,11 @@ function JobStopItem({
 function DraggableStopList({
   stops,
   onReorder,
+  onRemove,
 }: {
   stops: string[];
   onReorder: (stops: string[]) => void;
+  onRemove: (address: string) => void;
 }) {
   const dragIndex = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -145,6 +147,16 @@ function DraggableStopList({
           <MapPin className="h-3 w-3 shrink-0 text-primary" />
           <span className="truncate flex-1">{addr}</span>
           <span className="text-muted-foreground font-medium shrink-0">{index + 1}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(addr);
+            }}
+            className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            aria-label={`Remove stop ${index + 1}`}
+          >
+            <X className="h-3 w-3" />
+          </button>
         </div>
       ))}
     </div>
@@ -570,6 +582,7 @@ export default function RoutePlanner() {
                   <DraggableStopList
                     stops={orderedStops}
                     onReorder={setOrderedStops}
+                    onRemove={toggleStop}
                   />
                 </div>
               )}
