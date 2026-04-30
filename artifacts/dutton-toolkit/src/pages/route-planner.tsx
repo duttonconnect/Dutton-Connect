@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -83,6 +83,70 @@ function JobStopItem({
           </div>
         )}
       </label>
+    </div>
+  );
+}
+
+function DraggableStopList({
+  stops,
+  onReorder,
+}: {
+  stops: string[];
+  onReorder: (stops: string[]) => void;
+}) {
+  const dragIndex = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  function handleDragStart(index: number) {
+    dragIndex.current = index;
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }
+
+  function handleDrop(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    if (dragIndex.current === null || dragIndex.current === index) {
+      setDragOverIndex(null);
+      return;
+    }
+    const next = [...stops];
+    const [moved] = next.splice(dragIndex.current, 1);
+    next.splice(index, 0, moved);
+    onReorder(next);
+    dragIndex.current = null;
+    setDragOverIndex(null);
+  }
+
+  function handleDragEnd() {
+    dragIndex.current = null;
+    setDragOverIndex(null);
+  }
+
+  return (
+    <div className="space-y-1">
+      {stops.map((addr, index) => (
+        <div
+          key={addr}
+          draggable
+          onDragStart={() => handleDragStart(index)}
+          onDragOver={(e) => handleDragOver(e, index)}
+          onDrop={(e) => handleDrop(e, index)}
+          onDragEnd={handleDragEnd}
+          className={`text-xs bg-muted rounded px-2 py-1.5 flex items-center gap-1.5 cursor-grab active:cursor-grabbing transition-opacity select-none ${
+            dragOverIndex === index && dragIndex.current !== index
+              ? "opacity-50 ring-2 ring-primary ring-offset-1"
+              : "opacity-100"
+          }`}
+        >
+          <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <MapPin className="h-3 w-3 shrink-0 text-primary" />
+          <span className="truncate flex-1">{addr}</span>
+          <span className="text-muted-foreground font-medium shrink-0">{index + 1}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -235,10 +299,12 @@ export default function RoutePlanner() {
   const [startAddress, setStartAddress] = useState("");
   const [endAddress, setEndAddress] = useState("");
   const [routeName, setRouteName] = useState("");
-  const [selectedStops, setSelectedStops] = useState<Set<string>>(new Set());
+  const [orderedStops, setOrderedStops] = useState<string[]>([]);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const selectedSet = new Set(orderedStops);
 
   const todayJobs = jobs.filter(
     (j) => isToday(j.scheduledDate) && j.status !== "cancelled" && j.address,
@@ -277,24 +343,20 @@ export default function RoutePlanner() {
   }
 
   function toggleStop(address: string) {
-    setSelectedStops((prev) => {
-      const next = new Set(prev);
-      if (next.has(address)) {
-        next.delete(address);
-      } else {
-        next.add(address);
+    setOrderedStops((prev) => {
+      if (prev.includes(address)) {
+        return prev.filter((a) => a !== address);
       }
-      return next;
+      return [...prev, address];
     });
   }
 
   function handleOpenMaps() {
-    const stops = Array.from(selectedStops);
-    if (!startAddress.trim() && !endAddress.trim() && stops.length === 0) {
+    if (!startAddress.trim() && !endAddress.trim() && orderedStops.length === 0) {
       toast.error("Add at least a start address, end address, or one stop.");
       return;
     }
-    window.open(buildMapsUrl(startAddress, endAddress, stops), "_blank", "noopener,noreferrer");
+    window.open(buildMapsUrl(startAddress, endAddress, orderedStops), "_blank", "noopener,noreferrer");
   }
 
   async function handleSaveRoute() {
@@ -302,8 +364,7 @@ export default function RoutePlanner() {
       toast.error("Firebase is not configured. Cannot save routes.");
       return;
     }
-    const stops = Array.from(selectedStops);
-    if (!startAddress.trim() && !endAddress.trim() && stops.length === 0) {
+    if (!startAddress.trim() && !endAddress.trim() && orderedStops.length === 0) {
       toast.error("Add at least a start address, end address, or one stop.");
       return;
     }
@@ -314,7 +375,7 @@ export default function RoutePlanner() {
         name: routeName.trim(),
         startAddress: startAddress.trim(),
         endAddress: endAddress.trim(),
-        stops,
+        stops: orderedStops,
         createdAt: new Date().toISOString(),
       });
       toast.success("Route saved.");
@@ -355,8 +416,6 @@ export default function RoutePlanner() {
     }
   }
 
-  const selectedStopsList = Array.from(selectedStops);
-
   return (
     <div className="space-y-6">
       <div>
@@ -381,7 +440,7 @@ export default function RoutePlanner() {
                   <JobStopItem
                     key={job.id}
                     job={job}
-                    checked={selectedStops.has(job.address)}
+                    checked={selectedSet.has(job.address)}
                     onToggle={() => toggleStop(job.address)}
                   />
                 ))}
@@ -402,7 +461,7 @@ export default function RoutePlanner() {
                   <JobStopItem
                     key={job.id}
                     job={job}
-                    checked={selectedStops.has(job.address)}
+                    checked={selectedSet.has(job.address)}
                     onToggle={() => toggleStop(job.address)}
                   />
                 ))}
@@ -451,22 +510,15 @@ export default function RoutePlanner() {
                 />
               </div>
 
-              {selectedStopsList.length > 0 && (
+              {orderedStops.length > 0 && (
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">
-                    Selected Stops ({selectedStopsList.length})
+                    Selected Stops ({orderedStops.length}) — drag to reorder
                   </Label>
-                  <div className="space-y-1">
-                    {selectedStopsList.map((addr) => (
-                      <div
-                        key={addr}
-                        className="text-xs bg-muted rounded px-2 py-1 flex items-center gap-1"
-                      >
-                        <MapPin className="h-3 w-3 shrink-0 text-primary" />
-                        <span className="truncate">{addr}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <DraggableStopList
+                    stops={orderedStops}
+                    onReorder={setOrderedStops}
+                  />
                 </div>
               )}
 
