@@ -56,10 +56,12 @@ function buildMapsUrl(startAddress: string, endAddress: string, stops: string[])
 function JobStopItem({
   job,
   checked,
+  stopNumber,
   onToggle,
 }: {
   job: Job;
   checked: boolean;
+  stopNumber: number | null;
   onToggle: () => void;
 }) {
   return (
@@ -71,7 +73,14 @@ function JobStopItem({
         id={`stop-${job.id}`}
       />
       <label htmlFor={`stop-${job.id}`} className="min-w-0 flex-1 cursor-pointer">
-        <div className="font-medium text-sm truncate">{job.title}</div>
+        <div className="flex items-center gap-2">
+          <div className="font-medium text-sm truncate">{job.title}</div>
+          {stopNumber !== null && (
+            <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold leading-none">
+              {stopNumber}
+            </span>
+          )}
+        </div>
         <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="truncate">{job.address}</span>
@@ -359,8 +368,6 @@ export default function RoutePlanner() {
 
   const plannerRef = useRef<HTMLDivElement>(null);
 
-  const selectedSet = new Set(orderedStops);
-
   const todayJobs = jobs.filter(
     (j) => isToday(j.scheduledDate) && j.status !== "cancelled" && j.address,
   );
@@ -500,14 +507,18 @@ export default function RoutePlanner() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {todayJobs.map((job) => (
-                  <JobStopItem
-                    key={job.id}
-                    job={job}
-                    checked={selectedSet.has(job.address)}
-                    onToggle={() => toggleStop(job.address)}
-                  />
-                ))}
+                {todayJobs.map((job) => {
+                  const idx = orderedStops.indexOf(job.address);
+                  return (
+                    <JobStopItem
+                      key={job.id}
+                      job={job}
+                      checked={idx !== -1}
+                      stopNumber={idx !== -1 ? idx + 1 : null}
+                      onToggle={() => toggleStop(job.address)}
+                    />
+                  );
+                })}
               </CardContent>
             </Card>
           )}
@@ -521,14 +532,18 @@ export default function RoutePlanner() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {openJobs.map((job) => (
-                  <JobStopItem
-                    key={job.id}
-                    job={job}
-                    checked={selectedSet.has(job.address)}
-                    onToggle={() => toggleStop(job.address)}
-                  />
-                ))}
+                {openJobs.map((job) => {
+                  const idx = orderedStops.indexOf(job.address);
+                  return (
+                    <JobStopItem
+                      key={job.id}
+                      job={job}
+                      checked={idx !== -1}
+                      stopNumber={idx !== -1 ? idx + 1 : null}
+                      onToggle={() => toggleStop(job.address)}
+                    />
+                  );
+                })}
               </CardContent>
             </Card>
           )}
