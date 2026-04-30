@@ -163,6 +163,7 @@ function RouteCard({
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(route.name || "");
   const [renaming, setRenaming] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function startEdit() {
@@ -269,23 +270,52 @@ function RouteCard({
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => window.open(mapsUrl, "_blank", "noopener,noreferrer")}
-          >
-            <ExternalLink className="h-3.5 w-3.5 mr-1" />
-            Open
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => onDelete(route.id)}
-            aria-label="Delete route"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          {confirmingDelete ? (
+            <>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Delete?</span>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  setConfirmingDelete(false);
+                  onDelete(route.id);
+                }}
+                aria-label="Confirm delete"
+              >
+                Yes
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs"
+                onClick={() => setConfirmingDelete(false)}
+                aria-label="Cancel delete"
+              >
+                No
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.open(mapsUrl, "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                Open
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setConfirmingDelete(true)}
+                aria-label="Delete route"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
