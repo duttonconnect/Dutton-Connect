@@ -1,6 +1,16 @@
-import { useEffect, useState } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route } from "lucide-react";
-import { collection, addDoc, query, where, orderBy, getDocs } from "firebase/firestore";
+import { useEffect, useRef, useState } from "react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X } from "lucide-react";
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+} from "firebase/firestore";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -16,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 type SavedRoute = {
   id: string;
   userId: string;
+  name: string;
   startAddress: string;
   endAddress: string;
   stops: string[];
@@ -76,12 +87,154 @@ function JobStopItem({
   );
 }
 
+function RouteCard({
+  route,
+  onDelete,
+  onRename,
+}: {
+  route: SavedRoute;
+  onDelete: (id: string) => void;
+  onRename: (id: string, newName: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(route.name || "");
+  const [renaming, setRenaming] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function startEdit() {
+    setDraftName(route.name || "");
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+    setDraftName(route.name || "");
+  }
+
+  async function commitRename() {
+    const trimmed = draftName.trim();
+    if (trimmed === (route.name || "")) {
+      setEditing(false);
+      return;
+    }
+    setRenaming(true);
+    try {
+      await onRename(route.id, trimmed);
+      setEditing(false);
+    } finally {
+      setRenaming(false);
+    }
+  }
+
+  const stops = route.stops ?? [];
+  const mapsUrl = buildMapsUrl(route.startAddress, route.endAddress, stops);
+  const displayName = route.name || format(new Date(route.createdAt), "MMM d, yyyy · h:mm a");
+
+  return (
+    <div className="p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          {editing ? (
+            <div className="flex items-center gap-1">
+              <Input
+                ref={inputRef}
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitRename();
+                  if (e.key === "Escape") cancelEdit();
+                }}
+                className="h-7 text-sm font-medium px-2 py-0"
+                placeholder="Route name…"
+                disabled={renaming}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 shrink-0"
+                onClick={commitRename}
+                disabled={renaming}
+                aria-label="Confirm rename"
+              >
+                <Check className="h-3.5 w-3.5 text-green-600" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 shrink-0"
+                onClick={cancelEdit}
+                disabled={renaming}
+                aria-label="Cancel rename"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 group">
+              <span className="text-sm font-medium truncate">{displayName}</span>
+              <button
+                onClick={startEdit}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+                aria-label="Rename route"
+              >
+                <Pencil className="h-3 w-3 text-muted-foreground" />
+              </button>
+            </div>
+          )}
+          {route.name && (
+            <div className="text-xs text-muted-foreground">
+              {route.createdAt ? format(new Date(route.createdAt), "MMM d, yyyy · h:mm a") : "—"}
+            </div>
+          )}
+          {route.startAddress && (
+            <div className="text-sm">
+              <span className="font-medium">From:</span> {route.startAddress}
+            </div>
+          )}
+          {route.endAddress && (
+            <div className="text-sm">
+              <span className="font-medium">To:</span> {route.endAddress}
+            </div>
+          )}
+          {stops.length > 0 && (
+            <div className="text-sm">
+              <span className="font-medium">Stops ({stops.length}):</span>{" "}
+              {stops.join(" → ")}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.open(mapsUrl, "_blank", "noopener,noreferrer")}
+          >
+            <ExternalLink className="h-3.5 w-3.5 mr-1" />
+            Open
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => onDelete(route.id)}
+            aria-label="Delete route"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RoutePlanner() {
   const { jobs } = useAppStore();
   const { user } = useAuth();
 
   const [startAddress, setStartAddress] = useState("");
   const [endAddress, setEndAddress] = useState("");
+  const [routeName, setRouteName] = useState("");
   const [selectedStops, setSelectedStops] = useState<Set<string>>(new Set());
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
@@ -158,18 +311,47 @@ export default function RoutePlanner() {
     try {
       await addDoc(collection(db, "routes"), {
         userId: user.uid,
+        name: routeName.trim(),
         startAddress: startAddress.trim(),
         endAddress: endAddress.trim(),
         stops,
         createdAt: new Date().toISOString(),
       });
       toast.success("Route saved.");
+      setRouteName("");
       await loadSavedRoutes();
     } catch (err) {
       console.warn("[RoutePlanner] Save failed:", err);
       toast.error("Failed to save route.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteRoute(id: string) {
+    if (!isFirebaseConfigured || !db) return;
+    try {
+      await deleteDoc(doc(db, "routes", id));
+      setSavedRoutes((prev) => prev.filter((r) => r.id !== id));
+      toast.success("Route deleted.");
+    } catch (err) {
+      console.warn("[RoutePlanner] Delete failed:", err);
+      toast.error("Failed to delete route.");
+    }
+  }
+
+  async function handleRenameRoute(id: string, newName: string) {
+    if (!isFirebaseConfigured || !db) return;
+    try {
+      await updateDoc(doc(db, "routes", id), { name: newName });
+      setSavedRoutes((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, name: newName } : r)),
+      );
+      toast.success("Route renamed.");
+    } catch (err) {
+      console.warn("[RoutePlanner] Rename failed:", err);
+      toast.error("Failed to rename route.");
+      throw err;
     }
   }
 
@@ -293,6 +475,19 @@ export default function RoutePlanner() {
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Open Route in Google Maps
                 </Button>
+                <div>
+                  <Label htmlFor="routeName" className="text-xs text-muted-foreground">
+                    Route Name (optional)
+                  </Label>
+                  <Input
+                    id="routeName"
+                    placeholder='e.g. "Monday loop"'
+                    value={routeName}
+                    onChange={(e) => setRouteName(e.target.value)}
+                    disabled={!isFirebaseConfigured}
+                    className="mt-1"
+                  />
+                </div>
                 <Button
                   variant="outline"
                   onClick={handleSaveRoute}
@@ -332,52 +527,14 @@ export default function RoutePlanner() {
             </div>
           ) : (
             <div className="space-y-3">
-              {savedRoutes.map((route) => {
-                const stops = route.stops ?? [];
-                const mapsUrl = buildMapsUrl(route.startAddress, route.endAddress, stops);
-                return (
-                  <div
-                    key={route.id}
-                    className="p-4 border rounded-lg hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="text-xs text-muted-foreground">
-                          {route.createdAt
-                            ? format(new Date(route.createdAt), "MMM d, yyyy · h:mm a")
-                            : "—"}
-                        </div>
-                        {route.startAddress && (
-                          <div className="text-sm">
-                            <span className="font-medium">From:</span> {route.startAddress}
-                          </div>
-                        )}
-                        {route.endAddress && (
-                          <div className="text-sm">
-                            <span className="font-medium">To:</span> {route.endAddress}
-                          </div>
-                        )}
-                        {stops.length > 0 && (
-                          <div className="text-sm">
-                            <span className="font-medium">Stops ({stops.length}):</span>{" "}
-                            {stops.join(" → ")}
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          window.open(mapsUrl, "_blank", "noopener,noreferrer")
-                        }
-                      >
-                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                        Open
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+              {savedRoutes.map((route) => (
+                <RouteCard
+                  key={route.id}
+                  route={route}
+                  onDelete={handleDeleteRoute}
+                  onRename={handleRenameRoute}
+                />
+              ))}
             </div>
           )}
         </CardContent>
