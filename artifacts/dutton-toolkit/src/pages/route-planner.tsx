@@ -4,6 +4,7 @@ import {
   collection,
   addDoc,
   deleteDoc,
+  setDoc,
   doc,
   updateDoc,
   query,
@@ -453,14 +454,50 @@ export default function RoutePlanner() {
 
   async function handleDeleteRoute(id: string) {
     if (!isFirebaseConfigured || !db) return;
+
+    const routeToDelete = savedRoutes.find((r) => r.id === id);
+    if (!routeToDelete) return;
+
+    // Delete from Firestore immediately so it is final even if the page closes
     try {
       await deleteDoc(doc(db, "routes", id));
-      setSavedRoutes((prev) => prev.filter((r) => r.id !== id));
-      toast.success("Route deleted.");
     } catch (err) {
       console.warn("[RoutePlanner] Delete failed:", err);
       toast.error("Failed to delete route.");
+      return;
     }
+
+    // Remove from local state after successful Firestore deletion
+    setSavedRoutes((prev) => prev.filter((r) => r.id !== id));
+
+    // Track whether the undo was used so the toast action can be cleaned up
+    let undone = false;
+
+    toast.success("Route deleted.", {
+      duration: 5000,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          if (undone) return;
+          // Recreate the document in Firestore with its original id
+          const { id: _id, ...routeData } = routeToDelete;
+          try {
+            await setDoc(doc(db, "routes", id), routeData);
+            undone = true; // Mark done only after successful restore
+            // Restore into local list in sorted order
+            setSavedRoutes((prev) => {
+              if (prev.some((r) => r.id === id)) return prev;
+              return [...prev, routeToDelete].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+              );
+            });
+          } catch (err) {
+            console.warn("[RoutePlanner] Undo failed:", err);
+            toast.error("Could not undo deletion. Please try again.");
+          }
+        },
+      },
+    });
   }
 
   async function handleRenameRoute(id: string, newName: string) {
