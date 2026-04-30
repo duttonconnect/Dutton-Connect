@@ -19,6 +19,7 @@ import {
   MessageSquare,
   CalendarDays,
   Shield,
+  Navigation,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -37,13 +38,15 @@ const PRO_NAV = [
   { href: "/receipts", label: "Receipts", icon: Receipt },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/route-planner", label: "Route Planner", icon: Navigation },
 ];
 
 const CUSTOMER_NAV = [
   { href: "/", label: "Home", icon: Home },
   { href: "/post-request", label: "Post a Job", icon: ClipboardList },
   { href: "/find-pros", label: "Find Pros", icon: Search },
-  { href: "/my-requests", label: "My Requests", icon: ListChecks },
+  { href: "/my-jobs", label: "My Jobs", icon: ListChecks },
+  { href: "/my-requests", label: "My Requests", icon: Inbox },
   { href: "/my-quotes", label: "Quotes", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },

@@ -13,6 +13,8 @@ import {
   collection,
   addDoc,
   setDoc,
+  updateDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -30,8 +32,38 @@ export type FirestoreJobRequest = {
   preferredDate: string;
   urgency: string;
   customerId: string;
-  status: "open" | "closed";
+  status: "open" | "closed" | "accepted" | "scheduled" | "completed";
   createdAt: string;
+  // Set when a quote is accepted
+  acceptedProId?: string;
+  acceptedQuoteId?: string;
+  // Set when the customer schedules after accepting
+  scheduledDate?: string;
+  scheduledTime?: string;
+  scheduleNotes?: string;
+};
+
+export type Review = {
+  id: string;
+  jobRequestId: string;
+  customerId: string;
+  proId: string;
+  rating: number; // 1–5
+  text: string;
+  createdAt: string;
+};
+
+export type ProProfile = {
+  uid: string;
+  displayName?: string;
+  email?: string;
+  businessName?: string;
+  services?: string[];
+  serviceArea?: string;
+  serviceRadiusMiles?: number;
+  about?: string;
+  publicPhone?: string; // only shown when explicitly set as public
+  role?: string;
 };
 
 export type MatchQuote = {
@@ -176,5 +208,134 @@ export async function loadQuotesForRequest(
   } catch (err) {
     console.warn("[Matching] Could not load quotes for request:", err);
     return [];
+  }
+}
+
+/** Load all job requests posted by a customer (Firestore). */
+export async function loadJobRequestsForCustomer(
+  customerId: string,
+): Promise<FirestoreJobRequest[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, "jobRequests"), where("customerId", "==", customerId)),
+    );
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as FirestoreJobRequest));
+  } catch (err) {
+    console.warn("[Matching] Could not load customer job requests:", err);
+    return [];
+  }
+}
+
+/**
+ * Accept a quote: marks the jobRequest as "accepted" and the chosen matchQuote
+ * as "accepted". All other quotes for the same request stay unchanged.
+ */
+export async function acceptQuote(
+  jobRequestId: string,
+  quoteId: string,
+  proId: string,
+): Promise<boolean> {
+  if (!isFirebaseConfigured || !db) return false;
+  try {
+    await updateDoc(doc(db, "jobRequests", jobRequestId), {
+      status: "accepted",
+      acceptedProId: proId,
+      acceptedQuoteId: quoteId,
+    });
+    await updateDoc(doc(db, "matchQuotes", quoteId), { status: "accepted" });
+    return true;
+  } catch (err) {
+    console.warn("[Matching] acceptQuote failed:", err);
+    return false;
+  }
+}
+
+/** Schedule an accepted job request and update its Firestore document. */
+export async function scheduleJobRequest(
+  jobRequestId: string,
+  scheduledDate: string,
+  scheduledTime: string,
+  scheduleNotes: string,
+): Promise<boolean> {
+  if (!isFirebaseConfigured || !db) return false;
+  try {
+    await updateDoc(doc(db, "jobRequests", jobRequestId), {
+      status: "scheduled",
+      scheduledDate,
+      scheduledTime,
+      scheduleNotes,
+    });
+    return true;
+  } catch (err) {
+    console.warn("[Matching] scheduleJobRequest failed:", err);
+    return false;
+  }
+}
+
+/** Load a pro's public profile from the users collection. */
+export async function loadProProfile(proId: string): Promise<ProProfile | null> {
+  if (!isFirebaseConfigured || !db) return null;
+  try {
+    const snap = await getDoc(doc(db, "users", proId));
+    if (!snap.exists()) return null;
+    return { uid: snap.id, ...snap.data() } as ProProfile;
+  } catch (err) {
+    console.warn("[Matching] Could not load pro profile:", err);
+    return null;
+  }
+}
+
+/** Save a customer review for a pro. Returns the new doc ID or null. */
+export async function saveReview(
+  data: Omit<Review, "id" | "createdAt">,
+): Promise<string | null> {
+  if (!isFirebaseConfigured || !db) return null;
+  try {
+    const ref = await addDoc(collection(db, "reviews"), {
+      ...data,
+      createdAt: new Date().toISOString(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.warn("[Matching] saveReview failed:", err);
+    return null;
+  }
+}
+
+/** Load all reviews for a specific pro. */
+export async function loadReviewsForPro(proId: string): Promise<Review[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, "reviews"), where("proId", "==", proId)),
+    );
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review));
+  } catch (err) {
+    console.warn("[Matching] Could not load pro reviews:", err);
+    return [];
+  }
+}
+
+/** Check whether a customer has already reviewed a specific job request. */
+export async function loadExistingReview(
+  jobRequestId: string,
+  customerId: string,
+): Promise<Review | null> {
+  if (!isFirebaseConfigured || !db) return null;
+  try {
+    const snap = await getDocs(
+      query(
+        collection(db, "reviews"),
+        where("jobRequestId", "==", jobRequestId),
+        where("customerId", "==", customerId),
+      ),
+    );
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() } as Review;
+  } catch (err) {
+    console.warn("[Matching] loadExistingReview failed:", err);
+    return null;
   }
 }

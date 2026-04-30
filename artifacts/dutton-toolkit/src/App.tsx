@@ -24,14 +24,19 @@ import MapView from "@/pages/map";
 import MileageTracker from "@/pages/mileage";
 import ReceiptTracker from "@/pages/receipts";
 import NearbyJobs from "@/pages/nearby-jobs";
+import RoutePlanner from "@/pages/route-planner";
 import NotFound from "@/pages/not-found";
 
 import ChooseAccountType from "@/pages/choose-account-type";
 import CustomerDashboard from "@/pages/customer/dashboard";
 import PostJobRequest from "@/pages/customer/post-request";
 import MyJobRequests from "@/pages/customer/my-requests";
+import MyJobs from "@/pages/customer/my-jobs";
+import JobQuotes from "@/pages/customer/job-quotes";
+import LeaveReview from "@/pages/customer/leave-review";
 import FindNearbyPros from "@/pages/customer/find-pros";
 import MyQuotes from "@/pages/customer/my-quotes";
+import ProProfilePage from "@/pages/pros/profile";
 import MessagesList from "@/pages/messages/index";
 import ChatPage from "@/pages/messages/chat";
 import PrivacyPolicy from "@/pages/privacy";
@@ -63,6 +68,7 @@ function ProRoutes() {
         <Route path="/mileage" component={MileageTracker} />
         <Route path="/receipts" component={ReceiptTracker} />
         <Route path="/nearby-jobs" component={NearbyJobs} />
+        <Route path="/route-planner" component={RoutePlanner} />
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
         <Route path="/calendar" component={CalendarPage} />
@@ -82,8 +88,12 @@ function CustomerRoutes() {
         <Route path="/" component={CustomerDashboard} />
         <Route path="/post-request" component={PostJobRequest} />
         <Route path="/my-requests" component={MyJobRequests} />
+        <Route path="/my-jobs" component={MyJobs} />
+        <Route path="/my-jobs/:jobId/quotes" component={JobQuotes} />
+        <Route path="/my-jobs/:jobId/review/:proId" component={LeaveReview} />
         <Route path="/my-quotes" component={MyQuotes} />
         <Route path="/find-pros" component={FindNearbyPros} />
+        <Route path="/pros/:proId" component={ProProfilePage} />
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
         <Route path="/calendar" component={CalendarPage} />
