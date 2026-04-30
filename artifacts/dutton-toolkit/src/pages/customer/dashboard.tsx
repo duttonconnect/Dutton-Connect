@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ClipboardList, Search, ListChecks, ArrowRight, Phone } from "lucide-react";
+import { ClipboardList, Search, ListChecks, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
@@ -47,23 +47,6 @@ export default function CustomerDashboard() {
         />
       </div>
 
-      <Card>
-        <CardContent className="p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold text-gray-900">
-              Need help right now?
-            </div>
-            <div className="text-sm text-gray-600">
-              Reach Dutton Solutions LLC directly.
-            </div>
-          </div>
-          <Button asChild variant="outline">
-            <a href="tel:7065231447">
-              <Phone className="mr-2 h-4 w-4" /> 706-523-1447
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

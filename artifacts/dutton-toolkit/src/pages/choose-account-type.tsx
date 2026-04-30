@@ -47,9 +47,9 @@ export default function ChooseAccountType() {
               title="Customer"
               subtitle="Homeowner / client"
               bullets={[
-                "See Dutton Solutions services",
-                "Request a quote or call",
-                "Find contact information",
+                "Browse local service providers",
+                "Request quotes from trusted pros",
+                "Message, schedule, and leave reviews",
               ]}
               cta="Continue as Customer"
               onClick={() => setRole("customer")}

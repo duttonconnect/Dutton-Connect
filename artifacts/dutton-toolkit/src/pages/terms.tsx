@@ -4,7 +4,7 @@ export default function TermsOfService() {
       <h1 className="text-2xl font-bold mb-4">Terms of Service – Dutton Connect</h1>
       <p className="mb-4">Effective Date: April 29, 2026</p>
 
-      <p className="mb-4">Dutton Connect is operated by Dutton Solutions LLC.</p>
+      <p className="mb-4">Dutton Connect is an independent service marketplace connecting customers with local professionals.</p>
 
       <h2 className="font-bold mt-4">1. Platform Purpose</h2>
       <p>Dutton Connect connects customers with independent service providers.</p>

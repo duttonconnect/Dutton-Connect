@@ -82,13 +82,11 @@ export default function QuoteDetail() {
           {/* Header */}
           <div className="flex justify-between items-start border-b border-gray-200 pb-8">
             <div>
-              <h1 className="text-3xl font-extrabold tracking-tighter text-blue-800">DUTTON SOLUTIONS</h1>
-              <div className="text-sm font-semibold tracking-widest text-gray-500 uppercase mt-1">LLC</div>
+              <h1 className="text-3xl font-extrabold tracking-tighter text-blue-800">QUOTE</h1>
+              <div className="text-sm font-semibold tracking-widest text-gray-500 uppercase mt-1">Service Estimate</div>
             </div>
             <div className="text-right text-sm text-gray-600 space-y-1">
-              <div>706-523-1447</div>
-              <div>www.duttonsolutionsllc.com</div>
-              <div className="mt-2 text-gray-400">Quote Date: {format(new Date(quote.createdAt), "MMM d, yyyy")}</div>
+              <div className="text-gray-400">Quote Date: {format(new Date(quote.createdAt), "MMM d, yyyy")}</div>
               <div className="text-gray-400">Valid for 30 days</div>
             </div>
           </div>
@@ -163,8 +161,8 @@ export default function QuoteDetail() {
 
           {/* Footer Note */}
           <div className="text-center pt-12 border-t border-gray-100 text-gray-500 text-sm">
-            <p className="font-medium text-gray-700">Thank you for considering Dutton Solutions LLC.</p>
-            <p className="mt-1">We appreciate the opportunity to earn your business.</p>
+            <p className="font-medium text-gray-700">Thank you — we appreciate your business.</p>
+            <p className="mt-1">Please reach out with any questions about this quote.</p>
           </div>
 
         </CardContent>

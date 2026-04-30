@@ -5,7 +5,7 @@ export default function PrivacyPolicy() {
       <p className="mb-4">Effective Date: April 29, 2026</p>
 
       <p className="mb-4">
-        Dutton Connect is operated by Dutton Solutions LLC. Dutton Connect ("we," "our," or "us") respects your privacy.
+        Dutton Connect ("we," "our," or "us") is an independent service marketplace that respects your privacy.
       </p>
 
       <h2 className="font-bold mt-4">1. Information We Collect</h2>

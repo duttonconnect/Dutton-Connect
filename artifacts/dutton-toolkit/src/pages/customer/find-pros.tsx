@@ -23,7 +23,7 @@ type Pro = {
   services: string[];
   location: string;
   serviceRadiusMiles: number;
-  phone: string;
+  phone?: string;
   ratingPlaceholder: number;
   reviewsPlaceholder: number;
   verified?: boolean;
@@ -31,12 +31,11 @@ type Pro = {
 
 const SAMPLE_PROS: Pro[] = [
   {
-    id: "p-dutton",
-    business: "Dutton Solutions LLC",
+    id: "p-athens-handyman",
+    business: "Athens Handyman Services",
     services: ["Handyman", "Pressure Washing", "Yard Work", "Appliance Installation"],
     location: "Athens, GA",
     serviceRadiusMiles: 30,
-    phone: "706-523-1447",
     ratingPlaceholder: 5.0,
     reviewsPlaceholder: 47,
     verified: true,
@@ -176,27 +175,31 @@ export default function FindNearbyPros() {
                     {pro.location} · serves {pro.serviceRadiusMiles} mi radius
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 shrink-0" />
-                  <a
-                    href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}
-                    className="text-primary hover:underline"
-                  >
-                    {pro.phone}
-                  </a>
-                </div>
+                {pro.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    <a
+                      href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}
+                      className="text-primary hover:underline"
+                    >
+                      {pro.phone}
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 mt-auto pt-3 border-t">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  asChild
-                >
-                  <a href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}>
-                    <Phone className="mr-2 h-4 w-4" /> Call
-                  </a>
-                </Button>
+                {pro.phone && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    asChild
+                  >
+                    <a href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}>
+                      <Phone className="mr-2 h-4 w-4" /> Call
+                    </a>
+                  </Button>
+                )}
                 <Button
                   className="flex-1"
                   disabled={requestingId === pro.id || sentIds.has(pro.id)}
