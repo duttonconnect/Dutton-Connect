@@ -30,7 +30,7 @@ export default function Dashboard() {
             <Button variant="outline"><Plus className="mr-2 h-4 w-4" /> New Quote</Button>
           </Link>
           <Link href="/nearby-jobs">
-            <Button variant="outline"><Inbox className="mr-2 h-4 w-4" /> Nearby Jobs</Button>
+            <Button variant="outline"><Inbox className="mr-2 h-4 w-4" /> Nearby Requests</Button>
           </Link>
           <Link href="/map">
             <Button variant="outline"><MapIcon className="mr-2 h-4 w-4" /> View Job Map</Button>

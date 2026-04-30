@@ -1,7 +1,7 @@
 {
   "name": "Dutton Connect",
   "short_name": "Dutton Connect",
-  "description": "Local jobs. Trusted pros. Powered by Dutton Solutions LLC.",
+  "description": "Find trusted local professionals for any home service need.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

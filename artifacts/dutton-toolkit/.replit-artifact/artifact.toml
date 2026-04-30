@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Dutton Solutions Toolkit"
+title = "Dutton Connect"
 version = "1.0.0"
 id = "artifacts/dutton-toolkit"
 router = "path"

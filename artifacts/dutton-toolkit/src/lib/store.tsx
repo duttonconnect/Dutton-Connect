@@ -194,9 +194,9 @@ type AppContextType = AppState & {
 
 const SEED_DATA: AppState = {
   customers: [
-    { id: "c1", name: "Sarah Jenkins", phone: "706-555-0198", email: "sjenkins@example.com", address: "142 Oak St, Athens, GA", notes: "Prefers texts", createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: "c2", name: "Marcus Thompson", phone: "706-555-4432", email: "mthompson88@example.com", address: "89 Pine Ridge Rd, Watkinsville, GA", notes: "Gate code 4821", createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: "c3", name: "Elena Rodriguez", phone: "706-555-8810", email: "erodriguez@example.com", address: "2204 Sycamore Ln, Bogart, GA", notes: "Large dog in backyard, friendly", createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: "c1", name: "Sarah Jenkins", phone: "", email: "sjenkins@example.com", address: "142 Oak St, Athens, GA", notes: "Prefers texts", createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: "c2", name: "Marcus Thompson", phone: "", email: "mthompson88@example.com", address: "89 Pine Ridge Rd, Watkinsville, GA", notes: "Gate code 4821", createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: "c3", name: "Elena Rodriguez", phone: "", email: "erodriguez@example.com", address: "2204 Sycamore Ln, Bogart, GA", notes: "Large dog in backyard, friendly", createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
   ],
   jobs: [
     {

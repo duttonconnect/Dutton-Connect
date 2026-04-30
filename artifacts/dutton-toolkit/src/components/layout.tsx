@@ -63,7 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isConfigured, isAdmin } = useAuth();
 
   const navItems = role === "customer" ? CUSTOMER_NAV : PRO_NAV;
-  const subtitle = role === "customer" ? "Customer Portal" : "Field Toolkit";
+  const subtitle = role === "customer" ? "Customer Portal" : "Pro Portal";
 
   // Close mobile menu on route change
   useEffect(() => {
