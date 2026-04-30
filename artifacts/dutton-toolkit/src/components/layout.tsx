@@ -20,6 +20,7 @@ import {
   CalendarDays,
   Shield,
   Navigation,
+  Calculator,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -29,10 +30,13 @@ import { useAuth } from "@/lib/auth";
 const PRO_NAV = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/jobs", label: "Jobs", icon: Hammer },
-  { href: "/nearby-jobs", label: "Nearby Jobs", icon: Inbox },
+  { href: "/nearby-jobs", label: "Nearby Requests", icon: Inbox },
+  { href: "/lead-inbox", label: "Service Requests", icon: ClipboardList },
   { href: "/map", label: "Map", icon: MapIcon },
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/customers", label: "Customers", icon: Users },
+  { href: "/customer-crm", label: "Customer CRM", icon: ListChecks },
+  { href: "/estimates", label: "Estimates", icon: Calculator },
   { href: "/payments", label: "Payments", icon: DollarSign },
   { href: "/mileage", label: "Mileage", icon: Car },
   { href: "/receipts", label: "Receipts", icon: Receipt },
@@ -43,9 +47,9 @@ const PRO_NAV = [
 
 const CUSTOMER_NAV = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/post-request", label: "Post a Job", icon: ClipboardList },
+  { href: "/post-request", label: "Request Service", icon: ClipboardList },
   { href: "/find-pros", label: "Find Pros", icon: Search },
-  { href: "/my-jobs", label: "My Jobs", icon: ListChecks },
+  { href: "/my-jobs", label: "My Work", icon: ListChecks },
   { href: "/my-requests", label: "My Requests", icon: Inbox },
   { href: "/my-quotes", label: "Quotes", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: MessageSquare },

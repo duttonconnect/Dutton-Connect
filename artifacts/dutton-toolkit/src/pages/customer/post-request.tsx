@@ -145,7 +145,7 @@ export default function PostJobRequest() {
         urgency: requestData.urgency,
         customerId,
       }, createdAt);
-      toast.success("Job posted");
+      toast.success("Service request submitted");
       setLocation("/my-requests");
     } catch (err) {
       toast.error(
@@ -167,22 +167,22 @@ export default function PostJobRequest() {
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Post a Job
+            Request Service
           </h1>
           <p className="text-gray-500 text-sm">
-            Tell local pros what you need done.
+            Tell local pros what you need — they send quotes to you.
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Job Details</CardTitle>
+          <CardTitle>Service Details</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="title">Job Title</Label>
+              <Label htmlFor="title">Service Title</Label>
               <Input
                 id="title"
                 placeholder="e.g. Fix leaky kitchen faucet"
@@ -332,7 +332,7 @@ export default function PostJobRequest() {
                 {submitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Posting…</>
                 ) : (
-                  "Post Request"
+                  "Submit Request"
                 )}
               </Button>
               <Button

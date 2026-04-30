@@ -266,11 +266,11 @@ export default function LeadInbox() {
           <Link href="/dashboard">
             <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Lead Inbox</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Service Requests</h1>
         </div>
         <Card>
           <CardContent className="p-8 text-center text-gray-500">
-            Firebase is not configured. Connect Firebase to use the Lead Inbox.
+            Firebase is not configured. Connect Firebase to use the Service Requests.
           </CardContent>
         </Card>
       </div>
@@ -288,7 +288,7 @@ export default function LeadInbox() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
             <Inbox className="h-6 w-6 text-primary" />
-            Lead Inbox
+            Service Requests
           </h1>
           <p className="text-gray-500 text-sm">Job requests matching your services.</p>
         </div>

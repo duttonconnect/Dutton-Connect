@@ -155,9 +155,11 @@ function mockDistanceFor(id: string): number {
 }
 
 const urgencyStyle: Record<string, string> = {
-  Low: "bg-gray-100 text-gray-700",
+  Low: "bg-gray-100 text-gray-600",
   Normal: "bg-blue-100 text-blue-800",
-  Urgent: "bg-red-100 text-red-800",
+  Soon: "bg-yellow-100 text-yellow-800",
+  Urgent: "bg-amber-100 text-amber-800",
+  Emergency: "bg-red-100 text-red-800",
 };
 
 const ALL_CATEGORIES: (RequestCategory | "All")[] = [
@@ -271,14 +273,14 @@ export default function NearbyJobs() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nearby Jobs</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Nearby Service Requests</h1>
           <p className="text-gray-500">
-            Customer requests in your service area. Send a quote to get the work.
+            Open requests in your service area. Send a quote to win the job.
           </p>
         </div>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl border-gray-100">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filters
@@ -360,8 +362,8 @@ export default function NearbyJobs() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {visible.map((r) => (
-            <Card key={r.id} className="flex flex-col">
-              <CardContent className="p-5 flex flex-col gap-3 flex-1">
+            <Card key={r.id} className="flex flex-col rounded-2xl border-gray-100 hover:shadow-md transition-shadow">
+              <CardContent className="p-6 flex flex-col gap-3 flex-1">
                 <div className="flex justify-between items-start gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-lg truncate" title={r.title}>

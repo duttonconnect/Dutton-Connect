@@ -45,9 +45,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const URGENCY_STYLE: Record<string, string> = {
-  Low: "bg-gray-100 text-gray-700",
+  Low: "bg-gray-100 text-gray-600",
   Normal: "bg-blue-100 text-blue-800",
-  Urgent: "bg-red-100 text-red-800",
+  Soon: "bg-yellow-100 text-yellow-800",
+  Urgent: "bg-amber-100 text-amber-800",
+  Emergency: "bg-red-100 text-red-800",
 };
 
 function canReview(status: string) {
@@ -100,15 +102,15 @@ export default function MyJobs() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Jobs</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Work</h1>
             <p className="text-gray-500 text-sm">
-              {loading ? "Loading…" : `${jobs.length} job${jobs.length === 1 ? "" : "s"} posted`}
+              {loading ? "Loading…" : `${jobs.length} service request${jobs.length === 1 ? "" : "s"}`}
             </p>
           </div>
         </div>
         <Link href="/post-request">
           <Button>
-            <Plus className="mr-2 h-4 w-4" /> Post Job
+            <Plus className="mr-2 h-4 w-4" /> Request Service
           </Button>
         </Link>
       </div>
@@ -124,11 +126,11 @@ export default function MyJobs() {
         <Card>
           <CardContent className="py-14 text-center text-muted-foreground">
             <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No jobs posted yet.</p>
-            <p className="text-xs mt-1">Post a job and local pros will send you quotes.</p>
+            <p className="text-sm">No service requests yet.</p>
+            <p className="text-xs mt-1">Request a service and local pros will send you quotes.</p>
             <Link href="/post-request">
               <Button className="mt-4">
-                <Plus className="mr-2 h-4 w-4" /> Post Your First Job
+                <Plus className="mr-2 h-4 w-4" /> Request Your First Service
               </Button>
             </Link>
           </CardContent>
@@ -141,7 +143,7 @@ export default function MyJobs() {
             const reviewable = canReview(job.status) && !!job.acceptedProId;
 
             return (
-              <Card key={job.id} className="overflow-hidden">
+              <Card key={job.id} className="overflow-hidden rounded-2xl border-gray-100 hover:shadow-md transition-shadow">
                 <CardContent className="p-5 flex flex-col gap-3">
                   {/* Header row */}
                   <div className="flex justify-between items-start gap-3">

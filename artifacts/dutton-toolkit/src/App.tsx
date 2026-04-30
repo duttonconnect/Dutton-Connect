@@ -46,6 +46,9 @@ import CalendarPage from "@/pages/calendar";
 import AdminPanel from "@/pages/admin/index";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
+import LeadInbox from "@/pages/lead-inbox";
+import CustomerCRM from "@/pages/customer-crm";
+import EstimatesPage from "@/pages/estimates";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +71,9 @@ function ProRoutes() {
         <Route path="/mileage" component={MileageTracker} />
         <Route path="/receipts" component={ReceiptTracker} />
         <Route path="/nearby-jobs" component={NearbyJobs} />
+        <Route path="/lead-inbox" component={LeadInbox} />
+        <Route path="/customer-crm" component={CustomerCRM} />
+        <Route path="/estimates" component={EstimatesPage} />
         <Route path="/route-planner" component={RoutePlanner} />
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />
