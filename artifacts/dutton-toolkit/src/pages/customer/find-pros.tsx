@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { calculateDistanceMiles } from "@/lib/distance";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -12,12 +13,20 @@ import {
   Search,
   LocateFixed,
   X,
+  Filter,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { sendQuoteRequest } from "@/lib/matching";
 
@@ -31,6 +40,8 @@ type Pro = {
   ratingPlaceholder: number;
   reviewsPlaceholder: number;
   verified?: boolean;
+  lat?: number;
+  lng?: number;
 };
 
 const SAMPLE_PROS: Pro[] = [
@@ -43,6 +54,8 @@ const SAMPLE_PROS: Pro[] = [
     ratingPlaceholder: 5.0,
     reviewsPlaceholder: 47,
     verified: true,
+    lat: 33.9519,
+    lng: -83.3576,
   },
   {
     id: "p-athens-plumb",
@@ -52,6 +65,8 @@ const SAMPLE_PROS: Pro[] = [
     serviceRadiusMiles: 25,
     ratingPlaceholder: 4.8,
     reviewsPlaceholder: 132,
+    lat: 33.8624,
+    lng: -83.4082,
   },
   {
     id: "p-ne-pressure",
@@ -61,6 +76,8 @@ const SAMPLE_PROS: Pro[] = [
     serviceRadiusMiles: 40,
     ratingPlaceholder: 4.9,
     reviewsPlaceholder: 88,
+    lat: 33.9484,
+    lng: -83.5302,
   },
   {
     id: "p-classic-auto",
@@ -70,6 +87,8 @@ const SAMPLE_PROS: Pro[] = [
     serviceRadiusMiles: 15,
     ratingPlaceholder: 4.7,
     reviewsPlaceholder: 211,
+    lat: 33.9519,
+    lng: -83.3576,
   },
 ];
 
@@ -80,6 +99,8 @@ export default function FindNearbyPros() {
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [searchInput, setSearchInput] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [distanceMiles, setDistanceMiles] = useState<number>(25);
   const [locating, setLocating] = useState(false);
 
   const handleSearch = () => {
@@ -91,6 +112,7 @@ export default function FindNearbyPros() {
   const handleClearLocation = () => {
     setSelectedLocation("");
     setSearchInput("");
+    setUserCoords(null);
   };
 
   const handleUseMyLocation = () => {
@@ -101,9 +123,11 @@ export default function FindNearbyPros() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserCoords({ lat: latitude, lng: longitude });
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
             { headers: { "Accept-Language": "en" } },
           );
           const data = await res.json();
@@ -131,14 +155,25 @@ export default function FindNearbyPros() {
     );
   };
 
-  const filteredPros = selectedLocation
-    ? SAMPLE_PROS.filter((p) =>
-        p.location.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-        p.services.some((s) =>
-          s.toLowerCase().includes(selectedLocation.toLowerCase()),
-        ),
-      )
-    : SAMPLE_PROS;
+  const filteredPros = useMemo(() => {
+    return SAMPLE_PROS.filter((p) => {
+      if (userCoords && p.lat != null && p.lng != null) {
+        // Real Haversine distance
+        const d = calculateDistanceMiles(userCoords.lat, userCoords.lng, p.lat, p.lng);
+        return d <= distanceMiles;
+      }
+      if (selectedLocation) {
+        // Text fallback when no GPS coords
+        return (
+          p.location.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+          p.services.some((s) =>
+            s.toLowerCase().includes(selectedLocation.toLowerCase()),
+          )
+        );
+      }
+      return true;
+    });
+  }, [userCoords, distanceMiles, selectedLocation]);
 
   const handleRequestQuote = async (pro: Pro) => {
     if (!user) {
@@ -188,7 +223,7 @@ export default function FindNearbyPros() {
         </div>
       </div>
 
-      {/* Location search bar */}
+      {/* Location search + distance row */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -209,6 +244,25 @@ export default function FindNearbyPros() {
             </button>
           )}
         </div>
+
+        {/* Distance dropdown */}
+        <Select
+          value={String(distanceMiles)}
+          onValueChange={(v) => setDistanceMiles(Number(v))}
+        >
+          <SelectTrigger className="w-full sm:w-36">
+            <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[5, 10, 25, 50].map((d) => (
+              <SelectItem key={d} value={String(d)}>
+                Within {d} miles
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Button onClick={handleSearch} disabled={!searchInput.trim()}>
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
@@ -226,8 +280,21 @@ export default function FindNearbyPros() {
       {selectedLocation && (
         <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-800">
           <span>
-            Showing results near <span className="font-semibold">{selectedLocation}</span>
-            {" "}— {filteredPros.length} {filteredPros.length === 1 ? "pro" : "pros"} found
+            {userCoords ? (
+              <>
+                Showing{" "}
+                <span className="font-semibold">{filteredPros.length}</span>{" "}
+                {filteredPros.length === 1 ? "pro" : "pros"} within{" "}
+                <span className="font-semibold">{distanceMiles} miles</span> of{" "}
+                <span className="font-semibold">{selectedLocation}</span>
+              </>
+            ) : (
+              <>
+                Showing pros near{" "}
+                <span className="font-semibold">{selectedLocation}</span>
+                {" "}— {filteredPros.length} {filteredPros.length === 1 ? "pro" : "pros"} found
+              </>
+            )}
           </span>
           <button
             onClick={handleClearLocation}

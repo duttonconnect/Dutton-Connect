@@ -263,7 +263,7 @@ export default function LeadInbox() {
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard">
+          <Link href="/">
             <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">Service Requests</h1>
@@ -280,7 +280,7 @@ export default function LeadInbox() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard">
+        <Link href="/">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

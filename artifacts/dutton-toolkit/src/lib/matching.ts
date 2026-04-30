@@ -34,6 +34,9 @@ export type FirestoreJobRequest = {
   customerId: string;
   status: "open" | "closed" | "accepted" | "scheduled" | "completed";
   createdAt: string;
+  // Optional coordinates for Haversine distance filtering
+  latitude?: number;
+  longitude?: number;
   // Set when a quote is accepted
   acceptedProId?: string;
   acceptedQuoteId?: string;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { calculateDistanceMiles } from "@/lib/distance";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -66,6 +67,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     customerId: "sample",
     status: "open",
     createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    latitude: 33.9601,
+    longitude: -83.3652,
     distanceMiles: 2.4,
     isSample: true,
   },
@@ -82,6 +85,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     customerId: "sample",
     status: "open",
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    latitude: 33.9741,
+    longitude: -83.3714,
     distanceMiles: 4.1,
     isSample: true,
   },
@@ -98,6 +103,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     customerId: "sample",
     status: "open",
     createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+    latitude: 33.9340,
+    longitude: -83.3862,
     distanceMiles: 7.8,
     isSample: true,
   },
@@ -114,6 +121,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     customerId: "sample",
     status: "open",
     createdAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
+    latitude: 33.8624,
+    longitude: -83.4082,
     distanceMiles: 12.6,
     isSample: true,
   },
@@ -130,6 +139,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     customerId: "sample",
     status: "open",
     createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+    latitude: 33.9484,
+    longitude: -83.5302,
     distanceMiles: 18.3,
     isSample: true,
   },
@@ -146,6 +157,8 @@ const SAMPLE_FEED: FeedRequest[] = [
     customerId: "sample",
     status: "open",
     createdAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
+    latitude: 33.8810,
+    longitude: -83.4120,
     distanceMiles: 32.1,
     isSample: true,
   },
@@ -176,7 +189,7 @@ const ALL_CATEGORIES: (RequestCategory | "All")[] = [
   "Other",
 ];
 
-const DISTANCE_OPTIONS = [10, 25, 50] as const;
+const DISTANCE_OPTIONS = [5, 10, 25, 50, 100] as const;
 
 export default function NearbyJobs() {
   const { user } = useAuth();
@@ -186,6 +199,7 @@ export default function NearbyJobs() {
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
 
   // Send Quote dialog state
@@ -206,6 +220,7 @@ export default function NearbyJobs() {
   const handleClearLocation = () => {
     setSelectedLocation("");
     setSearchInput("");
+    setUserCoords(null);
   };
 
   const handleUseMyLocation = () => {
@@ -216,9 +231,11 @@ export default function NearbyJobs() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserCoords({ lat: latitude, lng: longitude });
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
             { headers: { "Accept-Language": "en" } },
           );
           const data = await res.json();
@@ -284,14 +301,30 @@ export default function NearbyJobs() {
 
   const visible = useMemo(
     () =>
-      allRequests.filter(
-        (r) =>
+      allRequests.filter((r) => {
+        if (categoryFilter !== "All" && r.category !== categoryFilter) return false;
+
+        if (userCoords) {
+          if (r.latitude != null && r.longitude != null) {
+            // Real Haversine distance
+            const d = calculateDistanceMiles(userCoords.lat, userCoords.lng, r.latitude, r.longitude);
+            return d <= maxDistance;
+          }
+          // Has user coords but job has no lat/lng — text fallback
+          return (
+            selectedLocation === "" ||
+            r.address.toLowerCase().includes(selectedLocation.toLowerCase())
+          );
+        }
+
+        // No user coords — legacy distanceMiles + optional text match
+        return (
           r.distanceMiles <= maxDistance &&
-          (categoryFilter === "All" || r.category === categoryFilter) &&
           (selectedLocation === "" ||
-            r.address.toLowerCase().includes(selectedLocation.toLowerCase())),
-      ),
-    [allRequests, maxDistance, categoryFilter, selectedLocation],
+            r.address.toLowerCase().includes(selectedLocation.toLowerCase()))
+        );
+      }),
+    [allRequests, maxDistance, categoryFilter, userCoords, selectedLocation],
   );
 
   const openQuoteDialog = (r: FeedRequest) => {
@@ -375,7 +408,21 @@ export default function NearbyJobs() {
       {selectedLocation && (
         <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-4 py-2.5 text-sm text-blue-800">
           <span>
-            Showing results near <span className="font-semibold">{selectedLocation}</span>
+            {userCoords ? (
+              <>
+                Showing{" "}
+                <span className="font-semibold">{visible.length}</span>{" "}
+                {visible.length === 1 ? "result" : "results"} within{" "}
+                <span className="font-semibold">{maxDistance} miles</span> of{" "}
+                <span className="font-semibold">{selectedLocation}</span>
+              </>
+            ) : (
+              <>
+                Showing results near{" "}
+                <span className="font-semibold">{selectedLocation}</span>
+                {" "}— {visible.length} {visible.length === 1 ? "result" : "results"}
+              </>
+            )}
           </span>
           <button
             onClick={handleClearLocation}
