@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -155,10 +155,12 @@ function RouteCard({
   route,
   onDelete,
   onRename,
+  onLoad,
 }: {
   route: SavedRoute;
   onDelete: (id: string) => void;
   onRename: (id: string, newName: string) => Promise<void>;
+  onLoad: (route: SavedRoute) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(route.name || "");
@@ -299,6 +301,15 @@ function RouteCard({
             <>
               <Button
                 size="sm"
+                variant="secondary"
+                onClick={() => onLoad(route)}
+                aria-label="Load route into planner"
+              >
+                <FolderOpen className="h-3.5 w-3.5 mr-1" />
+                Load
+              </Button>
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={() => window.open(mapsUrl, "_blank", "noopener,noreferrer")}
               >
@@ -333,6 +344,8 @@ export default function RoutePlanner() {
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const plannerRef = useRef<HTMLDivElement>(null);
 
   const selectedSet = new Set(orderedStops);
 
@@ -446,8 +459,17 @@ export default function RoutePlanner() {
     }
   }
 
+  function handleLoadRoute(route: SavedRoute) {
+    setStartAddress(route.startAddress ?? "");
+    setEndAddress(route.endAddress ?? "");
+    setRouteName(route.name ?? "");
+    setOrderedStops(route.stops ?? []);
+    toast.success("Route loaded into planner.");
+    plannerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
-    <div className="space-y-6">
+    <div ref={plannerRef} className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Route Planner</h1>
         <p className="text-gray-500">
@@ -615,6 +637,7 @@ export default function RoutePlanner() {
                   route={route}
                   onDelete={handleDeleteRoute}
                   onRename={handleRenameRoute}
+                  onLoad={handleLoadRoute}
                 />
               ))}
             </div>
