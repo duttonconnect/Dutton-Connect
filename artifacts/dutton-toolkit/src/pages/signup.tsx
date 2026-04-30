@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { UserPlus, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 export default function Signup() {
   const { signup, isConfigured } = useAuth();
   const [, setLocation] = useLocation();
+  const search = useSearch();
+  const params = new URLSearchParams(search);
+  const preselectedRole = params.get("role") === "pro" ? "pro" : "customer";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,7 +23,7 @@ export default function Signup() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<"customer" | "pro">("customer");
+  const [role, setRole] = useState<"customer" | "pro">(preselectedRole);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,14 +51,14 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gray-50">
-      <header className="bg-primary text-white px-6 py-5 shadow">
-        <div className="mx-auto max-w-5xl">
-          <div className="text-xs font-semibold tracking-widest uppercase opacity-80">
-            Local jobs. Trusted pros.
-          </div>
-          <div className="text-xl font-bold tracking-tight">Dutton Connect</div>
-        </div>
+    <div className="min-h-[100dvh] flex flex-col" style={{ background: "#F8FAFC" }}>
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+        <Link href="/">
+          <span className="text-lg font-bold tracking-tight text-gray-900 cursor-pointer">Dutton Connect</span>
+        </Link>
+        <Link href="/" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+          Back
+        </Link>
       </header>
 
       <main className="flex-1 flex items-center justify-center p-6">

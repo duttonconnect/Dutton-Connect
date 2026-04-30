@@ -1,18 +1,61 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
-import { LogIn, Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  LogIn,
+  Eye,
+  EyeOff,
+  Loader2,
+  Hammer,
+  Droplets,
+  Leaf,
+  Sparkles,
+  Car,
+  Wind,
+  MapPin,
+  BadgeCheck,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+const CATEGORIES = [
+  { label: "House Cleaning", icon: Sparkles },
+  { label: "Handyman", icon: Hammer },
+  { label: "Plumbing", icon: Droplets },
+  { label: "Yard Work", icon: Leaf },
+  { label: "Automotive", icon: Car },
+  { label: "Pressure Washing", icon: Wind },
+];
+
+const TRUST = [
+  {
+    icon: MapPin,
+    title: "Local requests",
+    desc: "Connect with professionals serving your neighborhood.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Verified profiles",
+    desc: "Pros are reviewed by real customers in your area.",
+  },
+  {
+    icon: MessageSquare,
+    title: "Secure messaging",
+    desc: "Message pros directly before committing to anything.",
+  },
+];
 
 export default function Login() {
   const { login, isConfigured } = useAuth();
   const [, setLocation] = useLocation();
 
+  const [showSignIn, setShowSignIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -26,9 +69,12 @@ export default function Login() {
       await login(email.trim(), password);
       setLocation("/");
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Login failed. Please try again.";
-      if (msg.includes("invalid-credential") || msg.includes("wrong-password") || msg.includes("user-not-found")) {
+      const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
+      if (
+        msg.includes("invalid-credential") ||
+        msg.includes("wrong-password") ||
+        msg.includes("user-not-found")
+      ) {
         toast.error("Incorrect email or password.");
       } else {
         toast.error(msg);
@@ -39,100 +85,186 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gray-50">
-      <header className="bg-primary text-white px-6 py-5 shadow">
-        <div className="mx-auto max-w-5xl">
-          <div className="text-xs font-semibold tracking-widest uppercase opacity-80">
-            Local jobs. Trusted pros.
-          </div>
-          <div className="text-xl font-bold tracking-tight">Dutton Connect</div>
-        </div>
+    <div className="min-h-[100dvh] flex flex-col" style={{ background: "#F8FAFC" }}>
+
+      {/* Minimal nav */}
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+        <span className="text-lg font-bold tracking-tight text-gray-900">Dutton Connect</span>
+        <button
+          onClick={() => setShowSignIn((v) => !v)}
+          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
+          Sign in
+        </button>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-6">
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Sign in
-            </h1>
-            <p className="text-sm text-gray-500">
-              Access your Dutton Connect account
-            </p>
-          </div>
+      {/* Hero */}
+      <section
+        className="px-6 pt-14 pb-12 text-white text-center"
+        style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)" }}
+      >
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto">
+          Find trusted local professionals near you
+        </h1>
+        <p className="mt-4 text-blue-200 text-base sm:text-lg max-w-xl mx-auto">
+          Post a request, compare quotes, and get the job done.
+        </p>
 
-          {!isConfigured && (
-            <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-              Firebase is not configured. You can still use the app with local storage.{" "}
-              <Link href="/" className="underline font-medium">
-                Continue without signing in
-              </Link>
-            </div>
-          )}
-
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Welcome back</CardTitle>
-              <CardDescription>Enter your email and password to continue.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPw ? "text" : "password"}
-                      autoComplete="current-password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowPw((p) => !p)}
-                      tabIndex={-1}
-                      aria-label={showPw ? "Hide password" : "Show password"}
-                    >
-                      {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…</>
-                  ) : (
-                    <><LogIn className="mr-2 h-4 w-4" /> Sign in</>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <div className="text-center text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary font-medium hover:underline">
-              Create one
-            </Link>
-          </div>
-
+        {/* Category chips */}
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
+          {CATEGORIES.map(({ label, icon: Icon }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/20 transition-colors cursor-default"
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </span>
+          ))}
         </div>
-      </main>
+      </section>
+
+      {/* Role cards */}
+      <section className="px-6 py-10 max-w-2xl mx-auto w-full">
+        <div className="grid sm:grid-cols-2 gap-4">
+          {/* Customer card */}
+          <Link href="/signup?role=customer">
+            <div className="group cursor-pointer rounded-2xl border-2 border-blue-100 bg-white p-6 hover:border-blue-400 hover:shadow-lg transition-all flex flex-col gap-3">
+              <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-lg font-bold text-gray-900">I need a service</div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Post a request and receive quotes from local pros.
+                </p>
+              </div>
+              <Button className="mt-auto w-full rounded-xl" size="sm">
+                Get Started
+              </Button>
+            </div>
+          </Link>
+
+          {/* Pro card */}
+          <Link href="/signup?role=pro">
+            <div className="group cursor-pointer rounded-2xl border-2 border-gray-100 bg-white p-6 hover:border-gray-300 hover:shadow-lg transition-all flex flex-col gap-3">
+              <div className="h-12 w-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                <Hammer className="h-6 w-6 text-gray-700" />
+              </div>
+              <div>
+                <div className="text-lg font-bold text-gray-900">I provide services</div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Find local requests, send quotes, and grow your business.
+                </p>
+              </div>
+              <Button variant="outline" className="mt-auto w-full rounded-xl" size="sm">
+                Join as a Pro
+              </Button>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Trust section */}
+      <section className="px-6 pb-10 max-w-2xl mx-auto w-full">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          {TRUST.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex flex-col items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center mx-auto">
+                <Icon className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="text-xs sm:text-sm font-semibold text-gray-800">{title}</div>
+              <p className="text-xs text-gray-500 hidden sm:block leading-snug">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Sign-in toggle */}
+      <section className="px-6 pb-12 max-w-md mx-auto w-full">
+        <button
+          onClick={() => setShowSignIn((v) => !v)}
+          className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 py-2"
+        >
+          Already have an account?{" "}
+          <span className="font-medium text-blue-600">Sign in</span>
+          {showSignIn ? (
+            <ChevronUp className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" />
+          )}
+        </button>
+
+        {showSignIn && (
+          <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+            {!isConfigured && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                Firebase not configured.{" "}
+                <Link href="/" className="underline font-medium">
+                  Continue without signing in
+                </Link>
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPw ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPw((p) => !p)}
+                    tabIndex={-1}
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                  >
+                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…</>
+                ) : (
+                  <><LogIn className="mr-2 h-4 w-4" /> Sign in</>
+                )}
+              </Button>
+            </form>
+          </div>
+        )}
+      </section>
+
+      {/* Footer */}
+      <footer className="mt-auto py-5 border-t border-gray-100 text-center text-xs text-gray-400 flex items-center justify-center gap-4">
+        <Link href="/privacy">
+          <span className="hover:text-gray-600 cursor-pointer">Privacy Policy</span>
+        </Link>
+        <span>·</span>
+        <Link href="/terms">
+          <span className="hover:text-gray-600 cursor-pointer">Terms of Service</span>
+        </Link>
+      </footer>
     </div>
   );
 }
