@@ -44,6 +44,7 @@ import TermsOfService from "@/pages/terms";
 
 import CalendarPage from "@/pages/calendar";
 import AdminPanel from "@/pages/admin/index";
+import ReportBug from "@/pages/report-bug";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import LeadInbox from "@/pages/lead-inbox";
@@ -79,6 +80,7 @@ function ProRoutes() {
         <Route path="/messages/:id" component={ChatPage} />
         <Route path="/calendar" component={CalendarPage} />
         <Route path="/admin" component={AdminPanel} />
+        <Route path="/report-bug" component={ReportBug} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />
@@ -104,6 +106,7 @@ function CustomerRoutes() {
         <Route path="/messages/:id" component={ChatPage} />
         <Route path="/calendar" component={CalendarPage} />
         <Route path="/admin" component={AdminPanel} />
+        <Route path="/report-bug" component={ReportBug} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />

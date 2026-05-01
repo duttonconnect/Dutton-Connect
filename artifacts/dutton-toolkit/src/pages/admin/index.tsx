@@ -9,6 +9,9 @@ import {
   ChevronUp,
   ChevronDown,
   BadgeCheck,
+  Bug,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
@@ -17,6 +20,11 @@ import {
   setUserAdmin,
   setUserRole,
 } from "@/lib/admin";
+import {
+  type BugReport,
+  loadBugReports,
+  updateBugReportStatus,
+} from "@/lib/bug-reports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +59,10 @@ export default function AdminPanel() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  const [bugReports, setBugReports] = useState<BugReport[]>([]);
+  const [loadingBugs, setLoadingBugs] = useState(true);
+  const [updatingBugId, setUpdatingBugId] = useState<string | null>(null);
+
   async function fetchUsers() {
     setLoading(true);
     const list = await loadAllUsers();
@@ -58,9 +70,21 @@ export default function AdminPanel() {
     setLoading(false);
   }
 
+  async function fetchBugReports() {
+    setLoadingBugs(true);
+    const reports = await loadBugReports();
+    setBugReports(reports);
+    setLoadingBugs(false);
+  }
+
   useEffect(() => {
-    if (isAdmin) fetchUsers();
-    else setLoading(false);
+    if (isAdmin) {
+      fetchUsers();
+      fetchBugReports();
+    } else {
+      setLoading(false);
+      setLoadingBugs(false);
+    }
   }, [isAdmin]);
 
   // ─── Guard ──────────────────────────────────────────────────────────────────
@@ -173,6 +197,30 @@ export default function AdminPanel() {
       toast.error("Failed to update role.");
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleBugStatus(
+    report: BugReport,
+    newStatus: BugReport["status"],
+  ) {
+    setUpdatingBugId(report.id + newStatus);
+    try {
+      const ok = await updateBugReportStatus(report.id, newStatus);
+      if (ok) {
+        setBugReports((prev) =>
+          prev.map((r) =>
+            r.id === report.id ? { ...r, status: newStatus } : r,
+          ),
+        );
+        toast.success(
+          `Report marked as ${newStatus === "reviewed" ? "reviewed" : "resolved"}.`,
+        );
+      } else {
+        toast.error("Failed to update report status.");
+      }
+    } finally {
+      setUpdatingBugId(null);
     }
   }
 
@@ -395,6 +443,167 @@ export default function AdminPanel() {
           You are the only admin. To grant access to another user, click "Make Admin" on their row.
         </p>
       )}
+
+      {/* ─── Bug Reports ─────────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3 border-b">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Bug className="h-4 w-4" />
+              Bug Reports
+              <Badge variant="secondary" className="ml-1">
+                {bugReports.length}
+              </Badge>
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchBugReports}
+              disabled={loadingBugs}
+            >
+              <RefreshCw
+                className={`mr-2 h-3.5 w-3.5 ${loadingBugs ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loadingBugs ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : bugReports.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <Bug className="h-8 w-8 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">No bug reports yet.</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {bugReports.map((r) => {
+                const isReviewing = updatingBugId === r.id + "reviewed";
+                const isResolving = updatingBugId === r.id + "resolved";
+                return (
+                  <div key={r.id} className="px-4 py-4 space-y-2">
+                    {/* Title row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-gray-900">
+                          {r.bugTitle}
+                        </span>
+                        {/* Priority badge */}
+                        <Badge
+                          variant="outline"
+                          className={
+                            r.priority === "High"
+                              ? "border-red-300 text-red-700 bg-red-50"
+                              : r.priority === "Medium"
+                                ? "border-amber-300 text-amber-700 bg-amber-50"
+                                : "border-gray-300 text-gray-600 bg-gray-50"
+                          }
+                        >
+                          {r.priority}
+                        </Badge>
+                        {/* Status badge */}
+                        <Badge
+                          variant="outline"
+                          className={
+                            r.status === "resolved"
+                              ? "border-green-300 text-green-700 bg-green-50"
+                              : r.status === "reviewed"
+                                ? "border-blue-300 text-blue-700 bg-blue-50"
+                                : "border-gray-300 text-gray-500 bg-gray-50"
+                          }
+                        >
+                          {r.status === "resolved" ? (
+                            <CheckCircle2 className="h-3 w-3 mr-1 inline" />
+                          ) : r.status === "reviewed" ? (
+                            <Clock className="h-3 w-3 mr-1 inline" />
+                          ) : null}
+                          {r.status}
+                        </Badge>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {r.status !== "reviewed" && r.status !== "resolved" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-2"
+                            disabled={!!updatingBugId}
+                            onClick={() => handleBugStatus(r, "reviewed")}
+                          >
+                            {isReviewing ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              "Mark Reviewed"
+                            )}
+                          </Button>
+                        )}
+                        {r.status !== "resolved" && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 text-xs px-2"
+                            disabled={!!updatingBugId}
+                            onClick={() => handleBugStatus(r, "resolved")}
+                          >
+                            {isResolving ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              "Mark Resolved"
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                      {r.description}
+                    </p>
+
+                    {/* Meta row */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {r.pageOrFeature && (
+                        <span>
+                          <span className="font-medium text-gray-600">Page:</span>{" "}
+                          {r.pageOrFeature}
+                        </span>
+                      )}
+                      <span>
+                        <span className="font-medium text-gray-600">Role:</span>{" "}
+                        {r.userRole}
+                      </span>
+                      <span>
+                        <span className="font-medium text-gray-600">
+                          Reporter:
+                        </span>{" "}
+                        {r.reporterId.slice(0, 10)}…
+                      </span>
+                      <span>
+                        <span className="font-medium text-gray-600">
+                          Submitted:
+                        </span>{" "}
+                        {formatDate(r.createdAt)}
+                      </span>
+                      {r.screenshotFileName && (
+                        <span>
+                          <span className="font-medium text-gray-600">
+                            Screenshot:
+                          </span>{" "}
+                          {r.screenshotFileName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
