@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -366,6 +366,8 @@ export default function RoutePlanner() {
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [routeSearch, setRouteSearch] = useState("");
+  const [routeSort, setRouteSort] = useState<"newest" | "alpha">("newest");
 
   const plannerRef = useRef<HTMLDivElement>(null);
 
@@ -514,6 +516,22 @@ export default function RoutePlanner() {
       throw err;
     }
   }
+
+  const visibleRoutes = savedRoutes
+    .filter((r) => {
+      if (!routeSearch.trim()) return true;
+      const q = routeSearch.trim().toLowerCase();
+      const displayName = r.name || format(new Date(r.createdAt), "MMM d, yyyy · h:mm a");
+      return displayName.toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (routeSort === "alpha") {
+        const nameA = (a.name || format(new Date(a.createdAt), "MMM d, yyyy · h:mm a")).toLowerCase();
+        const nameB = (b.name || format(new Date(b.createdAt), "MMM d, yyyy · h:mm a")).toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   function handleLoadRoute(route: SavedRoute) {
     setStartAddress(route.startAddress ?? "");
@@ -680,6 +698,47 @@ export default function RoutePlanner() {
       <Card>
         <CardHeader className="border-b">
           <CardTitle className="text-base">Saved Routes</CardTitle>
+          {isFirebaseConfigured && !loadingRoutes && savedRoutes.length > 0 && (
+            <div className="flex items-center gap-2 pt-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search routes…"
+                  value={routeSearch}
+                  onChange={(e) => setRouteSearch(e.target.value)}
+                  className="pl-8 h-8 text-sm"
+                />
+              </div>
+              <div className="flex items-center rounded-md border overflow-hidden shrink-0">
+                <button
+                  onClick={() => setRouteSort("newest")}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    routeSort === "newest"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  aria-label="Sort by newest"
+                  aria-pressed={routeSort === "newest"}
+                >
+                  <Clock className="h-3 w-3" />
+                  Newest
+                </button>
+                <button
+                  onClick={() => setRouteSort("alpha")}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    routeSort === "alpha"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  aria-label="Sort alphabetically"
+                  aria-pressed={routeSort === "alpha"}
+                >
+                  <ArrowDownAZ className="h-3 w-3" />
+                  A–Z
+                </button>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="pt-4">
           {!isFirebaseConfigured ? (
@@ -694,9 +753,14 @@ export default function RoutePlanner() {
               <div className="text-sm">No saved routes yet.</div>
               <div className="text-xs mt-1">Build a route above and press Save Route.</div>
             </div>
+          ) : visibleRoutes.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <div className="text-sm">No routes match your search.</div>
+            </div>
           ) : (
             <div className="space-y-3">
-              {savedRoutes.map((route) => (
+              {visibleRoutes.map((route) => (
                 <RouteCard
                   key={route.id}
                   route={route}
