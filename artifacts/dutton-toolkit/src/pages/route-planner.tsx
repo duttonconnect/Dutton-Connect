@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -99,10 +99,12 @@ function JobStopItem({
 
 function DraggableStopList({
   stops,
+  activeJobAddresses,
   onReorder,
   onRemove,
 }: {
   stops: string[];
+  activeJobAddresses: Set<string>;
   onReorder: (stops: string[]) => void;
   onRemove: (address: string) => void;
 }) {
@@ -139,36 +141,48 @@ function DraggableStopList({
 
   return (
     <div className="space-y-1">
-      {stops.map((addr, index) => (
-        <div
-          key={addr}
-          draggable
-          onDragStart={() => handleDragStart(index)}
-          onDragOver={(e) => handleDragOver(e, index)}
-          onDrop={(e) => handleDrop(e, index)}
-          onDragEnd={handleDragEnd}
-          className={`text-xs bg-muted rounded px-2 py-1.5 flex items-center gap-1.5 cursor-grab active:cursor-grabbing transition-opacity select-none ${
-            dragOverIndex === index && dragIndex.current !== index
-              ? "opacity-50 ring-2 ring-primary ring-offset-1"
-              : "opacity-100"
-          }`}
-        >
-          <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <MapPin className="h-3 w-3 shrink-0 text-primary" />
-          <span className="truncate flex-1">{addr}</span>
-          <span className="text-muted-foreground font-medium shrink-0">{index + 1}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(addr);
-            }}
-            className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-            aria-label={`Remove stop ${index + 1}`}
+      {stops.map((addr, index) => {
+        const hasMatchingJob = activeJobAddresses.has(addr);
+        return (
+          <div
+            key={addr}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`text-xs rounded px-2 py-1.5 flex items-center gap-1.5 cursor-grab active:cursor-grabbing transition-opacity select-none ${
+              dragOverIndex === index && dragIndex.current !== index
+                ? "opacity-50 ring-2 ring-primary ring-offset-1"
+                : "opacity-100"
+            } ${hasMatchingJob ? "bg-muted" : "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800"}`}
           >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ))}
+            <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            {hasMatchingJob ? (
+              <MapPin className="h-3 w-3 shrink-0 text-primary" />
+            ) : (
+              <AlertTriangle className="h-3 w-3 shrink-0 text-amber-500" />
+            )}
+            <span className={`truncate flex-1 ${hasMatchingJob ? "" : "text-muted-foreground"}`}>{addr}</span>
+            {!hasMatchingJob && (
+              <span className="shrink-0 inline-flex items-center rounded px-1 py-0.5 text-[10px] font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                No matching job
+              </span>
+            )}
+            <span className="text-muted-foreground font-medium shrink-0">{index + 1}</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(addr);
+              }}
+              className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              aria-label={`Remove stop ${index + 1}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -441,6 +455,10 @@ export default function RoutePlanner() {
       j.address,
   );
 
+  const activeJobAddresses = new Set(
+    jobs.filter((j) => j.status !== "cancelled" && j.address).map((j) => j.address),
+  );
+
   useEffect(() => {
     if (!isFirebaseConfigured || !db || !user) return;
     loadSavedRoutes();
@@ -710,6 +728,7 @@ export default function RoutePlanner() {
                   </Label>
                   <DraggableStopList
                     stops={orderedStops}
+                    activeJobAddresses={activeJobAddresses}
                     onReorder={setOrderedStops}
                     onRemove={toggleStop}
                   />
