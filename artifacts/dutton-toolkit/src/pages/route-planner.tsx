@@ -436,6 +436,7 @@ export default function RoutePlanner() {
   const [endAddress, setEndAddress] = useState("");
   const [routeName, setRouteName] = useState("");
   const [orderedStops, setOrderedStops] = useState<string[]>([]);
+  const [confirmingClearAll, setConfirmingClearAll] = useState(false);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -483,6 +484,10 @@ export default function RoutePlanner() {
       setLoadingRoutes(false);
     }
   }
+
+  useEffect(() => {
+    if (orderedStops.length === 0) setConfirmingClearAll(false);
+  }, [orderedStops.length]);
 
   function toggleStop(address: string) {
     setOrderedStops((prev) => {
@@ -696,10 +701,48 @@ export default function RoutePlanner() {
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Navigation className="h-4 w-4" />
-                Route Details
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Navigation className="h-4 w-4" />
+                  Route Details
+                </CardTitle>
+                {orderedStops.length > 0 && (
+                  confirmingClearAll ? (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">Clear all stops?</span>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => {
+                          setOrderedStops([]);
+                          setConfirmingClearAll(false);
+                        }}
+                      >
+                        Yes, clear
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setConfirmingClearAll(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => setConfirmingClearAll(true)}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear all
+                    </Button>
+                  )
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
