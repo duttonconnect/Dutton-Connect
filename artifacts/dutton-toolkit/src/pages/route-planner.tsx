@@ -538,13 +538,14 @@ export default function RoutePlanner() {
 
   async function handleDeleteRoute(id: string) {
     if (!isFirebaseConfigured || !db) return;
+    const firestore = db;
 
     const routeToDelete = savedRoutes.find((r) => r.id === id);
     if (!routeToDelete) return;
 
     // Delete from Firestore immediately so it is final even if the page closes
     try {
-      await deleteDoc(doc(db, "routes", id));
+      await deleteDoc(doc(firestore, "routes", id));
     } catch (err) {
       console.warn("[RoutePlanner] Delete failed:", err);
       toast.error("Failed to delete route.");
@@ -566,7 +567,7 @@ export default function RoutePlanner() {
           // Recreate the document in Firestore with its original id
           const { id: _id, ...routeData } = routeToDelete;
           try {
-            await setDoc(doc(db, "routes", id), routeData);
+            await setDoc(doc(firestore, "routes", id), routeData);
             undone = true; // Mark done only after successful restore
             // Restore into local list in sorted order
             setSavedRoutes((prev) => {
@@ -586,12 +587,38 @@ export default function RoutePlanner() {
 
   async function handleRenameRoute(id: string, newName: string) {
     if (!isFirebaseConfigured || !db) return;
+    const firestore = db;
+
+    const previousRoute = savedRoutes.find((r) => r.id === id);
+    const previousName = previousRoute?.name ?? "";
+
     try {
-      await updateDoc(doc(db, "routes", id), { name: newName });
+      await updateDoc(doc(firestore, "routes", id), { name: newName });
       setSavedRoutes((prev) =>
         prev.map((r) => (r.id === id ? { ...r, name: newName } : r)),
       );
-      toast.success("Route renamed.");
+
+      let undone = false;
+
+      toast.success("Route renamed.", {
+        duration: 5000,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            if (undone) return;
+            try {
+              await updateDoc(doc(firestore, "routes", id), { name: previousName });
+              undone = true;
+              setSavedRoutes((prev) =>
+                prev.map((r) => (r.id === id ? { ...r, name: previousName } : r)),
+              );
+            } catch (err) {
+              console.warn("[RoutePlanner] Undo rename failed:", err);
+              toast.error("Could not undo rename. Please try again.");
+            }
+          },
+        },
+      });
     } catch (err) {
       console.warn("[RoutePlanner] Rename failed:", err);
       toast.error("Failed to rename route.");
