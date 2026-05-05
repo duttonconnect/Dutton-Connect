@@ -52,14 +52,20 @@ function authed(uid: string) {
   return testEnv.authenticatedContext(uid);
 }
 
-function adminContext(uid: string) {
-  return testEnv.authenticatedContext(uid, { uid });
-}
-
 async function seedDoc(path: string, data: Record<string, unknown>) {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), path), data);
   });
+}
+
+/**
+ * Seeds users/{uid} with isAdmin: true (bypassing rules) so that the
+ * isAdmin() helper in firestore.rules resolves to true, then returns
+ * a regular authenticated context for that uid.
+ */
+async function seedAdminAndGetContext(uid: string) {
+  await seedDoc(`users/${uid}`, { isAdmin: true, displayName: "Admin", role: "admin" });
+  return authed(uid);
 }
 
 // ─── routes ──────────────────────────────────────────────────────────────────
@@ -262,6 +268,70 @@ describe("users collection", () => {
         role: "admin",
       })
     );
+  });
+
+  describe("admin privilege changes", () => {
+    const adminUid = "admin-user";
+    const targetUid = "target-user";
+    const targetPath = `users/${targetUid}`;
+    const targetDoc = { displayName: "Bob", isAdmin: false, role: "pro" };
+
+    it("allows an admin to grant isAdmin=true to another user", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(targetPath, targetDoc);
+      await assertSucceeds(
+        updateDoc(doc(adminCtx.firestore(), targetPath), {
+          isAdmin: true,
+        })
+      );
+    });
+
+    it("allows an admin to revoke isAdmin (set to false) on another user", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(targetPath, { ...targetDoc, isAdmin: true });
+      await assertSucceeds(
+        updateDoc(doc(adminCtx.firestore(), targetPath), {
+          isAdmin: false,
+        })
+      );
+    });
+
+    it("allows an admin to change another user's role field", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(targetPath, targetDoc);
+      await assertSucceeds(
+        updateDoc(doc(adminCtx.firestore(), targetPath), {
+          role: "customer",
+        })
+      );
+    });
+
+    it("allows an admin to update their own isAdmin field", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await assertSucceeds(
+        updateDoc(doc(adminCtx.firestore(), `users/${adminUid}`), {
+          isAdmin: false,
+        })
+      );
+    });
+
+    it("denies a non-admin from granting isAdmin to another user", async () => {
+      await seedDoc(targetPath, targetDoc);
+      await assertFails(
+        updateDoc(doc(authed(ownerUid).firestore(), targetPath), {
+          isAdmin: true,
+        })
+      );
+    });
+
+    it("denies a non-admin from changing another user's role", async () => {
+      await seedDoc(targetPath, targetDoc);
+      await assertFails(
+        updateDoc(doc(authed(ownerUid).firestore(), targetPath), {
+          role: "customer",
+        })
+      );
+    });
   });
 
   describe("private/appState subcollection", () => {
@@ -1042,6 +1112,47 @@ describe("reports collection", () => {
         status: "resolved",
       })
     );
+  });
+
+  describe("admin-only access", () => {
+    const adminUid = "admin-reports";
+
+    it("allows an admin to read any report (not just their own)", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(reportPath, reportData);
+      await assertSucceeds(getDoc(doc(adminCtx.firestore(), reportPath)));
+    });
+
+    it("allows an admin to update a report status to resolved", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(reportPath, reportData);
+      await assertSucceeds(
+        updateDoc(doc(adminCtx.firestore(), reportPath), {
+          status: "resolved",
+        })
+      );
+    });
+
+    it("allows an admin to update a report with additional resolution fields", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(reportPath, reportData);
+      await assertSucceeds(
+        updateDoc(doc(adminCtx.firestore(), reportPath), {
+          status: "resolved",
+          resolvedAt: Date.now(),
+          resolvedBy: adminUid,
+        })
+      );
+    });
+
+    it("denies a non-admin authenticated user from updating another user's report", async () => {
+      await seedDoc(reportPath, reportData);
+      await assertFails(
+        updateDoc(doc(authed(otherUid).firestore(), reportPath), {
+          status: "resolved",
+        })
+      );
+    });
   });
 });
 
