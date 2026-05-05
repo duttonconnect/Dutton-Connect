@@ -699,12 +699,17 @@ export default function RoutePlanner() {
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Navigation className="h-4 w-4" />
                   Route Details
+                  {orderedStops.length > 0 && (
+                    <span className="inline-flex items-center justify-center h-5 px-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold leading-none shrink-0">
+                      {orderedStops.length} {orderedStops.length === 1 ? "stop" : "stops"}
+                    </span>
+                  )}
                 </CardTitle>
                 {orderedStops.length > 0 && (
                   confirmingClearAll ? (
@@ -769,12 +774,14 @@ export default function RoutePlanner() {
                   <Label className="text-xs text-muted-foreground mb-1 block">
                     Selected Stops ({orderedStops.length}) — drag to reorder
                   </Label>
-                  <DraggableStopList
-                    stops={orderedStops}
-                    activeJobAddresses={activeJobAddresses}
-                    onReorder={setOrderedStops}
-                    onRemove={toggleStop}
-                  />
+                  <div className="max-h-56 overflow-y-auto pr-0.5">
+                    <DraggableStopList
+                      stops={orderedStops}
+                      activeJobAddresses={activeJobAddresses}
+                      onReorder={setOrderedStops}
+                      onRemove={toggleStop}
+                    />
+                  </div>
                 </div>
               )}
 
