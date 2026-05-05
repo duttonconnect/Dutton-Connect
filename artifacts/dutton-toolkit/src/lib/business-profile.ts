@@ -68,6 +68,7 @@ export async function saveBusinessProfile(
       serviceRadiusMiles: data.serviceRadius,
       about: data.about,
       publicPhone: data.publicPhone ?? null,
+      profilePhoto: data.profilePhoto ?? null,
       hasBusinessProfile: true,
     });
     return true;

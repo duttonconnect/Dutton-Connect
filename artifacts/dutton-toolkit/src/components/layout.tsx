@@ -22,6 +22,7 @@ import {
   Navigation,
   Calculator,
   Bug,
+  UserCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -44,6 +45,7 @@ const PRO_NAV = [
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/route-planner", label: "Route Planner", icon: Navigation },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/report-bug", label: "Report Bug", icon: Bug },
 ];
 
@@ -56,6 +58,7 @@ const CUSTOMER_NAV = [
   { href: "/my-quotes", label: "Quotes", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/report-bug", label: "Report Bug", icon: Bug },
 ];
 

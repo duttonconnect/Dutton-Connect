@@ -66,6 +66,7 @@ export type ProProfile = {
   serviceRadiusMiles?: number;
   about?: string;
   publicPhone?: string; // only shown when explicitly set as public
+  profilePhoto?: string;
   role?: string;
 };
 

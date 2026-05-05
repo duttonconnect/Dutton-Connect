@@ -50,6 +50,7 @@ import Signup from "@/pages/signup";
 import LeadInbox from "@/pages/lead-inbox";
 import CustomerCRM from "@/pages/customer-crm";
 import EstimatesPage from "@/pages/estimates";
+import ProfilePage from "@/pages/profile/index";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ function ProRoutes() {
         <Route path="/calendar" component={CalendarPage} />
         <Route path="/admin" component={AdminPanel} />
         <Route path="/report-bug" component={ReportBug} />
+        <Route path="/profile" component={ProfilePage} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />
@@ -107,6 +109,7 @@ function CustomerRoutes() {
         <Route path="/calendar" component={CalendarPage} />
         <Route path="/admin" component={AdminPanel} />
         <Route path="/report-bug" component={ReportBug} />
+        <Route path="/profile" component={ProfilePage} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />

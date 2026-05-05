@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
+import { useRole } from "@/lib/role";
 import {
   loadProProfile,
   loadReviewsForPro,
+  saveReview,
   sendQuoteRequest,
   type ProProfile,
   type Review,
@@ -26,6 +28,8 @@ import { getOrCreateConversation } from "@/lib/messaging";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) {
   const sz = size === "lg" ? "h-5 w-5" : "h-3.5 w-3.5";
@@ -41,10 +45,43 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg
   );
 }
 
+function StarPicker({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+}) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHovered(n)}
+          onMouseLeave={() => setHovered(0)}
+          className="focus:outline-none"
+        >
+          <Star
+            className={`h-8 w-8 transition-colors ${
+              n <= (hovered || value)
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-gray-300 hover:text-yellow-300"
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function ProProfilePage() {
   const params = useParams<{ proId: string }>();
   const proId = params.proId;
   const { user } = useAuth();
+  const { role } = useRole();
   const [, navigate] = useLocation();
 
   const [profile, setProfile] = useState<ProProfile | null>(null);
@@ -54,6 +91,10 @@ export default function ProProfilePage() {
   const [messaging, setMessaging] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
+
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const avgRating =
     reviews.length > 0
@@ -112,6 +153,40 @@ export default function ProProfilePage() {
     }
   };
 
+  const handleSubmitReview = async () => {
+    if (!user) { navigate("/login"); return; }
+    if (reviewRating === 0) { toast.error("Please select a star rating."); return; }
+    setSubmittingReview(true);
+    try {
+      const id = await saveReview({
+        jobRequestId: "direct",
+        customerId: user.uid,
+        proId,
+        rating: reviewRating,
+        text: reviewText.trim(),
+      });
+      if (id) {
+        toast.success("Review submitted. Thank you!");
+        const newReview: Review = {
+          id,
+          jobRequestId: "direct",
+          customerId: user.uid,
+          proId,
+          rating: reviewRating,
+          text: reviewText.trim(),
+          createdAt: new Date().toISOString(),
+        };
+        setReviews((prev) => [newReview, ...prev]);
+        setReviewRating(0);
+        setReviewText("");
+      } else {
+        toast.error("Could not submit review. Try again.");
+      }
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   if (loadingProfile) {
     return (
       <div className="flex justify-center items-center py-24 text-muted-foreground">
@@ -121,6 +196,11 @@ export default function ProProfilePage() {
   }
 
   const name = profile?.businessName || profile?.displayName || "Pro";
+  const myReview = reviews.find(
+    (r) => r.customerId === user?.uid && r.jobRequestId === "direct",
+  );
+  const canLeaveReview =
+    role === "customer" && user?.uid !== proId && !myReview;
 
   return (
     <div className="space-y-6">
@@ -137,8 +217,16 @@ export default function ProProfilePage() {
         <CardContent className="p-5 sm:p-6 flex flex-col gap-4">
           {/* Avatar + name */}
           <div className="flex items-start gap-4">
-            <div className="h-16 w-16 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
-              <Hammer className="h-8 w-8" />
+            <div className="h-16 w-16 rounded-xl overflow-hidden bg-primary text-white flex items-center justify-center shrink-0">
+              {profile?.profilePhoto ? (
+                <img
+                  src={profile.profilePhoto}
+                  alt={name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Hammer className="h-8 w-8" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -291,6 +379,78 @@ export default function ProProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Write a Review — only customers who haven't reviewed yet */}
+      {canLeaveReview && (
+        <Card>
+          <CardHeader className="pb-3 border-b">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              Write a Review
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label>Your Rating</Label>
+              <StarPicker value={reviewRating} onChange={setReviewRating} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="reviewText">Your Review (optional)</Label>
+              <Textarea
+                id="reviewText"
+                placeholder="Share your experience with this pro…"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                rows={3}
+                maxLength={600}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {reviewText.length}/600
+              </p>
+            </div>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submittingReview || reviewRating === 0}
+              className="w-full sm:w-auto"
+            >
+              {submittingReview ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                "Submit Review"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show customer's own direct review if already submitted */}
+      {myReview && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardContent className="p-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={`h-4 w-4 ${n <= myReview.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-green-700 font-medium">
+                Your review
+              </span>
+            </div>
+            {myReview.text && (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                {myReview.text}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
