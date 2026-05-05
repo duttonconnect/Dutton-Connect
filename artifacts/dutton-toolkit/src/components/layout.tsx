@@ -31,6 +31,7 @@ import { useAuth } from "@/lib/auth";
 
 const PRO_NAV = [
   { href: "/", label: "Dashboard", icon: Home },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/jobs", label: "Jobs", icon: Hammer },
   { href: "/nearby-jobs", label: "Nearby Requests", icon: Inbox },
   { href: "/lead-inbox", label: "Service Requests", icon: ClipboardList },
@@ -45,12 +46,12 @@ const PRO_NAV = [
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/route-planner", label: "Route Planner", icon: Navigation },
-  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/report-bug", label: "Report Bug", icon: Bug },
 ];
 
 const CUSTOMER_NAV = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/post-request", label: "Request Service", icon: ClipboardList },
   { href: "/find-pros", label: "Find Pros", icon: Search },
   { href: "/my-jobs", label: "My Work", icon: ListChecks },
