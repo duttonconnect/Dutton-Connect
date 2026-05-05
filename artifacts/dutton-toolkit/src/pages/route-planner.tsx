@@ -77,7 +77,7 @@ function JobStopItem({
         <div className="flex items-center gap-2">
           <div className="font-medium text-sm truncate">{job.title}</div>
           {stopNumber !== null && (
-            <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold leading-none">
+            <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-amber-500 text-white dark:bg-amber-400 dark:text-amber-950 text-xs font-semibold leading-none">
               {stopNumber}
             </span>
           )}
