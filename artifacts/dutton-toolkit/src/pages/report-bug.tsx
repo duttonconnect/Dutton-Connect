@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  Bell,
+  BellOff,
   Bug,
   Loader2,
   Paperclip,
@@ -25,6 +27,12 @@ import { useAuth } from "@/lib/auth";
 import { useRole } from "@/lib/role";
 import { saveBugReport } from "@/lib/bug-reports";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import {
+  browserNotificationsSupported,
+  browserNotificationPermission,
+  requestBrowserNotificationPermission,
+  sendBrowserNotification,
+} from "@/lib/notifications";
 
 const PRIORITY_OPTIONS = ["Low", "Medium", "High"] as const;
 
@@ -65,6 +73,25 @@ export default function ReportBug() {
 
   const [form, setForm] = useState(BLANK);
   const [submitting, setSubmitting] = useState(false);
+  const [notifPermission, setNotifPermission] =
+    useState<NotificationPermission>("default");
+
+  // Read current permission state on mount
+  useEffect(() => {
+    if (browserNotificationsSupported()) {
+      setNotifPermission(browserNotificationPermission());
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    const result = await requestBrowserNotificationPermission();
+    setNotifPermission(result);
+    if (result === "granted") {
+      toast.success("Notifications enabled.");
+    } else if (result === "denied") {
+      toast.error("Notifications blocked. Check your browser settings.");
+    }
+  };
 
   const set = (field: keyof typeof BLANK, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -107,6 +134,11 @@ export default function ReportBug() {
 
       if (id) {
         toast.success("Bug report sent. Thank you!");
+        sendBrowserNotification(
+          "Bug report received",
+          `"${form.bugTitle.trim()}" has been submitted. We'll look into it.`,
+          "bug-report-submitted",
+        );
         setForm(BLANK);
         clearFile();
       } else {
@@ -146,6 +178,48 @@ export default function ReportBug() {
             Firebase is connected.
           </CardContent>
         </Card>
+      )}
+
+      {/* Notification permission prompt */}
+      {browserNotificationsSupported() && notifPermission === "default" && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Bell className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-blue-900">
+                  Enable notifications
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Get a confirmation when your report is received.
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-blue-300 text-blue-800 hover:bg-blue-100 shrink-0"
+              onClick={handleEnableNotifications}
+            >
+              Allow
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {browserNotificationsSupported() && notifPermission === "granted" && (
+        <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+          <Bell className="h-3.5 w-3.5 shrink-0" />
+          Notifications are on — you'll get a confirmation when your report is
+          submitted.
+        </div>
+      )}
+
+      {browserNotificationsSupported() && notifPermission === "denied" && (
+        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 border rounded-lg px-3 py-2">
+          <BellOff className="h-3.5 w-3.5 shrink-0" />
+          Notifications are blocked in your browser settings.
+        </div>
       )}
 
       <Card>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -136,6 +136,19 @@ function RoleCloudBridge() {
 
 function RoleGate() {
   const { role } = useRole();
+  const [, navigate] = useLocation();
+  const prevRole = useRef<string | null>(null);
+
+  // When the user picks a role from the account chooser (role goes from
+  // null → something), always land on "/" so they never hit a 404 because
+  // their old URL isn't valid in the new role's router.
+  useEffect(() => {
+    if (role && !prevRole.current) {
+      navigate("/");
+    }
+    prevRole.current = role ?? null;
+  }, [role]);
+
   if (!role) return <ChooseAccountType />;
   if (role === "customer") return <CustomerRoutes />;
   return <ProRoutes />;

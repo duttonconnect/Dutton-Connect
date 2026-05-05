@@ -126,3 +126,37 @@ export function useUnreadNotificationCount(userId: string | undefined): number {
   }, [userId]);
   return count;
 }
+
+// ─── Browser (OS-level) Notifications ────────────────────────────────────────
+
+export function browserNotificationsSupported(): boolean {
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
+export function browserNotificationPermission(): NotificationPermission {
+  if (!browserNotificationsSupported()) return "denied";
+  return Notification.permission;
+}
+
+export async function requestBrowserNotificationPermission(): Promise<NotificationPermission> {
+  if (!browserNotificationsSupported()) return "denied";
+  if (Notification.permission !== "default") return Notification.permission;
+  try {
+    return await Notification.requestPermission();
+  } catch {
+    return "denied";
+  }
+}
+
+export function sendBrowserNotification(
+  title: string,
+  body: string,
+  tag?: string,
+): void {
+  if (!browserNotificationsSupported() || Notification.permission !== "granted") return;
+  try {
+    new Notification(title, { body, tag, icon: "/favicon.ico" });
+  } catch {
+    // silently fail in sandboxed/embedded contexts
+  }
+}
