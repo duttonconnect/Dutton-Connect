@@ -4,9 +4,10 @@ import {
   collection,
   addDoc,
   deleteDoc,
-  setDoc,
   doc,
+  getDoc,
   updateDoc,
+  deleteField,
   query,
   where,
   orderBy,
@@ -24,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const UNDO_WINDOW_MS = 5000;
+
 type SavedRoute = {
   id: string;
   userId: string;
@@ -32,6 +35,7 @@ type SavedRoute = {
   endAddress: string;
   stops: string[];
   createdAt: string;
+  deletedAt?: string;
 };
 
 function isToday(dateStr: string): boolean {
@@ -444,6 +448,7 @@ export default function RoutePlanner() {
   const [routeSort, setRouteSort] = useState<"newest" | "alpha">("newest");
 
   const plannerRef = useRef<HTMLDivElement>(null);
+  const pendingDeleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const todayJobs = jobs.filter(
     (j) => isToday(j.scheduledDate) && j.status !== "cancelled" && j.address,
@@ -467,17 +472,95 @@ export default function RoutePlanner() {
 
   async function loadSavedRoutes() {
     if (!isFirebaseConfigured || !db || !user) return;
+    const firestore = db;
     setLoadingRoutes(true);
     try {
       const q = query(
-        collection(db, "routes"),
+        collection(firestore, "routes"),
         where("userId", "==", user.uid),
         orderBy("createdAt", "desc"),
       );
       const snap = await getDocs(q);
-      setSavedRoutes(
-        snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SavedRoute, "id">) })),
-      );
+      const now = Date.now();
+      const activeRoutes: SavedRoute[] = [];
+      const staleDeleteIds: string[] = [];
+      const pendingRoutes: SavedRoute[] = [];
+
+      for (const d of snap.docs) {
+        const data = d.data() as Omit<SavedRoute, "id">;
+        const route: SavedRoute = { id: d.id, ...data };
+        if (data.deletedAt) {
+          const elapsed = now - new Date(data.deletedAt).getTime();
+          if (elapsed >= UNDO_WINDOW_MS) {
+            staleDeleteIds.push(d.id);
+          } else {
+            pendingRoutes.push(route);
+          }
+        } else {
+          activeRoutes.push(route);
+        }
+      }
+
+      // Purge stale soft-deletes in the background
+      for (const id of staleDeleteIds) {
+        deleteDoc(doc(firestore, "routes", id)).catch((err) =>
+          console.warn("[RoutePlanner] Failed to purge stale soft-delete:", err),
+        );
+      }
+
+      setSavedRoutes(activeRoutes);
+
+      // Re-surface undo toasts for any deletions that survived a reload
+      for (const route of pendingRoutes) {
+        const elapsed = Date.now() - new Date(route.deletedAt!).getTime();
+        const remaining = Math.max(500, UNDO_WINDOW_MS - elapsed);
+        let undone = false;
+
+        // Cancel any pre-existing timer for this route (e.g. from a prior loadSavedRoutes call)
+        const existingTimer = pendingDeleteTimers.current.get(route.id);
+        if (existingTimer !== undefined) clearTimeout(existingTimer);
+
+        const timer = setTimeout(async () => {
+          pendingDeleteTimers.current.delete(route.id);
+          if (undone) return;
+          // Guard: only hard-delete if deletedAt is still set (undo may have cleared it)
+          try {
+            const snap = await getDoc(doc(firestore, "routes", route.id));
+            if (snap.exists() && snap.data()?.["deletedAt"]) {
+              await deleteDoc(doc(firestore, "routes", route.id));
+            }
+          } catch (err) {
+            console.warn("[RoutePlanner] Permanent delete failed:", err);
+          }
+        }, remaining);
+        pendingDeleteTimers.current.set(route.id, timer);
+
+        toast.success("Route deleted.", {
+          duration: remaining,
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              if (undone) return;
+              clearTimeout(timer);
+              pendingDeleteTimers.current.delete(route.id);
+              try {
+                await updateDoc(doc(firestore, "routes", route.id), { deletedAt: deleteField() });
+                undone = true;
+                setSavedRoutes((prev) => {
+                  if (prev.some((r) => r.id === route.id)) return prev;
+                  const restored = { ...route, deletedAt: undefined };
+                  return [...prev, restored].sort(
+                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                  );
+                });
+              } catch (err) {
+                console.warn("[RoutePlanner] Undo failed:", err);
+                toast.error("Could not undo deletion. Please try again.");
+              }
+            },
+          },
+        });
+      }
     } catch (err) {
       console.warn("[RoutePlanner] Failed to load saved routes:", err);
     } finally {
@@ -543,36 +626,59 @@ export default function RoutePlanner() {
     const routeToDelete = savedRoutes.find((r) => r.id === id);
     if (!routeToDelete) return;
 
-    // Delete from Firestore immediately so it is final even if the page closes
+    const deletedAt = new Date().toISOString();
+
+    // Soft-delete: stamp deletedAt on the doc instead of removing it.
+    // This makes the deletion durable across page reloads within the undo window.
     try {
-      await deleteDoc(doc(firestore, "routes", id));
+      await updateDoc(doc(firestore, "routes", id), { deletedAt });
     } catch (err) {
       console.warn("[RoutePlanner] Delete failed:", err);
       toast.error("Failed to delete route.");
       return;
     }
 
-    // Remove from local state after successful Firestore deletion
+    // Remove from local list immediately
     setSavedRoutes((prev) => prev.filter((r) => r.id !== id));
 
-    // Track whether the undo was used so the toast action can be cleaned up
     let undone = false;
 
+    // Cancel any stale timer that may already exist for this route
+    const existingTimer = pendingDeleteTimers.current.get(id);
+    if (existingTimer !== undefined) clearTimeout(existingTimer);
+
+    // Schedule the permanent hard-delete after the undo window expires
+    const timer = setTimeout(async () => {
+      pendingDeleteTimers.current.delete(id);
+      if (undone) return;
+      // Guard: only hard-delete if deletedAt is still set (undo may have cleared it)
+      try {
+        const snap = await getDoc(doc(firestore, "routes", id));
+        if (snap.exists() && snap.data()?.["deletedAt"]) {
+          await deleteDoc(doc(firestore, "routes", id));
+        }
+      } catch (err) {
+        console.warn("[RoutePlanner] Permanent delete failed:", err);
+      }
+    }, UNDO_WINDOW_MS);
+    pendingDeleteTimers.current.set(id, timer);
+
     toast.success("Route deleted.", {
-      duration: 5000,
+      duration: UNDO_WINDOW_MS,
       action: {
         label: "Undo",
         onClick: async () => {
           if (undone) return;
-          // Recreate the document in Firestore with its original id
-          const { id: _id, ...routeData } = routeToDelete;
+          clearTimeout(timer);
+          pendingDeleteTimers.current.delete(id);
           try {
-            await setDoc(doc(firestore, "routes", id), routeData);
-            undone = true; // Mark done only after successful restore
-            // Restore into local list in sorted order
+            // Clearing deletedAt is the undo — no data is lost
+            await updateDoc(doc(firestore, "routes", id), { deletedAt: deleteField() });
+            undone = true;
             setSavedRoutes((prev) => {
               if (prev.some((r) => r.id === id)) return prev;
-              return [...prev, routeToDelete].sort(
+              const restored = { ...routeToDelete, deletedAt: undefined };
+              return [...prev, restored].sort(
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
               );
             });

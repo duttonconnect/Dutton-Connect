@@ -24,4 +24,10 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
+## Environment Variables
+
+- `VITE_FIREBASE_*` — Firebase client config (required for cloud sync/auth in the web app)
+- `FIREBASE_SERVICE_ACCOUNT_KEY` — *(optional)* JSON string of a Firebase service account; enables the server-side Firestore soft-delete cleanup job
+- `FIREBASE_PROJECT_ID` — *(optional)* Firebase project ID; used by the cleanup job when `FIREBASE_SERVICE_ACCOUNT_KEY` is not set (falls back to Application Default Credentials)
+
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
