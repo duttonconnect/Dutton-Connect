@@ -213,6 +213,7 @@ function RouteCard({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingLoad, setConfirmingLoad] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   function startEdit() {
     setDraftName(route.name || "");
@@ -245,7 +246,7 @@ function RouteCard({
   const displayName = route.name || format(new Date(route.createdAt), "MMM d, yyyy · h:mm a");
 
   return (
-    <div className="p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+    <div ref={cardRef} className="p-4 border rounded-lg hover:bg-muted/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
           {editing ? (
@@ -361,7 +362,12 @@ function RouteCard({
                 size="sm"
                 variant="ghost"
                 className="h-7 px-2 text-xs"
-                onClick={() => setConfirmingLoad(false)}
+                onClick={() => {
+                  setConfirmingLoad(false);
+                  requestAnimationFrame(() => {
+                    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  });
+                }}
                 aria-label="Cancel load"
               >
                 Cancel
