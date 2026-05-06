@@ -569,6 +569,25 @@ export default function RoutePlanner() {
   }
 
   useEffect(() => {
+    if (!user?.uid) return;
+    try {
+      const stored = localStorage.getItem(`routePlannerSortOrder:${user.uid}`);
+      if (stored === "alpha" || stored === "newest") setRouteSort(stored);
+    } catch {
+      // ignore
+    }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    try {
+      localStorage.setItem(`routePlannerSortOrder:${user.uid}`, routeSort);
+    } catch {
+      // ignore
+    }
+  }, [routeSort, user?.uid]);
+
+  useEffect(() => {
     if (orderedStops.length === 0) setConfirmingClearAll(false);
   }, [orderedStops.length]);
 
