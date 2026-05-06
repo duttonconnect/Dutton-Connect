@@ -51,119 +51,7 @@ import {
 
 type FeedRequest = FirestoreJobRequest & {
   distanceMiles: number;
-  isSample?: boolean;
 };
-
-const SAMPLE_FEED: FeedRequest[] = [
-  {
-    id: "sr-1",
-    title: "Replace porch light fixture",
-    category: "Handyman",
-    description:
-      "Old fixture stopped working. Need a similar style replaced. I'll provide the new fixture from Lowe's.",
-    address: "311 Hill St, Athens, GA",
-    budget: 120,
-    preferredDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
-    urgency: "Normal",
-    customerId: "sample",
-    status: "open",
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    latitude: 33.9601,
-    longitude: -83.3652,
-    distanceMiles: 2.4,
-    isSample: true,
-  },
-  {
-    id: "sr-2",
-    title: "Kitchen sink leaking under cabinet",
-    category: "Plumbing",
-    description:
-      "Slow drip from the P-trap. Cabinet floor getting damp. Need this fixed before it gets worse.",
-    address: "1024 Prince Ave, Athens, GA",
-    budget: 200,
-    preferredDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    urgency: "Urgent",
-    customerId: "sample",
-    status: "open",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    latitude: 33.9741,
-    longitude: -83.3714,
-    distanceMiles: 4.1,
-    isSample: true,
-  },
-  {
-    id: "sr-3",
-    title: "Pressure wash driveway and walkway",
-    category: "Pressure Washing",
-    description:
-      "Two-car driveway plus the walkway up to the front porch. Lots of mildew on the north side.",
-    address: "55 Gaines School Rd, Athens, GA",
-    budget: 275,
-    preferredDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-    urgency: "Low",
-    customerId: "sample",
-    status: "open",
-    createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
-    latitude: 33.9340,
-    longitude: -83.3862,
-    distanceMiles: 7.8,
-    isSample: true,
-  },
-  {
-    id: "sr-4",
-    title: "Install new dishwasher",
-    category: "Appliance Installation",
-    description:
-      "New Bosch dishwasher arriving Tuesday. Need the old one removed and the new one installed and tested.",
-    address: "412 Riverbend Pkwy, Watkinsville, GA",
-    budget: 180,
-    preferredDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    urgency: "Normal",
-    customerId: "sample",
-    status: "open",
-    createdAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
-    latitude: 33.8624,
-    longitude: -83.4082,
-    distanceMiles: 12.6,
-    isSample: true,
-  },
-  {
-    id: "sr-5",
-    title: "Spring yard cleanup, half acre",
-    category: "Yard Work",
-    description:
-      "Leaf cleanup, hedge trim along the front, mulch refresh on three beds. Materials provided.",
-    address: "88 Hampton Park Dr, Bogart, GA",
-    budget: 425,
-    preferredDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    urgency: "Low",
-    customerId: "sample",
-    status: "open",
-    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-    latitude: 33.9484,
-    longitude: -83.5302,
-    distanceMiles: 18.3,
-    isSample: true,
-  },
-  {
-    id: "sr-6",
-    title: "Replace alternator on '12 F-150",
-    category: "Automotive",
-    description:
-      "Battery light came on yesterday and dies if it sits overnight. Have the part already.",
-    address: "147 Mars Hill Rd, Watkinsville, GA",
-    budget: 320,
-    preferredDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    urgency: "Urgent",
-    customerId: "sample",
-    status: "open",
-    createdAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
-    latitude: 33.8810,
-    longitude: -83.4120,
-    distanceMiles: 32.1,
-    isSample: true,
-  },
-];
 
 function mockDistanceFor(id: string): number {
   let h = 0;
@@ -304,9 +192,7 @@ export default function NearbyJobs() {
   }, [user?.uid]);
 
   const allRequests: FeedRequest[] = useMemo(() => {
-    const firestoreIds = new Set(firestoreRequests.map((r) => r.id));
-    const samples = SAMPLE_FEED.filter((s) => !firestoreIds.has(s.id));
-    return [...firestoreRequests, ...samples].sort(
+    return [...firestoreRequests].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [firestoreRequests]);
@@ -610,14 +496,6 @@ export default function NearbyJobs() {
                         )}
                         {r.urgency}
                       </Badge>
-                      {!r.isSample && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs bg-emerald-100 text-emerald-800"
-                        >
-                          Live request
-                        </Badge>
-                      )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -656,21 +534,19 @@ export default function NearbyJobs() {
                       <Send className="mr-2 h-4 w-4" /> Send Quote
                     </Button>
                   )}
-                  {!r.isSample && (
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      disabled={messagingId === r.id}
-                      onClick={() => handleMessageCustomer(r)}
-                    >
-                      {messagingId === r.id ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                      )}
-                      Message Customer
-                    </Button>
-                  )}
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    disabled={messagingId === r.id}
+                    onClick={() => handleMessageCustomer(r)}
+                  >
+                    {messagingId === r.id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                    )}
+                    Message Customer
+                  </Button>
                 </div>
               </CardContent>
             </Card>

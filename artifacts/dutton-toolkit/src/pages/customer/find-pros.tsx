@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { calculateDistanceMiles } from "@/lib/distance";
 import { matchesKeyword } from "@/lib/search";
+import { loadAllBusinessProfiles } from "@/lib/business-profile";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -45,57 +46,11 @@ type Pro = {
   lng?: number;
 };
 
-const SAMPLE_PROS: Pro[] = [
-  {
-    id: "p-athens-handyman",
-    business: "Athens Handyman Services",
-    services: ["Handyman", "Pressure Washing", "Yard Work", "Appliance Installation"],
-    location: "Athens, GA",
-    serviceRadiusMiles: 30,
-    ratingPlaceholder: 5.0,
-    reviewsPlaceholder: 47,
-    verified: true,
-    lat: 33.9519,
-    lng: -83.3576,
-  },
-  {
-    id: "p-athens-plumb",
-    business: "Athens Pro Plumbing",
-    services: ["Plumbing", "Appliance Installation"],
-    location: "Watkinsville, GA",
-    serviceRadiusMiles: 25,
-    ratingPlaceholder: 4.8,
-    reviewsPlaceholder: 132,
-    lat: 33.8624,
-    lng: -83.4082,
-  },
-  {
-    id: "p-ne-pressure",
-    business: "Northeast GA Pressure Washing",
-    services: ["Pressure Washing", "Yard Work"],
-    location: "Bogart, GA",
-    serviceRadiusMiles: 40,
-    ratingPlaceholder: 4.9,
-    reviewsPlaceholder: 88,
-    lat: 33.9484,
-    lng: -83.5302,
-  },
-  {
-    id: "p-classic-auto",
-    business: "Classic City Auto Repair",
-    services: ["Automotive"],
-    location: "Athens, GA",
-    serviceRadiusMiles: 15,
-    ratingPlaceholder: 4.7,
-    reviewsPlaceholder: 211,
-    lat: 33.9519,
-    lng: -83.3576,
-  },
-];
-
 export default function FindNearbyPros() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const [pros, setPros] = useState<Pro[]>([]);
+  const [loadingPros, setLoadingPros] = useState(true);
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [keywordInput, setKeywordInput] = useState("");
@@ -105,6 +60,26 @@ export default function FindNearbyPros() {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [distanceMiles, setDistanceMiles] = useState<number>(25);
   const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    setLoadingPros(true);
+    loadAllBusinessProfiles()
+      .then((profiles) => {
+        const mapped: Pro[] = profiles.map((bp) => ({
+          id: bp.proId,
+          business: bp.businessName,
+          services: bp.serviceCategories as string[],
+          location: bp.serviceArea,
+          serviceRadiusMiles: bp.serviceRadius,
+          phone: bp.publicPhone,
+          ratingPlaceholder: 0,
+          reviewsPlaceholder: 0,
+          verified: false,
+        }));
+        setPros(mapped);
+      })
+      .finally(() => setLoadingPros(false));
+  }, []);
 
   const handleKeywordSearch = () => {
     setAppliedKeyword(keywordInput.trim());
@@ -168,8 +143,7 @@ export default function FindNearbyPros() {
   };
 
   const filteredPros = useMemo(() => {
-    return SAMPLE_PROS.filter((p) => {
-      // --- Keyword filter (AND) ---
+    return pros.filter((p) => {
       if (
         appliedKeyword &&
         !matchesKeyword(appliedKeyword, [
@@ -181,7 +155,6 @@ export default function FindNearbyPros() {
         return false;
       }
 
-      // --- Location / distance filter ---
       if (userCoords && p.lat != null && p.lng != null) {
         const d = calculateDistanceMiles(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return d <= distanceMiles;
@@ -196,7 +169,7 @@ export default function FindNearbyPros() {
       }
       return true;
     });
-  }, [userCoords, distanceMiles, selectedLocation, appliedKeyword]);
+  }, [pros, userCoords, distanceMiles, selectedLocation, appliedKeyword]);
 
   const handleRequestQuote = async (pro: Pro) => {
     if (!user) {
@@ -375,14 +348,29 @@ export default function FindNearbyPros() {
         </div>
       )}
 
-      {filteredPros.length === 0 ? (
+      {loadingPros ? (
+        <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-muted-foreground">
+          <Loader2 className="h-8 w-8 mx-auto mb-3 opacity-30 animate-spin" />
+          <p className="text-sm">Loading pros in your area…</p>
+        </div>
+      ) : filteredPros.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-muted-foreground">
           <MapPin className="h-9 w-9 mx-auto mb-3 opacity-30" />
-          <p className="text-sm font-medium">No pros found near "{selectedLocation}"</p>
-          <p className="text-xs mt-1">Try a nearby city or a broader search term.</p>
-          <Button variant="ghost" size="sm" className="mt-3" onClick={handleClearLocation}>
-            Clear search
-          </Button>
+          <p className="text-sm font-medium">
+            {selectedLocation
+              ? `No pros found near "${selectedLocation}"`
+              : "No pros available yet in your area."}
+          </p>
+          <p className="text-xs mt-1">
+            {selectedLocation
+              ? "Try a nearby city or a broader search term."
+              : "Check back soon as more pros join the platform."}
+          </p>
+          {selectedLocation && (
+            <Button variant="ghost" size="sm" className="mt-3" onClick={handleClearLocation}>
+              Clear search
+            </Button>
+          )}
         </div>
       ) : (
       <div className="grid gap-4 md:grid-cols-2">
@@ -406,15 +394,17 @@ export default function FindNearbyPros() {
                         />
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium text-gray-700">
-                        {pro.ratingPlaceholder.toFixed(1)}
-                      </span>
-                      <span className="text-xs">
-                        ({pro.reviewsPlaceholder} reviews)
-                      </span>
-                    </div>
+                    {pro.reviewsPlaceholder > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium text-gray-700">
+                          {pro.ratingPlaceholder.toFixed(1)}
+                        </span>
+                        <span className="text-xs">
+                          ({pro.reviewsPlaceholder} reviews)
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

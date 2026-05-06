@@ -193,35 +193,13 @@ type AppContextType = AppState & {
 };
 
 const SEED_DATA: AppState = {
-  customers: [
-    { id: "c1", name: "Sarah Jenkins", phone: "", email: "sjenkins@example.com", address: "142 Oak St, Athens, GA", notes: "Prefers texts", createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: "c2", name: "Marcus Thompson", phone: "", email: "mthompson88@example.com", address: "89 Pine Ridge Rd, Watkinsville, GA", notes: "Gate code 4821", createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() },
-    { id: "c3", name: "Elena Rodriguez", phone: "", email: "erodriguez@example.com", address: "2204 Sycamore Ln, Bogart, GA", notes: "Large dog in backyard, friendly", createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-  ],
-  jobs: [
-    {
-      id: "j1", title: "Deck Board Replacement", customerId: "c1", address: "142 Oak St, Athens, GA", latitude: 33.9519, longitude: -83.3576, scheduledDate: new Date().toISOString(), estimatedHours: 4, hourlyRate: 75, materialsCost: 120, description: "Replace 4 rotted boards on back deck and reinforce stairs", status: "in_progress", notes: "Found some additional rot near the ledger board, need to discuss with Sarah.", timeEntries: [{ id: "t1", date: new Date().toISOString(), hours: 2, description: "Demolition and measurements" }], materials: [{ id: "m1", description: "Pressure treated 2x6x8 (x4)", cost: 48 }, { id: "m2", description: "Deck screws and brackets", cost: 35 }], createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "j2", title: "Master Bath Faucet Install", customerId: "c2", address: "89 Pine Ridge Rd, Watkinsville, GA", latitude: 33.8624, longitude: -83.4082, scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), estimatedHours: 2, hourlyRate: 75, materialsCost: 0, description: "Install customer-provided Moen faucet in master bathroom", status: "scheduled", notes: "", timeEntries: [], materials: [], createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "j3", title: "Drywall Patch - Living Room", customerId: "c3", address: "2204 Sycamore Ln, Bogart, GA", latitude: 33.9484, longitude: -83.5302, scheduledDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), estimatedHours: 3, hourlyRate: 75, materialsCost: 45, description: "Patch 2x2 hole in drywall, texture to match", status: "completed", notes: "Texture matched perfectly.", timeEntries: [{ id: "t2", date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), hours: 3, description: "Patch, mud, texture" }], materials: [{ id: "m3", description: "Drywall square, joint compound", cost: 45 }], createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ],
-  quotes: [
-    {
-      id: "q1", customerId: "c2", lineItems: [{ id: "l1", description: "Gate rebuild - labor", qty: 8, unitPrice: 75 }, { id: "l2", description: "Lumber and hardware", qty: 1, unitPrice: 350 }], notes: "Complete tear down and rebuild of double drive gate.", taxRate: 7, status: "sent", createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ],
-  payments: [
-    {
-      id: "p1", jobId: "j3", amount: 270, method: "card", date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), notes: "Paid via Square"
-    }
-  ],
+  customers: [],
+  jobs: [],
+  quotes: [],
+  payments: [],
   trips: [],
   receipts: [],
-  jobRequests: []
+  jobRequests: [],
 };
 
 const AppContext = createContext<AppContextType | null>(null);

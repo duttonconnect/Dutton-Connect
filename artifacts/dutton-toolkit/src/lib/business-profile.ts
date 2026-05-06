@@ -1,6 +1,8 @@
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -34,6 +36,17 @@ export type BusinessProfile = {
   businessLogo?: string;
   updatedAt: string;
 };
+
+export async function loadAllBusinessProfiles(): Promise<BusinessProfile[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(collection(db, "businessProfiles"));
+    return snap.docs.map((d) => ({ proId: d.id, ...d.data() } as BusinessProfile));
+  } catch (err) {
+    console.error("[BusinessProfile] loadAll failed:", err);
+    return [];
+  }
+}
 
 export async function loadBusinessProfile(uid: string): Promise<BusinessProfile | null> {
   if (!isFirebaseConfigured || !db) return null;
