@@ -24,10 +24,19 @@ import {
   Bug,
   UserCircle,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { useRole } from "@/lib/role";
 import { useAuth } from "@/lib/auth";
+import { useAppStore } from "@/lib/store";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const PRO_NAV = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -68,6 +77,70 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, clearRole } = useRole();
   const { user, logout, isConfigured, isAdmin } = useAuth();
+  const { routePlannerDirty, setRoutePlannerDirty, routePlannerHasContent } = useAppStore();
+  const routePlannerShouldWarn = routePlannerDirty && routePlannerHasContent;
+
+  const [pendingNavCallback, setPendingNavCallback] = useState<(() => void) | null>(null);
+
+  const origPushStateRef = useRef<typeof history.pushState>(history.pushState.bind(history));
+  const bypassGuardRef = useRef(false);
+  const routePlannerShouldWarnRef = useRef(routePlannerShouldWarn);
+  routePlannerShouldWarnRef.current = routePlannerShouldWarn;
+
+  useEffect(() => {
+    if (!routePlannerShouldWarn) return;
+    const orig = origPushStateRef.current;
+
+    history.pushState = function (state, title, url) {
+      if (bypassGuardRef.current) {
+        orig.call(history, state, title, url);
+        return;
+      }
+      const targetPath = typeof url === "string" ? url : (url?.toString() ?? "");
+      if (!targetPath.includes("/route-planner")) {
+        setPendingNavCallback(() => () => {
+          bypassGuardRef.current = true;
+          history.pushState = orig;
+          orig.call(history, state, title, url);
+          window.dispatchEvent(new PopStateEvent("popstate", { state }));
+          bypassGuardRef.current = false;
+        });
+      } else {
+        orig.call(history, state, title, url);
+      }
+    };
+
+    return () => {
+      history.pushState = orig;
+    };
+  }, [routePlannerShouldWarn]);
+
+  useEffect(() => {
+    if (!routePlannerShouldWarn) return;
+    const orig = origPushStateRef.current;
+    const savedUrl = window.location.href;
+    const savedState = window.history.state;
+
+    function handler() {
+      if (bypassGuardRef.current) return;
+      if (!routePlannerShouldWarnRef.current) return;
+      const destinationUrl = window.location.href;
+      const destinationState = window.history.state;
+      bypassGuardRef.current = true;
+      orig.call(history, savedState, "", savedUrl);
+      window.dispatchEvent(new PopStateEvent("popstate", { state: savedState }));
+      bypassGuardRef.current = false;
+      setPendingNavCallback(() => () => {
+        bypassGuardRef.current = true;
+        orig.call(history, destinationState, "", destinationUrl);
+        window.dispatchEvent(new PopStateEvent("popstate", { state: destinationState }));
+        bypassGuardRef.current = false;
+      });
+    }
+
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, [routePlannerShouldWarn]);
 
   const navItems = role === "customer" ? CUSTOMER_NAV : PRO_NAV;
   const subtitle = role === "customer" ? "Customer Portal" : "Pro Portal";
@@ -88,6 +161,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
+    <>
+    <Dialog open={pendingNavCallback !== null} onOpenChange={(open) => { if (!open) setPendingNavCallback(null); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Leave without saving?</DialogTitle>
+          <DialogDescription>
+            Your route has unsaved changes. If you leave now, your current start address, end address, and stops will be lost.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setPendingNavCallback(null)}>
+            Stay
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              const nav = pendingNavCallback;
+              setRoutePlannerDirty(false);
+              setPendingNavCallback(null);
+              nav?.();
+            }}
+          >
+            Leave anyway
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     <div className="min-h-[100dvh] flex flex-col bg-gray-50 md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 bg-primary text-white sticky top-0 z-50 print:hidden shadow-md">
@@ -262,5 +362,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </footer>
       </main>
     </div>
+    </>
   );
 }

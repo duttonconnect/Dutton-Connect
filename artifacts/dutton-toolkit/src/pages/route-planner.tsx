@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star } from "lucide-react";
 import {
   collection,
@@ -454,7 +454,7 @@ function RouteCard({
 }
 
 export default function RoutePlanner() {
-  const { jobs } = useAppStore();
+  const { jobs, routePlannerDirty, setRoutePlannerDirty, setRoutePlannerHasContent } = useAppStore();
   const { user } = useAuth();
 
   const [startAddress, setStartAddress] = useState("");
@@ -470,6 +470,37 @@ export default function RoutePlanner() {
 
   const plannerRef = useRef<HTMLDivElement>(null);
   const pendingDeleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const isDirty = routePlannerDirty;
+  const setIsDirty = setRoutePlannerDirty;
+
+  const plannerHasContent =
+    startAddress.trim().length > 0 ||
+    endAddress.trim().length > 0 ||
+    orderedStops.length > 0;
+
+  useEffect(() => {
+    if (!isDirty || !plannerHasContent) return;
+    function handler(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty, plannerHasContent]);
+
+  useEffect(() => {
+    setRoutePlannerHasContent(plannerHasContent);
+  }, [plannerHasContent]);
+
+  useEffect(() => {
+    return () => {
+      setRoutePlannerDirty(false);
+      setRoutePlannerHasContent(false);
+    };
+  }, []);
+
+  const markDirty = useCallback(() => setIsDirty(true), []);
 
   const todayJobs = jobs.filter(
     (j) => isToday(j.scheduledDate) && j.status !== "cancelled" && j.address,
@@ -613,6 +644,7 @@ export default function RoutePlanner() {
   }, [orderedStops.length]);
 
   function toggleStop(address: string) {
+    markDirty();
     setOrderedStops((prev) => {
       if (prev.includes(address)) {
         return prev.filter((a) => a !== address);
@@ -651,6 +683,7 @@ export default function RoutePlanner() {
       });
       toast.success("Route saved.");
       setRouteName("");
+      setIsDirty(false);
       await loadSavedRoutes();
     } catch (err) {
       console.warn("[RoutePlanner] Save failed:", err);
@@ -810,6 +843,7 @@ export default function RoutePlanner() {
     setEndAddress(route.endAddress ?? "");
     setRouteName(route.name ?? "");
     setOrderedStops(route.stops ?? []);
+    setIsDirty(false);
     toast.success("Route loaded into planner.");
     plannerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -910,6 +944,7 @@ export default function RoutePlanner() {
                         variant="destructive"
                         className="h-7 px-2 text-xs"
                         onClick={() => {
+                          markDirty();
                           setOrderedStops([]);
                           setConfirmingClearAll(false);
                         }}
@@ -946,7 +981,7 @@ export default function RoutePlanner() {
                   id="startAddress"
                   placeholder="e.g. 123 Main St, Athens, GA"
                   value={startAddress}
-                  onChange={(e) => setStartAddress(e.target.value)}
+                  onChange={(e) => { markDirty(); setStartAddress(e.target.value); }}
                 />
               </div>
               <div>
@@ -955,7 +990,7 @@ export default function RoutePlanner() {
                   id="endAddress"
                   placeholder="e.g. Your home or office address"
                   value={endAddress}
-                  onChange={(e) => setEndAddress(e.target.value)}
+                  onChange={(e) => { markDirty(); setEndAddress(e.target.value); }}
                 />
               </div>
 
@@ -968,7 +1003,7 @@ export default function RoutePlanner() {
                     <DraggableStopList
                       stops={orderedStops}
                       activeJobAddresses={activeJobAddresses}
-                      onReorder={setOrderedStops}
+                      onReorder={(stops) => { markDirty(); setOrderedStops(stops); }}
                       onRemove={toggleStop}
                     />
                   </div>

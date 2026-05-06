@@ -165,6 +165,11 @@ type AppState = {
 };
 
 type AppContextType = AppState & {
+  routePlannerDirty: boolean;
+  setRoutePlannerDirty: (dirty: boolean) => void;
+  routePlannerHasContent: boolean;
+  setRoutePlannerHasContent: (has: boolean) => void;
+
   addCustomer: (c: Omit<Customer, "id" | "createdAt">) => void;
   updateCustomer: (id: string, c: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
@@ -215,6 +220,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return SEED_DATA;
   });
 
+  const [routePlannerDirty, setRoutePlannerDirty] = useState(false);
+  const [routePlannerHasContent, setRoutePlannerHasContent] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("dutton_toolkit_state", JSON.stringify(state));
   }, [state]);
@@ -223,6 +231,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value: AppContextType = {
     ...state,
+    routePlannerDirty,
+    setRoutePlannerDirty,
+    routePlannerHasContent,
+    setRoutePlannerHasContent,
     addCustomer: (c) => setState(s => ({ ...s, customers: [...s.customers, { ...c, id: generateId(), createdAt: new Date().toISOString() }] })),
     updateCustomer: (id, c) => setState(s => ({ ...s, customers: s.customers.map(x => x.id === id ? { ...x, ...c } : x) })),
     deleteCustomer: (id) => setState(s => ({ ...s, customers: s.customers.filter(x => x.id !== id) })),
