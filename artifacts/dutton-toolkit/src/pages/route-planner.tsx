@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -36,6 +36,7 @@ type SavedRoute = {
   stops: string[];
   createdAt: string;
   deletedAt?: string;
+  starred?: boolean;
 };
 
 function isToday(dateStr: string): boolean {
@@ -196,12 +197,14 @@ function RouteCard({
   onDelete,
   onRename,
   onLoad,
+  onStar,
   plannerHasContent,
 }: {
   route: SavedRoute;
   onDelete: (id: string) => void;
   onRename: (id: string, newName: string) => Promise<void>;
   onLoad: (route: SavedRoute) => void;
+  onStar: (id: string, starred: boolean) => void;
   plannerHasContent: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -366,6 +369,18 @@ function RouteCard({
             </>
           ) : (
             <>
+              <button
+                onClick={() => onStar(route.id, !route.starred)}
+                className={`p-1 rounded transition-colors ${
+                  route.starred
+                    ? "text-amber-400 hover:text-amber-500"
+                    : "text-muted-foreground hover:text-amber-400"
+                }`}
+                aria-label={route.starred ? "Unstar route" : "Star route"}
+                aria-pressed={route.starred ?? false}
+              >
+                <Star className={`h-4 w-4 ${route.starred ? "fill-amber-400" : ""}`} />
+              </button>
               <Button
                 size="sm"
                 variant="secondary"
@@ -626,6 +641,7 @@ export default function RoutePlanner() {
         endAddress: endAddress.trim(),
         stops: orderedStops,
         createdAt: new Date().toISOString(),
+        starred: false,
       });
       toast.success("Route saved.");
       setRouteName("");
@@ -710,6 +726,19 @@ export default function RoutePlanner() {
     });
   }
 
+  async function handleStarRoute(id: string, starred: boolean) {
+    if (!isFirebaseConfigured || !db) return;
+    try {
+      await updateDoc(doc(db, "routes", id), { starred });
+      setSavedRoutes((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, starred } : r)),
+      );
+    } catch (err) {
+      console.warn("[RoutePlanner] Star failed:", err);
+      toast.error("Failed to update star.");
+    }
+  }
+
   async function handleRenameRoute(id: string, newName: string) {
     if (!isFirebaseConfigured || !db) return;
     const firestore = db;
@@ -759,6 +788,9 @@ export default function RoutePlanner() {
       return displayName.toLowerCase().includes(q);
     })
     .sort((a, b) => {
+      const aStarred = a.starred ? 1 : 0;
+      const bStarred = b.starred ? 1 : 0;
+      if (bStarred !== aStarred) return bStarred - aStarred;
       if (routeSort === "alpha") {
         const nameA = (a.name || format(new Date(a.createdAt), "MMM d, yyyy · h:mm a")).toLowerCase();
         const nameB = (b.name || format(new Date(b.createdAt), "MMM d, yyyy · h:mm a")).toLowerCase();
@@ -1047,6 +1079,7 @@ export default function RoutePlanner() {
                   onDelete={handleDeleteRoute}
                   onRename={handleRenameRoute}
                   onLoad={handleLoadRoute}
+                  onStar={handleStarRoute}
                   plannerHasContent={
                     startAddress.trim().length > 0 ||
                     endAddress.trim().length > 0 ||
