@@ -199,6 +199,7 @@ function RouteCard({
   onLoad,
   onStar,
   plannerHasContent,
+  activeJobAddresses,
 }: {
   route: SavedRoute;
   onDelete: (id: string) => void;
@@ -206,6 +207,7 @@ function RouteCard({
   onLoad: (route: SavedRoute) => void;
   onStar: (id: string, starred: boolean) => void;
   plannerHasContent: boolean;
+  activeJobAddresses: Set<string>;
 }) {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(route.name || "");
@@ -244,6 +246,7 @@ function RouteCard({
   const stops = route.stops ?? [];
   const mapsUrl = buildMapsUrl(route.startAddress, route.endAddress, stops);
   const displayName = route.name || format(new Date(route.createdAt), "MMM d, yyyy · h:mm a");
+  const staleStopCount = stops.filter((addr) => !activeJobAddresses.has(addr)).length;
 
   return (
     <div ref={cardRef} className="p-4 border rounded-lg hover:bg-muted/30 transition-colors">
@@ -446,6 +449,13 @@ function RouteCard({
           )}
           {!route.startAddress && !route.endAddress && stops.length === 0 && (
             <div className="text-xs text-muted-foreground">No addresses saved in this route.</div>
+          )}
+          {staleStopCount > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              {staleStopCount} {staleStopCount === 1 ? "stop" : "stops"} no longer{" "}
+              {staleStopCount === 1 ? "matches" : "match"} active jobs
+            </div>
           )}
         </div>
       )}
@@ -839,12 +849,20 @@ export default function RoutePlanner() {
     });
 
   function handleLoadRoute(route: SavedRoute) {
+    const stops = route.stops ?? [];
+    const staleCount = stops.filter((addr) => !activeJobAddresses.has(addr)).length;
     setStartAddress(route.startAddress ?? "");
     setEndAddress(route.endAddress ?? "");
     setRouteName(route.name ?? "");
-    setOrderedStops(route.stops ?? []);
+    setOrderedStops(stops);
     setIsDirty(false);
-    toast.success("Route loaded into planner.");
+    if (staleCount > 0) {
+      toast.warning(
+        `Route loaded — ${staleCount} ${staleCount === 1 ? "stop" : "stops"} no longer ${staleCount === 1 ? "matches" : "match"} active jobs.`,
+      );
+    } else {
+      toast.success("Route loaded into planner.");
+    }
     plannerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -1140,6 +1158,7 @@ export default function RoutePlanner() {
                     endAddress.trim().length > 0 ||
                     orderedStops.length > 0
                   }
+                  activeJobAddresses={activeJobAddresses}
                 />
               ))}
             </div>
