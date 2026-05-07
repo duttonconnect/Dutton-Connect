@@ -188,14 +188,26 @@ describe("users collection", () => {
     role: "pro",
   };
 
-  it("allows authenticated user to read any user document", async () => {
+  it("allows the document owner to read their own user document", async () => {
     await seedDoc(userPath, userDoc);
-    await assertSucceeds(getDoc(doc(authed(otherUid).firestore(), userPath)));
+    await assertSucceeds(getDoc(doc(authed(ownerUid).firestore(), userPath)));
+  });
+
+  it("denies another authenticated user from reading someone else's user document", async () => {
+    await seedDoc(userPath, userDoc);
+    await assertFails(getDoc(doc(authed(otherUid).firestore(), userPath)));
   });
 
   it("denies unauthenticated user from reading a user document", async () => {
     await seedDoc(userPath, userDoc);
     await assertFails(getDoc(doc(unauthed().firestore(), userPath)));
+  });
+
+  it("allows an admin to read any user document (including sensitive fields)", async () => {
+    const adminUid = "admin-user-read";
+    const adminCtx = await seedAdminAndGetContext(adminUid);
+    await seedDoc(userPath, userDoc);
+    await assertSucceeds(getDoc(doc(adminCtx.firestore(), userPath)));
   });
 
   it("allows owner to create their own profile (without isAdmin)", async () => {
@@ -1153,6 +1165,134 @@ describe("reports collection", () => {
         })
       );
     });
+  });
+});
+
+// ─── publicProfiles ───────────────────────────────────────────────────────────
+
+describe("publicProfiles collection", () => {
+  const proUid = "pro-pub";
+  const customerUid = "customer-pub";
+  const otherUid = "other-pub";
+  const profilePath = `publicProfiles/${proUid}`;
+  const profileData = {
+    displayName: "Alice Smith",
+    businessName: "Alice's Plumbing",
+    services: ["Plumbing"],
+    serviceArea: "Athens, GA",
+    serviceRadiusMiles: 25,
+    about: "10 years experience",
+    role: "pro",
+    updatedAt: new Date().toISOString(),
+  };
+
+  it("denies unauthenticated read", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(getDoc(doc(unauthed().firestore(), profilePath)));
+  });
+
+  it("allows any authenticated user to read a pro public profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      getDoc(doc(authed(customerUid).firestore(), profilePath))
+    );
+  });
+
+  it("allows the pro to read their own public profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      getDoc(doc(authed(proUid).firestore(), profilePath))
+    );
+  });
+
+  it("allows the pro to create their own public profile", async () => {
+    await assertSucceeds(
+      setDoc(doc(authed(proUid).firestore(), profilePath), profileData)
+    );
+  });
+
+  it("denies another user from creating a public profile for someone else", async () => {
+    await assertFails(
+      setDoc(doc(authed(otherUid).firestore(), profilePath), profileData)
+    );
+  });
+
+  it("allows the pro to update their own public profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      updateDoc(doc(authed(proUid).firestore(), profilePath), {
+        about: "Updated bio",
+      })
+    );
+  });
+
+  it("denies another user from updating someone else's public profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      updateDoc(doc(authed(otherUid).firestore(), profilePath), {
+        about: "Hacked bio",
+      })
+    );
+  });
+
+  it("denies a non-admin from deleting a public profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      deleteDoc(doc(authed(otherUid).firestore(), profilePath))
+    );
+  });
+
+  it("denies the pro themselves from deleting their own public profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      deleteDoc(doc(authed(proUid).firestore(), profilePath))
+    );
+  });
+
+  it("allows an admin to delete a public profile", async () => {
+    const adminUid = "admin-pub";
+    const adminCtx = await seedAdminAndGetContext(adminUid);
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      deleteDoc(doc(adminCtx.firestore(), profilePath))
+    );
+  });
+
+  it("denies the pro from writing email into their public profile", async () => {
+    await assertFails(
+      setDoc(doc(authed(proUid).firestore(), profilePath), {
+        ...profileData,
+        email: "alice@example.com",
+      })
+    );
+  });
+
+  it("denies the pro from writing isAdmin into their public profile", async () => {
+    await assertFails(
+      setDoc(doc(authed(proUid).firestore(), profilePath), {
+        ...profileData,
+        isAdmin: true,
+      })
+    );
+  });
+
+  it("denies the pro from writing an arbitrary unknown field into their public profile", async () => {
+    await assertFails(
+      setDoc(doc(authed(proUid).firestore(), profilePath), {
+        ...profileData,
+        secretToken: "abc123",
+      })
+    );
+  });
+
+  it("denies updating a public profile with a disallowed field (email)", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      updateDoc(doc(authed(proUid).firestore(), profilePath), {
+        email: "alice@example.com",
+        about: "Updated bio",
+      })
+    );
   });
 });
 

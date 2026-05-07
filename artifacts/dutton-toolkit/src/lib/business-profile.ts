@@ -43,6 +43,23 @@ export type BusinessProfile = {
   completedJobsCount?: number;
 };
 
+/**
+ * Fields written to publicProfiles/{uid} — never includes email or isAdmin.
+ * Readable by any authenticated user for pro discovery / browsing.
+ */
+export type PublicProfile = {
+  displayName: string;
+  businessName: string;
+  services: string[];
+  serviceArea: string;
+  serviceRadiusMiles: number;
+  about: string;
+  publicPhone?: string;
+  profilePhoto?: string;
+  role: string;
+  updatedAt: string;
+};
+
 export async function loadAllBusinessProfiles(): Promise<BusinessProfile[]> {
   if (!isFirebaseConfigured || !db) return [];
   try {
@@ -73,23 +90,38 @@ export async function saveBusinessProfile(
   if (!isFirebaseConfigured || !db) return false;
   try {
     const updatedAt = new Date().toISOString();
+
+    // Write the full profile (owner-only access) to businessProfiles
     await setDoc(
       doc(db, "businessProfiles", uid),
       { proId: uid, ...data, updatedAt },
       { merge: true },
     );
-    // Also sync key fields to users/{uid} so ProProfile can read them
+
+    // Sync key fields to users/{uid} for owner/admin reads (e.g. admin panel)
     await updateDoc(doc(db, "users", uid), {
       businessName: data.businessName,
       displayName: data.ownerName,
-      services: data.serviceCategories,
+      hasBusinessProfile: true,
+    });
+
+    // Write ONLY public fields to publicProfiles/{uid}.
+    // This collection is readable by any authenticated user for pro browsing.
+    // Sensitive fields (email, isAdmin) are deliberately never written here.
+    const publicProfile: PublicProfile = {
+      displayName: data.ownerName,
+      businessName: data.businessName,
+      services: data.serviceCategories as string[],
       serviceArea: data.serviceArea,
       serviceRadiusMiles: data.serviceRadius,
       about: data.about,
-      publicPhone: data.publicPhone ?? null,
-      profilePhoto: data.profilePhoto ?? null,
-      hasBusinessProfile: true,
-    });
+      role: "pro",
+      updatedAt,
+      ...(data.publicPhone ? { publicPhone: data.publicPhone } : {}),
+      ...(data.profilePhoto ? { profilePhoto: data.profilePhoto } : {}),
+    };
+    await setDoc(doc(db, "publicProfiles", uid), publicProfile, { merge: true });
+
     return true;
   } catch (err) {
     console.error("[BusinessProfile] save failed:", err);

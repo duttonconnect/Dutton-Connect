@@ -56,10 +56,15 @@ export type Review = {
   createdAt: string;
 };
 
+/**
+ * Public-facing pro profile fields readable by any authenticated user.
+ * These fields mirror the allowlist enforced by the `publicProfiles` Firestore
+ * security rule — sensitive fields (email, isAdmin) are never present in that
+ * collection and are therefore never returned from loadProProfile.
+ */
 export type ProProfile = {
   uid: string;
   displayName?: string;
-  email?: string;
   businessName?: string;
   services?: string[];
   serviceArea?: string;
@@ -283,13 +288,34 @@ export async function scheduleJobRequest(
   }
 }
 
-/** Load a pro's public profile from the users collection. */
+/**
+ * Load a pro's public profile from the publicProfiles collection.
+ *
+ * publicProfiles/{uid} is a curated projection that contains only the fields
+ * safe for any authenticated user to read (businessName, services, serviceArea,
+ * publicPhone, about, profilePhoto, displayName, role). Sensitive fields
+ * (email, isAdmin) are never written to this collection — they live in
+ * users/{uid} which is restricted to the owner and admins.
+ */
 export async function loadProProfile(proId: string): Promise<ProProfile | null> {
   if (!isFirebaseConfigured || !db) return null;
   try {
-    const snap = await getDoc(doc(db, "users", proId));
+    const snap = await getDoc(doc(db, "publicProfiles", proId));
     if (!snap.exists()) return null;
-    return { uid: snap.id, ...snap.data() } as ProProfile;
+    const d = snap.data();
+    const profile: ProProfile = {
+      uid: snap.id,
+      ...(d.displayName !== undefined && { displayName: d.displayName as string }),
+      ...(d.businessName !== undefined && { businessName: d.businessName as string }),
+      ...(d.services !== undefined && { services: d.services as string[] }),
+      ...(d.serviceArea !== undefined && { serviceArea: d.serviceArea as string }),
+      ...(d.serviceRadiusMiles !== undefined && { serviceRadiusMiles: d.serviceRadiusMiles as number }),
+      ...(d.about !== undefined && { about: d.about as string }),
+      ...(d.publicPhone !== undefined && { publicPhone: d.publicPhone as string }),
+      ...(d.profilePhoto !== undefined && { profilePhoto: d.profilePhoto as string }),
+      ...(d.role !== undefined && { role: d.role as string }),
+    };
+    return profile;
   } catch (err) {
     console.warn("[Matching] Could not load pro profile:", err);
     return null;
