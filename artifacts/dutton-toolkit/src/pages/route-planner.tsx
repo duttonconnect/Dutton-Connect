@@ -471,6 +471,7 @@ export default function RoutePlanner() {
   const [endAddress, setEndAddress] = useState("");
   const [routeName, setRouteName] = useState("");
   const [orderedStops, setOrderedStops] = useState<string[]>([]);
+  const [loadedRouteId, setLoadedRouteId] = useState<string | null>(null);
   const [confirmingClearAll, setConfirmingClearAll] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [stopsCollapsed, setStopsCollapsed] = useState(false);
@@ -690,8 +691,87 @@ export default function RoutePlanner() {
       return;
     }
     setSaving(true);
+    const firestore = db;
+
+    // Save-over branch: overwrite an existing route the pro loaded earlier
+    if (loadedRouteId) {
+      const previous = savedRoutes.find((r) => r.id === loadedRouteId);
+      if (!previous) {
+        // Route no longer exists — fall through to create a new one
+      } else {
+        const previousStart = previous.startAddress;
+        const previousEnd = previous.endAddress;
+        const previousStops = previous.stops ?? [];
+
+        const nextStart = startAddress.trim();
+        const nextEnd = endAddress.trim();
+        const nextStops = orderedStops;
+        const nextName = routeName.trim();
+
+        try {
+          await updateDoc(doc(firestore, "routes", loadedRouteId), {
+            name: nextName,
+            startAddress: nextStart,
+            endAddress: nextEnd,
+            stops: nextStops,
+          });
+
+          setSavedRoutes((prev) =>
+            prev.map((r) =>
+              r.id === loadedRouteId
+                ? { ...r, name: nextName, startAddress: nextStart, endAddress: nextEnd, stops: nextStops }
+                : r,
+            ),
+          );
+          setIsDirty(false);
+
+          let undone = false;
+          toast.success("Route updated.", {
+            duration: UNDO_WINDOW_MS,
+            action: {
+              label: "Undo",
+              onClick: async () => {
+                if (undone) return;
+                try {
+                  await updateDoc(doc(firestore, "routes", loadedRouteId), {
+                    name: previous.name,
+                    startAddress: previousStart,
+                    endAddress: previousEnd,
+                    stops: previousStops,
+                  });
+                  undone = true;
+                  setStartAddress(previousStart);
+                  setEndAddress(previousEnd);
+                  setRouteName(previous.name ?? "");
+                  setOrderedStops(previousStops);
+                  setSavedRoutes((prev) =>
+                    prev.map((r) =>
+                      r.id === loadedRouteId
+                        ? { ...r, name: previous.name, startAddress: previousStart, endAddress: previousEnd, stops: previousStops }
+                        : r,
+                    ),
+                  );
+                  toast.success("Route restored.");
+                } catch (err) {
+                  console.warn("[RoutePlanner] Undo save-over failed:", err);
+                  toast.error("Could not undo. Please try again.");
+                }
+              },
+            },
+          });
+        } catch (err) {
+          console.warn("[RoutePlanner] Save-over failed:", err);
+          toast.error("Failed to update route.");
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
+    }
+
+    // New route branch
     try {
-      await addDoc(collection(db, "routes"), {
+      await addDoc(collection(firestore, "routes"), {
         userId: user.uid,
         name: routeName.trim(),
         startAddress: startAddress.trim(),
@@ -702,6 +782,7 @@ export default function RoutePlanner() {
       });
       toast.success("Route saved.");
       setRouteName("");
+      setLoadedRouteId(null);
       setIsDirty(false);
       await loadSavedRoutes();
     } catch (err) {
@@ -864,6 +945,7 @@ export default function RoutePlanner() {
     setEndAddress(route.endAddress ?? "");
     setRouteName(route.name ?? "");
     setOrderedStops(stops);
+    setLoadedRouteId(route.id);
     setIsDirty(false);
     if (staleCount > 0) {
       toast.warning(
@@ -974,6 +1056,7 @@ export default function RoutePlanner() {
                         setEndAddress("");
                         setRouteName("");
                         setOrderedStops([]);
+                        setLoadedRouteId(null);
                         setConfirmingReset(false);
                         setConfirmingClearAll(false);
                         setIsDirty(false);
