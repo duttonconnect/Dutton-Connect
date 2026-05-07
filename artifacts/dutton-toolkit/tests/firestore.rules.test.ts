@@ -1165,6 +1165,35 @@ describe("reports collection", () => {
         })
       );
     });
+
+    it("allows an admin to delete a report", async () => {
+      const adminCtx = await seedAdminAndGetContext(adminUid);
+      await seedDoc(reportPath, reportData);
+      await assertSucceeds(
+        deleteDoc(doc(adminCtx.firestore(), reportPath))
+      );
+    });
+
+    it("denies the original reporter from deleting their own report", async () => {
+      await seedDoc(reportPath, reportData);
+      await assertFails(
+        deleteDoc(doc(authed(reporterUid).firestore(), reportPath))
+      );
+    });
+
+    it("denies a non-admin user from deleting someone else's report", async () => {
+      await seedDoc(reportPath, reportData);
+      await assertFails(
+        deleteDoc(doc(authed(otherUid).firestore(), reportPath))
+      );
+    });
+
+    it("denies an unauthenticated user from deleting a report", async () => {
+      await seedDoc(reportPath, reportData);
+      await assertFails(
+        deleteDoc(doc(unauthed().firestore(), reportPath))
+      );
+    });
   });
 });
 

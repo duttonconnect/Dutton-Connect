@@ -302,14 +302,15 @@ service cloud.firestore {
     // ── reports ───────────────────────────────────────────────────────────
     // Users submit reports about issues (`reporterId` = caller).
     // Reporters may read their own submitted reports.
-    // Admins may read all reports and update their status.
-    // Reports are immutable once created — no updates by reporters.
+    // Admins may read all reports, update their status, and delete them.
+    // Reports are immutable once created — no updates or deletes by reporters.
     match /reports/{reportId} {
       allow read: if isSignedIn()
                   && (request.auth.uid == resource.data.reporterId || isAdmin());
       allow create: if isSignedIn()
                     && request.auth.uid == request.resource.data.reporterId;
       allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ── catch-all ─────────────────────────────────────────────────────────
