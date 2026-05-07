@@ -10,12 +10,16 @@ import {
   Wrench,
   Search,
   ListChecks,
-  ArrowRight,
   ClipboardList,
   ChevronRight,
+  Home,
+  Bell,
+  AlertCircle,
 } from "lucide-react";
+import { isPast, isWithinInterval, addDays } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/lib/store";
 import { OnboardingBanner } from "@/components/onboarding-banner";
 
@@ -31,9 +35,20 @@ const CATEGORIES = [
 ];
 
 export default function CustomerDashboard() {
-  const { jobRequests } = useAppStore();
+  const { jobRequests, serviceReminders, homeProfile } = useAppStore();
   const myRequests = jobRequests ?? [];
   const openCount = myRequests.length;
+
+  const reminders = serviceReminders ?? [];
+  const overdueCount = reminders.filter((r) => {
+    const due = new Date(r.nextDue);
+    return isPast(due);
+  }).length;
+  const soonCount = reminders.filter((r) => {
+    const due = new Date(r.nextDue);
+    return !isPast(due) && isWithinInterval(due, { start: new Date(), end: addDays(new Date(), 14) });
+  }).length;
+  const reminderAlerts = overdueCount + soonCount;
 
   return (
     <div className="space-y-8">
@@ -123,6 +138,41 @@ export default function CustomerDashboard() {
           />
         </div>
       </div>
+
+      {/* New exclusive features */}
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight mb-1">Only on Dutton Connect</h2>
+        <p className="text-sm text-muted-foreground mb-3">Tools you won't find anywhere else.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <ActionCard
+            to="/home-profile"
+            icon={<Home className="h-6 w-6" />}
+            title="Home Profile"
+            description={
+              homeProfile
+                ? `${homeProfile.homeType.charAt(0).toUpperCase() + homeProfile.homeType.slice(1)} · ${homeProfile.address}`
+                : "Save your property details once — pros get them automatically with every request."
+            }
+            teal
+          />
+          <ActionCard
+            to="/reminders"
+            icon={<Bell className="h-6 w-6" />}
+            title="Service Reminders"
+            description={
+              reminders.length === 0
+                ? "Never miss HVAC filters, gutter cleaning, or any routine maintenance."
+                : overdueCount > 0
+                ? `${overdueCount} overdue · ${reminders.length} total reminder${reminders.length === 1 ? "" : "s"}`
+                : reminderAlerts > 0
+                ? `${reminderAlerts} due soon · ${reminders.length} total`
+                : `${reminders.length} reminder${reminders.length === 1 ? "" : "s"} — all on track`
+            }
+            badge={reminderAlerts > 0 ? reminderAlerts : undefined}
+            badgeColor={overdueCount > 0 ? "red" : "amber"}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -133,33 +183,48 @@ function ActionCard({
   title,
   description,
   accent,
+  teal,
   badge,
+  badgeColor = "blue",
 }: {
   to: string;
   icon: React.ReactNode;
   title: string;
   description: string;
   accent?: boolean;
+  teal?: boolean;
   badge?: number;
+  badgeColor?: "blue" | "red" | "amber";
 }) {
+  const iconBg = accent
+    ? "bg-primary text-white"
+    : teal
+    ? "bg-teal-50 text-teal-600"
+    : "bg-gray-100 text-gray-700";
+
+  const borderClass = accent
+    ? "border-primary/30"
+    : teal
+    ? "border-teal-100"
+    : "border-gray-100";
+
+  const badgeBg =
+    badgeColor === "red"
+      ? "bg-red-500"
+      : badgeColor === "amber"
+      ? "bg-amber-400"
+      : "bg-primary";
+
   return (
     <Link href={to}>
-      <Card
-        className={`cursor-pointer hover:shadow-lg transition-all h-full rounded-2xl ${
-          accent ? "border-primary/30" : "border-gray-100"
-        }`}
-      >
+      <Card className={`cursor-pointer hover:shadow-lg transition-all h-full rounded-2xl ${borderClass}`}>
         <CardContent className="p-6 flex flex-col gap-4 h-full">
           <div className="flex items-center justify-between">
-            <div
-              className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                accent ? "bg-primary text-white" : "bg-gray-100 text-gray-700"
-              }`}
-            >
+            <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${iconBg}`}>
               {icon}
             </div>
             {badge !== undefined && (
-              <span className="bg-primary text-white text-xs font-bold rounded-full h-6 min-w-6 px-2 flex items-center justify-center">
+              <span className={`${badgeBg} text-white text-xs font-bold rounded-full h-6 min-w-6 px-2 flex items-center justify-center`}>
                 {badge}
               </span>
             )}

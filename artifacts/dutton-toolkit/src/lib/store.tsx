@@ -139,6 +139,29 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
 
 export type Urgency = "Low" | "Normal" | "Urgent" | "Soon" | "Emergency";
 
+export type HomeProfile = {
+  homeType: "house" | "apartment" | "condo" | "townhouse" | "other";
+  address: string;
+  squareFootage: string;
+  yearBuilt: string;
+  bedrooms: string;
+  bathrooms: string;
+  parkingNotes: string;
+  accessNotes: string;
+  updatedAt: string;
+};
+
+export type ServiceReminder = {
+  id: string;
+  title: string;
+  category: string;
+  intervalDays: number;
+  lastDone: string;
+  nextDue: string;
+  notes: string;
+  createdAt: string;
+};
+
 export type JobRequest = {
   id: string;
   title: string;
@@ -162,6 +185,8 @@ type AppState = {
   trips: Trip[];
   receipts: Receipt[];
   jobRequests: JobRequest[];
+  homeProfile: HomeProfile | null;
+  serviceReminders: ServiceReminder[];
 };
 
 type AppContextType = AppState & {
@@ -194,6 +219,12 @@ type AppContextType = AppState & {
   addJobRequest: (r: Omit<JobRequest, "id" | "createdAt"> & { id?: string }) => void;
   deleteJobRequest: (id: string) => void;
 
+  setHomeProfile: (p: HomeProfile) => void;
+
+  addServiceReminder: (r: Omit<ServiceReminder, "id" | "createdAt">) => void;
+  updateServiceReminder: (id: string, r: Partial<ServiceReminder>) => void;
+  deleteServiceReminder: (id: string) => void;
+
   loadState: (s: Partial<AppState>) => void;
 };
 
@@ -205,6 +236,8 @@ const SEED_DATA: AppState = {
   trips: [],
   receipts: [],
   jobRequests: [],
+  homeProfile: null,
+  serviceReminders: [],
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -263,6 +296,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     },
     deleteJobRequest: (id) => setState(s => ({ ...s, jobRequests: (s.jobRequests ?? []).filter(x => x.id !== id) })),
 
+    setHomeProfile: (p) => setState(s => ({ ...s, homeProfile: p })),
+
+    addServiceReminder: (r) => setState(s => ({ ...s, serviceReminders: [...(s.serviceReminders ?? []), { ...r, id: generateId(), createdAt: new Date().toISOString() }] })),
+    updateServiceReminder: (id, r) => setState(s => ({ ...s, serviceReminders: (s.serviceReminders ?? []).map(x => x.id === id ? { ...x, ...r } : x) })),
+    deleteServiceReminder: (id) => setState(s => ({ ...s, serviceReminders: (s.serviceReminders ?? []).filter(x => x.id !== id) })),
+
     loadState: (incoming) => setState(s => ({
       customers: incoming.customers ?? s.customers,
       jobs: incoming.jobs ?? s.jobs,
@@ -271,6 +310,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       trips: incoming.trips ?? s.trips,
       receipts: incoming.receipts ?? s.receipts,
       jobRequests: incoming.jobRequests ?? s.jobRequests,
+      homeProfile: incoming.homeProfile ?? s.homeProfile,
+      serviceReminders: incoming.serviceReminders ?? s.serviceReminders,
     })),
   };
 

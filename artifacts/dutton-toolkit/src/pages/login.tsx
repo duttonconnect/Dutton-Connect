@@ -17,6 +17,22 @@ import {
   MessageSquare,
   ChevronDown,
   ChevronUp,
+  Zap,
+  Truck,
+  PaintbrushVertical,
+  Bug,
+  ClipboardList,
+  Search,
+  Bell,
+  Home,
+  Star,
+  Navigation,
+  Receipt,
+  Calculator,
+  Users,
+  CalendarDays,
+  FileText,
+  DollarSign,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
@@ -25,12 +41,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const CATEGORIES = [
-  { label: "House Cleaning", icon: Sparkles },
+  { label: "Cleaning Services", icon: Sparkles },
   { label: "Handyman", icon: Hammer },
   { label: "Plumbing", icon: Droplets },
   { label: "Yard Work", icon: Leaf },
-  { label: "Automotive", icon: Car },
+  { label: "Electrical", icon: Zap },
+  { label: "Moving Help", icon: Truck },
+  { label: "Painting", icon: PaintbrushVertical },
+  { label: "Pest Control", icon: Bug },
   { label: "Pressure Washing", icon: Wind },
+  { label: "Automotive", icon: Car },
 ];
 
 const TRUST = [
@@ -49,6 +69,26 @@ const TRUST = [
     title: "Secure messaging",
     desc: "Message pros directly before committing to anything.",
   },
+];
+
+const CUSTOMER_FEATURES = [
+  { icon: ClipboardList, text: "Post a request in under 2 minutes" },
+  { icon: Search, text: "Browse and compare nearby pros" },
+  { icon: MessageSquare, text: "Message pros before hiring anyone" },
+  { icon: Star, text: "Leave reviews after the job is done" },
+  { icon: Home, text: "Home Profile — save your property details once" },
+  { icon: Bell, text: "Service Reminders — never miss routine maintenance" },
+  { icon: CalendarDays, text: "Schedule and track upcoming jobs" },
+];
+
+const PRO_FEATURES = [
+  { icon: ClipboardList, text: "Browse nearby customer job requests" },
+  { icon: FileText, text: "Send professional quotes instantly" },
+  { icon: Users, text: "Manage all your customers in one place" },
+  { icon: DollarSign, text: "Track payments and outstanding balances" },
+  { icon: Navigation, text: "Route Planner for efficient daily scheduling" },
+  { icon: Receipt, text: "Mileage and receipt tracker for tax time" },
+  { icon: Calculator, text: "Build and send detailed estimates" },
 ];
 
 export default function Login() {
@@ -104,10 +144,10 @@ export default function Login() {
         style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)" }}
       >
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto">
-          Find trusted local professionals near you
+          Your neighborhood, done right.
         </h1>
         <p className="mt-4 text-blue-200 text-base sm:text-lg max-w-xl mx-auto">
-          Post a request, compare quotes, and get the job done.
+          Post any job, compare real quotes, and hire the right local pro — all in one place.
         </p>
 
         {/* Category chips */}
@@ -162,6 +202,64 @@ export default function Login() {
               </Button>
             </div>
           </Link>
+        </div>
+      </section>
+
+      {/* Feature showcase */}
+      <section className="px-6 pb-12 max-w-4xl mx-auto w-full">
+        <h2 className="text-center text-xl font-bold text-gray-900 mb-8">
+          Everything you need, built in
+        </h2>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {/* Customer features */}
+          <div className="rounded-2xl bg-white border border-blue-100 p-6 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+              </div>
+              <span className="font-semibold text-gray-900">For Customers</span>
+            </div>
+            <ul className="space-y-3">
+              {CUSTOMER_FEATURES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-start gap-3 text-sm text-gray-700">
+                  <div className="h-6 w-6 rounded-md bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon className="h-3.5 w-3.5 text-blue-600" />
+                  </div>
+                  {text}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup?role=customer">
+              <Button size="sm" className="w-full mt-2">
+                Get Started Free
+              </Button>
+            </Link>
+          </div>
+
+          {/* Pro features */}
+          <div className="rounded-2xl bg-white border border-gray-100 p-6 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <Hammer className="h-4 w-4 text-gray-700" />
+              </div>
+              <span className="font-semibold text-gray-900">For Service Pros</span>
+            </div>
+            <ul className="space-y-3">
+              {PRO_FEATURES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-start gap-3 text-sm text-gray-700">
+                  <div className="h-6 w-6 rounded-md bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon className="h-3.5 w-3.5 text-gray-700" />
+                  </div>
+                  {text}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup?role=pro">
+              <Button size="sm" variant="outline" className="w-full mt-2">
+                Join as a Pro
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

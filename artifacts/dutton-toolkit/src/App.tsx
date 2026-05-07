@@ -36,6 +36,8 @@ import JobQuotes from "@/pages/customer/job-quotes";
 import LeaveReview from "@/pages/customer/leave-review";
 import FindNearbyPros from "@/pages/customer/find-pros";
 import MyQuotes from "@/pages/customer/my-quotes";
+import HomeProfilePage from "@/pages/customer/home-profile";
+import RemindersPage from "@/pages/customer/reminders";
 import ProProfilePage from "@/pages/pros/profile";
 import MessagesList from "@/pages/messages/index";
 import ChatPage from "@/pages/messages/chat";
@@ -103,6 +105,8 @@ function CustomerRoutes() {
         <Route path="/my-jobs/:jobId/review/:proId" component={LeaveReview} />
         <Route path="/my-quotes" component={MyQuotes} />
         <Route path="/find-pros" component={FindNearbyPros} />
+        <Route path="/home-profile" component={HomeProfilePage} />
+        <Route path="/reminders" component={RemindersPage} />
         <Route path="/pros/:proId" component={ProProfilePage} />
         <Route path="/messages" component={MessagesList} />
         <Route path="/messages/:id" component={ChatPage} />

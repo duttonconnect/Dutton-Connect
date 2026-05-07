@@ -23,6 +23,7 @@ import {
   Calculator,
   Bug,
   UserCircle,
+  Bell,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
@@ -68,6 +69,8 @@ const CUSTOMER_NAV = [
   { href: "/my-quotes", label: "Quotes", icon: DollarSign },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/home-profile", label: "Home Profile", icon: Home },
+  { href: "/reminders", label: "Reminders", icon: Bell },
   { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/report-bug", label: "Report Bug", icon: Bug },
 ];
