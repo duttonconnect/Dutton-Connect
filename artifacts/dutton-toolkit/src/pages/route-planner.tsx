@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star, RotateCcw } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -472,6 +472,7 @@ export default function RoutePlanner() {
   const [routeName, setRouteName] = useState("");
   const [orderedStops, setOrderedStops] = useState<string[]>([]);
   const [confirmingClearAll, setConfirmingClearAll] = useState(false);
+  const [confirmingReset, setConfirmingReset] = useState(false);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -488,6 +489,9 @@ export default function RoutePlanner() {
     startAddress.trim().length > 0 ||
     endAddress.trim().length > 0 ||
     orderedStops.length > 0;
+
+  const plannerHasAnyContent =
+    plannerHasContent || routeName.trim().length > 0;
 
   useEffect(() => {
     if (!isDirty || !plannerHasContent) return;
@@ -953,55 +957,100 @@ export default function RoutePlanner() {
                     </span>
                   )}
                 </CardTitle>
-                {orderedStops.length > 0 && (
-                  confirmingClearAll ? (
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">Clear all stops?</span>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => {
-                          const previousStops = [...orderedStops];
-                          markDirty();
-                          setOrderedStops([]);
-                          setConfirmingClearAll(false);
-                          let undone = false;
-                          toast.success("Stops cleared.", {
-                            duration: UNDO_WINDOW_MS,
-                            action: {
-                              label: "Undo",
-                              onClick: () => {
-                                if (undone) return;
-                                undone = true;
-                                setOrderedStops(previousStops);
-                              },
-                            },
-                          });
-                        }}
-                      >
-                        Yes, clear
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setConfirmingClearAll(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
+                {confirmingReset ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Reset everything?</span>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => {
+                        setStartAddress("");
+                        setEndAddress("");
+                        setRouteName("");
+                        setOrderedStops([]);
+                        setConfirmingReset(false);
+                        setConfirmingClearAll(false);
+                        setIsDirty(false);
+                        toast.success("Planner reset.");
+                      }}
+                    >
+                      Yes, reset
+                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
-                      onClick={() => setConfirmingClearAll(true)}
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setConfirmingReset(false)}
                     >
-                      <X className="h-3 w-3 mr-1" />
-                      Clear all
+                      Cancel
                     </Button>
-                  )
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 shrink-0">
+                    {orderedStops.length > 0 && (
+                      confirmingClearAll ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">Clear all stops?</span>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => {
+                              const previousStops = [...orderedStops];
+                              markDirty();
+                              setOrderedStops([]);
+                              setConfirmingClearAll(false);
+                              let undone = false;
+                              toast.success("Stops cleared.", {
+                                duration: UNDO_WINDOW_MS,
+                                action: {
+                                  label: "Undo",
+                                  onClick: () => {
+                                    if (undone) return;
+                                    undone = true;
+                                    setOrderedStops(previousStops);
+                                  },
+                                },
+                              });
+                            }}
+                          >
+                            Yes, clear
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setConfirmingClearAll(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setConfirmingClearAll(true)}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Clear all
+                        </Button>
+                      )
+                    )}
+                    {plannerHasAnyContent && !confirmingClearAll && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setConfirmingReset(true)}
+                        aria-label="Reset planner"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Reset
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </CardHeader>
