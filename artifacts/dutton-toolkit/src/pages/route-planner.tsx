@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star, RotateCcw } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -473,6 +473,7 @@ export default function RoutePlanner() {
   const [orderedStops, setOrderedStops] = useState<string[]>([]);
   const [confirmingClearAll, setConfirmingClearAll] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [stopsCollapsed, setStopsCollapsed] = useState(false);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -656,6 +657,10 @@ export default function RoutePlanner() {
   useEffect(() => {
     if (orderedStops.length === 0) setConfirmingClearAll(false);
   }, [orderedStops.length]);
+
+  useEffect(() => {
+    setStopsCollapsed(false);
+  }, [orderedStops]);
 
   function toggleStop(address: string) {
     markDirty();
@@ -1077,10 +1082,21 @@ export default function RoutePlanner() {
               {orderedStops.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Selected Stops ({orderedStops.length}) — drag to reorder
-                    </Label>
-                    {orderedStops.some((addr) => !activeJobAddresses.has(addr)) && (
+                    <button
+                      type="button"
+                      onClick={() => setStopsCollapsed((c) => !c)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      aria-expanded={!stopsCollapsed}
+                      aria-label={stopsCollapsed ? "Expand stop list" : "Collapse stop list"}
+                    >
+                      {stopsCollapsed ? (
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <ChevronUp className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      Selected Stops ({orderedStops.length}){!stopsCollapsed && " — drag to reorder"}
+                    </button>
+                    {!stopsCollapsed && orderedStops.some((addr) => !activeJobAddresses.has(addr)) && (
                       <button
                         onClick={() => {
                           markDirty();
@@ -1093,14 +1109,16 @@ export default function RoutePlanner() {
                       </button>
                     )}
                   </div>
-                  <div className="max-h-56 overflow-y-auto pr-0.5">
-                    <DraggableStopList
-                      stops={orderedStops}
-                      activeJobAddresses={activeJobAddresses}
-                      onReorder={(stops) => { markDirty(); setOrderedStops(stops); }}
-                      onRemove={toggleStop}
-                    />
-                  </div>
+                  {!stopsCollapsed && (
+                    <div className="max-h-56 overflow-y-auto pr-0.5">
+                      <DraggableStopList
+                        stops={orderedStops}
+                        activeJobAddresses={activeJobAddresses}
+                        onReorder={(stops) => { markDirty(); setOrderedStops(stops); }}
+                        onRemove={toggleStop}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
