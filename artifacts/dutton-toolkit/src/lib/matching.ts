@@ -68,6 +68,12 @@ export type ProProfile = {
   publicPhone?: string; // only shown when explicitly set as public
   profilePhoto?: string;
   role?: string;
+  // Trust badges
+  verifiedPro?: boolean;
+  fastResponder?: boolean;
+  topRated?: boolean;
+  // Stats
+  completedJobsCount?: number;
 };
 
 export type MatchQuote = {

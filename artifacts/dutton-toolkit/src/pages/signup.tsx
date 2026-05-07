@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { UserPlus, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import { UserPlus, Eye, EyeOff, AlertCircle, Loader2, Hammer, User, Users } from "lucide-react";
 
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { type Role } from "@/lib/role";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+type RoleOption = "customer" | "pro" | "both";
 
 export default function Signup() {
   const { signup, isConfigured } = useAuth();
@@ -15,6 +18,7 @@ export default function Signup() {
   const search = useSearch();
   const params = new URLSearchParams(search);
   const preselectedRole = params.get("role") === "pro" ? "pro" : "customer";
+  const referralCode = params.get("ref") ?? "";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,7 +27,7 @@ export default function Signup() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<"customer" | "pro">(preselectedRole);
+  const [roleOption, setRoleOption] = useState<RoleOption>(preselectedRole);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +42,10 @@ export default function Signup() {
     }
     setLoading(true);
     try {
-      await signup(email.trim(), password, name.trim(), role);
+      const roles: Role[] = roleOption === "both"
+        ? ["customer", "pro"]
+        : [roleOption];
+      await signup(email.trim(), password, name.trim(), roles);
       toast.success("Account created");
       setLocation("/");
     } catch (err: unknown) {
@@ -49,6 +56,27 @@ export default function Signup() {
       setLoading(false);
     }
   };
+
+  const roleOptions: { value: RoleOption; icon: React.ReactNode; label: string; sub: string }[] = [
+    {
+      value: "customer",
+      icon: <User className="h-4 w-4" />,
+      label: "Customer",
+      sub: "I need work done",
+    },
+    {
+      value: "pro",
+      icon: <Hammer className="h-4 w-4" />,
+      label: "Pro",
+      sub: "I provide services",
+    },
+    {
+      value: "both",
+      icon: <Users className="h-4 w-4" />,
+      label: "Both",
+      sub: "Customer & Pro",
+    },
+  ];
 
   return (
     <div className="min-h-[100dvh] flex flex-col" style={{ background: "#F8FAFC" }}>
@@ -81,6 +109,12 @@ export default function Signup() {
             </div>
           )}
 
+          {referralCode && (
+            <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800">
+              You were referred with code <strong>{referralCode}</strong>. Welcome to Dutton Connect!
+            </div>
+          )}
+
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Get started</CardTitle>
@@ -102,32 +136,36 @@ export default function Signup() {
                     autoFocus
                   />
                 </div>
+
+                {/* Role picker — 3 options */}
                 <div>
                   <Label>I am a</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    {(["customer", "pro"] as const).map((option) => (
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {roleOptions.map((opt) => (
                       <button
-                        key={option}
+                        key={opt.value}
                         type="button"
-                        onClick={() => setRole(option)}
+                        onClick={() => setRoleOption(opt.value)}
                         className={[
-                          "rounded-md border px-3 py-3 text-left transition-colors",
-                          role === option
+                          "rounded-md border px-2 py-3 text-left transition-colors",
+                          roleOption === opt.value
                             ? "border-primary bg-primary/5 text-primary"
                             : "border-gray-200 bg-white text-gray-700 hover:border-gray-300",
                         ].join(" ")}
                       >
-                        <div className="font-medium text-sm">
-                          {option === "customer" ? "Customer" : "Pro"}
+                        <div className="flex items-center gap-1.5 font-medium text-sm">
+                          {opt.icon}
+                          {opt.label}
                         </div>
-                        <div className="text-xs mt-0.5 text-gray-500">
-                          {option === "customer"
-                            ? "I need work done"
-                            : "I provide services"}
-                        </div>
+                        <div className="text-xs mt-0.5 text-gray-500">{opt.sub}</div>
                       </button>
                     ))}
                   </div>
+                  {roleOption === "both" && (
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      You'll start in Customer Mode — switch to Pro Mode anytime from the menu.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -206,7 +244,6 @@ export default function Signup() {
               Sign in
             </Link>
           </div>
-
         </div>
       </main>
     </div>

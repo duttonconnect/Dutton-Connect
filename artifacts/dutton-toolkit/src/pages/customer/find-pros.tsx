@@ -16,6 +16,9 @@ import {
   LocateFixed,
   X,
   Filter,
+  BadgeCheck,
+  Zap,
+  ShieldCheck,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,6 +47,10 @@ type Pro = {
   verified?: boolean;
   lat?: number;
   lng?: number;
+  verifiedPro?: boolean;
+  fastResponder?: boolean;
+  topRated?: boolean;
+  completedJobsCount?: number;
 };
 
 export default function FindNearbyPros() {
@@ -74,7 +81,11 @@ export default function FindNearbyPros() {
           phone: bp.publicPhone,
           ratingPlaceholder: 0,
           reviewsPlaceholder: 0,
-          verified: false,
+          verified: bp.verifiedPro ?? false,
+          verifiedPro: bp.verifiedPro,
+          fastResponder: bp.fastResponder,
+          topRated: bp.topRated,
+          completedJobsCount: bp.completedJobsCount,
         }));
         setPros(mapped);
       })
@@ -387,11 +398,14 @@ export default function FindNearbyPros() {
                       <span className="truncate" title={pro.business}>
                         {pro.business}
                       </span>
-                      {pro.verified && (
-                        <CheckCircle2
+                      {pro.verifiedPro && (
+                        <BadgeCheck
                           className="h-4 w-4 text-primary shrink-0"
-                          aria-label="Verified"
+                          aria-label="Verified Pro"
                         />
+                      )}
+                      {pro.topRated && (
+                        <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" aria-label="Top Rated" />
                       )}
                     </div>
                     {pro.reviewsPlaceholder > 0 && (
@@ -403,6 +417,24 @@ export default function FindNearbyPros() {
                         <span className="text-xs">
                           ({pro.reviewsPlaceholder} reviews)
                         </span>
+                      </div>
+                    )}
+                    {(pro.completedJobsCount ?? 0) > 0 && (
+                      <p className="text-xs text-muted-foreground">{pro.completedJobsCount} jobs completed</p>
+                    )}
+                    {/* Trust badge pills */}
+                    {(pro.verifiedPro || pro.fastResponder) && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {pro.verifiedPro && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                            <BadgeCheck className="h-2.5 w-2.5" /> Verified
+                          </span>
+                        )}
+                        {pro.fastResponder && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                            <Zap className="h-2.5 w-2.5" /> Fast Responder
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

@@ -162,6 +162,62 @@ export type ServiceReminder = {
   createdAt: string;
 };
 
+export type JobPhoto = {
+  id: string;
+  jobRequestId: string;
+  propertyAddress: string;
+  beforeDataUrl?: string;
+  afterDataUrl?: string;
+  proName?: string;
+  serviceType: string;
+  completedDate: string;
+  notes: string;
+  createdAt: string;
+};
+
+export type Warranty = {
+  id: string;
+  jobRequestId: string;
+  proId: string;
+  proName: string;
+  serviceDescription: string;
+  propertyAddress: string;
+  completedDate: string;
+  warrantyDays: number;
+  expiresAt: string;
+  notes: string;
+  createdAt: string;
+};
+
+export type BundleRequest = {
+  id: string;
+  title: string;
+  category: RequestCategory;
+  description: string;
+  address: string;
+  budget: number;
+  urgency: Urgency;
+  createdBy: string;
+  participants: string[];
+  maxParticipants: number;
+  status: "open" | "full" | "closed";
+  createdAt: string;
+};
+
+export type AvailabilitySlot = {
+  id: string;
+  proId: string;
+  proName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  serviceTypes: string[];
+  location: string;
+  notes: string;
+  bookedBy?: string;
+  createdAt: string;
+};
+
 export type JobRequest = {
   id: string;
   title: string;
@@ -187,6 +243,9 @@ type AppState = {
   jobRequests: JobRequest[];
   homeProfile: HomeProfile | null;
   serviceReminders: ServiceReminder[];
+  jobPhotos: JobPhoto[];
+  warranties: Warranty[];
+  bundleRequests: BundleRequest[];
 };
 
 type AppContextType = AppState & {
@@ -225,6 +284,16 @@ type AppContextType = AppState & {
   updateServiceReminder: (id: string, r: Partial<ServiceReminder>) => void;
   deleteServiceReminder: (id: string) => void;
 
+  addJobPhoto: (p: Omit<JobPhoto, "id" | "createdAt">) => void;
+  deleteJobPhoto: (id: string) => void;
+
+  addWarranty: (w: Omit<Warranty, "id" | "createdAt">) => void;
+  deleteWarranty: (id: string) => void;
+
+  addBundleRequest: (b: Omit<BundleRequest, "id" | "createdAt">) => void;
+  joinBundleRequest: (id: string, userId: string) => void;
+  deleteBundleRequest: (id: string) => void;
+
   loadState: (s: Partial<AppState>) => void;
 };
 
@@ -238,6 +307,9 @@ const SEED_DATA: AppState = {
   jobRequests: [],
   homeProfile: null,
   serviceReminders: [],
+  jobPhotos: [],
+  warranties: [],
+  bundleRequests: [],
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -302,6 +374,24 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     updateServiceReminder: (id, r) => setState(s => ({ ...s, serviceReminders: (s.serviceReminders ?? []).map(x => x.id === id ? { ...x, ...r } : x) })),
     deleteServiceReminder: (id) => setState(s => ({ ...s, serviceReminders: (s.serviceReminders ?? []).filter(x => x.id !== id) })),
 
+    addJobPhoto: (p) => setState(s => ({ ...s, jobPhotos: [...(s.jobPhotos ?? []), { ...p, id: generateId(), createdAt: new Date().toISOString() }] })),
+    deleteJobPhoto: (id) => setState(s => ({ ...s, jobPhotos: (s.jobPhotos ?? []).filter(x => x.id !== id) })),
+
+    addWarranty: (w) => setState(s => ({ ...s, warranties: [...(s.warranties ?? []), { ...w, id: generateId(), createdAt: new Date().toISOString() }] })),
+    deleteWarranty: (id) => setState(s => ({ ...s, warranties: (s.warranties ?? []).filter(x => x.id !== id) })),
+
+    addBundleRequest: (b) => setState(s => ({ ...s, bundleRequests: [...(s.bundleRequests ?? []), { ...b, id: generateId(), createdAt: new Date().toISOString() }] })),
+    joinBundleRequest: (id, userId) => setState(s => ({
+      ...s,
+      bundleRequests: (s.bundleRequests ?? []).map(b => {
+        if (b.id !== id) return b;
+        const participants = b.participants.includes(userId) ? b.participants : [...b.participants, userId];
+        const status: BundleRequest["status"] = participants.length >= b.maxParticipants ? "full" : "open";
+        return { ...b, participants, status };
+      }),
+    })),
+    deleteBundleRequest: (id) => setState(s => ({ ...s, bundleRequests: (s.bundleRequests ?? []).filter(x => x.id !== id) })),
+
     loadState: (incoming) => setState(s => ({
       customers: incoming.customers ?? s.customers,
       jobs: incoming.jobs ?? s.jobs,
@@ -312,6 +402,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       jobRequests: incoming.jobRequests ?? s.jobRequests,
       homeProfile: incoming.homeProfile ?? s.homeProfile,
       serviceReminders: incoming.serviceReminders ?? s.serviceReminders,
+      jobPhotos: incoming.jobPhotos ?? s.jobPhotos,
+      warranties: incoming.warranties ?? s.warranties,
+      bundleRequests: incoming.bundleRequests ?? s.bundleRequests,
     })),
   };
 

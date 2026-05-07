@@ -1,10 +1,10 @@
-import { Hammer, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Hammer, User, ArrowRight, CheckCircle2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRole } from "@/lib/role";
 
 export default function ChooseAccountType() {
-  const { setRole } = useRole();
+  const { setRole, setRoles } = useRole();
 
   return (
     <div className="min-h-[100dvh] bg-gray-50 flex flex-col">
@@ -18,17 +18,29 @@ export default function ChooseAccountType() {
       </header>
 
       <main className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-3xl space-y-8">
+        <div className="w-full max-w-4xl space-y-8">
           <div className="text-center space-y-2">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">
               Welcome
             </h1>
             <p className="text-gray-600 max-w-xl mx-auto">
-              Choose how you'd like to use the app. You can switch later from the menu.
+              Choose how you'd like to use Dutton Connect. You can add the other mode later, anytime from the menu.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
+            <RoleCard
+              icon={<User className="h-6 w-6" />}
+              title="Customer"
+              subtitle="Homeowner / client"
+              bullets={[
+                "Browse local service pros",
+                "Request quotes and compare",
+                "Message, schedule, and review",
+              ]}
+              cta="Continue as Customer"
+              onClick={() => setRole("customer")}
+            />
             <RoleCard
               icon={<Hammer className="h-6 w-6" />}
               title="Pro"
@@ -36,25 +48,30 @@ export default function ChooseAccountType() {
               bullets={[
                 "Manage jobs, quotes, customers",
                 "Track payments and mileage",
-                "Save receipts and view the job map",
+                "Get discovered by local clients",
               ]}
               cta="Continue as Pro"
               onClick={() => setRole("pro")}
               accent
             />
             <RoleCard
-              icon={<User className="h-6 w-6" />}
-              title="Customer"
-              subtitle="Homeowner / client"
+              icon={<Users className="h-6 w-6" />}
+              title="Both"
+              subtitle="Customer & Pro"
               bullets={[
-                "Browse local service providers",
-                "Request quotes from trusted pros",
-                "Message, schedule, and leave reviews",
+                "Full access to both sides",
+                "Switch modes from the menu",
+                "One account for everything",
               ]}
-              cta="Continue as Customer"
-              onClick={() => setRole("customer")}
+              cta="I'm Both"
+              onClick={() => setRoles(["customer", "pro"], "customer")}
+              teal
             />
           </div>
+
+          <p className="text-center text-xs text-gray-400">
+            You can switch or add the other role anytime from your account menu.
+          </p>
         </div>
       </main>
     </div>
@@ -69,6 +86,7 @@ function RoleCard({
   cta,
   onClick,
   accent,
+  teal,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -77,21 +95,27 @@ function RoleCard({
   cta: string;
   onClick: () => void;
   accent?: boolean;
+  teal?: boolean;
 }) {
+  const iconBg = accent
+    ? "bg-primary text-white"
+    : teal
+    ? "bg-teal-600 text-white"
+    : "bg-gray-100 text-gray-700";
+  const borderClass = accent
+    ? "border-primary/30"
+    : teal
+    ? "border-teal-200"
+    : "";
+
   return (
     <Card
-      className={`flex flex-col cursor-pointer transition-shadow hover:shadow-lg ${
-        accent ? "border-primary/30" : ""
-      }`}
+      className={`flex flex-col cursor-pointer transition-shadow hover:shadow-lg ${borderClass}`}
       onClick={onClick}
     >
       <CardContent className="p-6 flex flex-col flex-1 gap-4">
         <div className="flex items-center gap-3">
-          <div
-            className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-              accent ? "bg-primary text-white" : "bg-gray-100 text-gray-700"
-            }`}
-          >
+          <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${iconBg}`}>
             {icon}
           </div>
           <div>
@@ -114,7 +138,8 @@ function RoleCard({
         <Button
           type="button"
           className="w-full mt-2"
-          variant={accent ? "default" : "outline"}
+          variant={accent ? "default" : teal ? "default" : "outline"}
+          style={teal && !accent ? { backgroundColor: "#0d9488", color: "white" } : undefined}
           onClick={(e) => {
             e.stopPropagation();
             onClick();

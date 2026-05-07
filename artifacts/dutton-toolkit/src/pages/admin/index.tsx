@@ -12,6 +12,8 @@ import {
   Bug,
   CheckCircle2,
   Clock,
+  Zap,
+  Star,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
@@ -25,6 +27,12 @@ import {
   loadBugReports,
   updateBugReportStatus,
 } from "@/lib/bug-reports";
+import {
+  type BusinessProfile,
+  type BadgeKey,
+  loadAllBusinessProfiles,
+  toggleProBadge,
+} from "@/lib/business-profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +71,10 @@ export default function AdminPanel() {
   const [loadingBugs, setLoadingBugs] = useState(true);
   const [updatingBugId, setUpdatingBugId] = useState<string | null>(null);
 
+  const [proProfiles, setProProfiles] = useState<BusinessProfile[]>([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [togglingBadge, setTogglingBadge] = useState<string | null>(null);
+
   async function fetchUsers() {
     setLoading(true);
     const list = await loadAllUsers();
@@ -77,10 +89,40 @@ export default function AdminPanel() {
     setLoadingBugs(false);
   }
 
+  async function fetchProProfiles() {
+    setLoadingProfiles(true);
+    const profiles = await loadAllBusinessProfiles();
+    setProProfiles(profiles);
+    setLoadingProfiles(false);
+  }
+
+  async function handleToggleBadge(profile: BusinessProfile, badge: BadgeKey) {
+    const current = Boolean(profile[badge]);
+    const key = `${profile.proId}-${badge}`;
+    setTogglingBadge(key);
+    try {
+      const ok = await toggleProBadge(profile.proId, badge, !current);
+      if (ok) {
+        setProProfiles((prev) =>
+          prev.map((p) => p.proId === profile.proId ? { ...p, [badge]: !current } : p),
+        );
+        const badgeLabel = badge === "verifiedPro" ? "Verified Pro" : badge === "fastResponder" ? "Fast Responder" : "Top Rated";
+        toast.success(`${badgeLabel} ${!current ? "granted to" : "removed from"} ${profile.businessName}`);
+      } else {
+        toast.error("Failed to update badge.");
+      }
+    } catch {
+      toast.error("Failed to update badge.");
+    } finally {
+      setTogglingBadge(null);
+    }
+  }
+
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
       fetchBugReports();
+      fetchProProfiles();
     } else {
       setLoading(false);
       setLoadingBugs(false);
@@ -443,6 +485,82 @@ export default function AdminPanel() {
           You are the only admin. To grant access to another user, click "Make Admin" on their row.
         </p>
       )}
+
+      {/* ─── Pro Trust Badges ────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3 border-b">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <BadgeCheck className="h-4 w-4" />
+              Pro Trust Badges
+              <Badge variant="secondary" className="ml-1">{proProfiles.length}</Badge>
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={fetchProProfiles} disabled={loadingProfiles}>
+              <RefreshCw className={`mr-2 h-3.5 w-3.5 ${loadingProfiles ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loadingProfiles ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : proProfiles.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              <BadgeCheck className="h-8 w-8 mx-auto mb-2 opacity-20" />
+              <p>No pro profiles yet. Pros must save a business profile to appear here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <th className="px-4 py-3 text-left">Pro / Business</th>
+                    <th className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1"><BadgeCheck className="h-3.5 w-3.5 text-blue-600" />Verified</span>
+                    </th>
+                    <th className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-green-600" />Fast</span>
+                    </th>
+                    <th className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" />Top Rated</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {proProfiles.map((p) => (
+                    <tr key={p.proId} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{p.businessName}</div>
+                        <div className="text-xs text-muted-foreground">{p.ownerName} · {p.serviceArea}</div>
+                      </td>
+                      {(["verifiedPro", "fastResponder", "topRated"] as BadgeKey[]).map((badge) => {
+                        const key = `${p.proId}-${badge}`;
+                        const active = Boolean(p[badge]);
+                        const busy = togglingBadge === key;
+                        return (
+                          <td key={badge} className="px-4 py-3 text-center">
+                            <Button
+                              size="sm"
+                              variant={active ? "default" : "outline"}
+                              className={`h-7 text-xs px-2 ${active ? "" : "text-gray-400"}`}
+                              disabled={busy}
+                              onClick={() => handleToggleBadge(p, badge)}
+                            >
+                              {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : active ? "On" : "Off"}
+                            </Button>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ─── Bug Reports ─────────────────────────────────────────────────── */}
       <Card>

@@ -35,6 +35,12 @@ export type BusinessProfile = {
   profilePhoto?: string;
   businessLogo?: string;
   updatedAt: string;
+  // Trust badges — toggled by admin
+  verifiedPro?: boolean;
+  fastResponder?: boolean;
+  topRated?: boolean;
+  // Jobs completed count — incremented when a job is marked completed
+  completedJobsCount?: number;
 };
 
 export async function loadAllBusinessProfiles(): Promise<BusinessProfile[]> {
@@ -87,6 +93,30 @@ export async function saveBusinessProfile(
     return true;
   } catch (err) {
     console.error("[BusinessProfile] save failed:", err);
+    return false;
+  }
+}
+
+export type BadgeKey = "verifiedPro" | "fastResponder" | "topRated";
+
+/** Toggle a trust badge on a pro's businessProfile and sync to users/{uid}. */
+export async function toggleProBadge(
+  uid: string,
+  badge: BadgeKey,
+  value: boolean,
+): Promise<boolean> {
+  if (!isFirebaseConfigured || !db) return false;
+  try {
+    await setDoc(
+      doc(db, "businessProfiles", uid),
+      { [badge]: value, updatedAt: new Date().toISOString() },
+      { merge: true },
+    );
+    // Sync badge to users/{uid} so ProProfile reads it too
+    await updateDoc(doc(db, "users", uid), { [badge]: value });
+    return true;
+  } catch (err) {
+    console.error("[BusinessProfile] toggleProBadge failed:", err);
     return false;
   }
 }

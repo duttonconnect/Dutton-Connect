@@ -12,6 +12,10 @@ import {
   User,
   CheckCircle2,
   Inbox,
+  Zap,
+  ShieldCheck,
+  Clock,
+  BadgeCheck,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
@@ -231,7 +235,9 @@ export default function ProProfilePage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-xl">{name}</span>
-                <CheckCircle2 className="h-5 w-5 text-primary shrink-0" aria-label="Verified" />
+                {profile?.verifiedPro && (
+                  <BadgeCheck className="h-5 w-5 text-primary shrink-0" aria-label="Verified Pro" />
+                )}
               </div>
               {profile?.displayName && profile.businessName && (
                 <p className="text-sm text-muted-foreground">{profile.displayName}</p>
@@ -247,8 +253,42 @@ export default function ProProfilePage() {
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">No reviews yet</p>
               )}
+              {/* Stats */}
+              {(profile?.completedJobsCount ?? 0) > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {profile?.completedJobsCount} jobs completed
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Trust Badges */}
+          {(profile?.verifiedPro || profile?.fastResponder || profile?.topRated) && (
+            <div className="flex flex-wrap gap-2">
+              {profile.verifiedPro && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                  Verified Pro
+                </span>
+              )}
+              {profile.fastResponder && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700">
+                  <Zap className="h-3.5 w-3.5" />
+                  Fast Responder
+                </span>
+              )}
+              {profile.topRated && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-700">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  Top Rated
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-200 px-3 py-1 text-xs font-medium text-gray-500">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Background Check — Coming Soon
+              </span>
+            </div>
+          )}
 
           {/* Services */}
           <div>

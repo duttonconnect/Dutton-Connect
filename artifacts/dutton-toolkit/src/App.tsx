@@ -38,6 +38,11 @@ import FindNearbyPros from "@/pages/customer/find-pros";
 import MyQuotes from "@/pages/customer/my-quotes";
 import HomeProfilePage from "@/pages/customer/home-profile";
 import RemindersPage from "@/pages/customer/reminders";
+import PhotoWallPage from "@/pages/customer/photo-wall";
+import WarrantiesPage from "@/pages/customer/warranties";
+import BundleRequestsPage from "@/pages/customer/bundle-requests";
+import AvailabilityPage from "@/pages/customer/availability";
+import ServiceHistoryPage from "@/pages/customer/service-history";
 import ProProfilePage from "@/pages/pros/profile";
 import MessagesList from "@/pages/messages/index";
 import ChatPage from "@/pages/messages/chat";
@@ -53,8 +58,28 @@ import LeadInbox from "@/pages/lead-inbox";
 import CustomerCRM from "@/pages/customer-crm";
 import EstimatesPage from "@/pages/estimates";
 import ProfilePage from "@/pages/profile/index";
+import WalletPage from "@/pages/wallet";
+import ReferralsPage from "@/pages/referrals";
 
 const queryClient = new QueryClient();
+
+// Shared routes available in both Pro and Customer mode
+function SharedRoutes() {
+  return (
+    <>
+      <Route path="/wallet" component={WalletPage} />
+      <Route path="/referrals" component={ReferralsPage} />
+      <Route path="/messages" component={MessagesList} />
+      <Route path="/messages/:id" component={ChatPage} />
+      <Route path="/calendar" component={CalendarPage} />
+      <Route path="/admin" component={AdminPanel} />
+      <Route path="/report-bug" component={ReportBug} />
+      <Route path="/profile" component={ProfilePage} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
+    </>
+  );
+}
 
 function ProRoutes() {
   return (
@@ -79,14 +104,7 @@ function ProRoutes() {
         <Route path="/customer-crm" component={CustomerCRM} />
         <Route path="/estimates" component={EstimatesPage} />
         <Route path="/route-planner" component={RoutePlanner} />
-        <Route path="/messages" component={MessagesList} />
-        <Route path="/messages/:id" component={ChatPage} />
-        <Route path="/calendar" component={CalendarPage} />
-        <Route path="/admin" component={AdminPanel} />
-        <Route path="/report-bug" component={ReportBug} />
-        <Route path="/profile" component={ProfilePage} />
-        <Route path="/privacy" component={PrivacyPolicy} />
-        <Route path="/terms" component={TermsOfService} />
+        {SharedRoutes()}
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -107,36 +125,38 @@ function CustomerRoutes() {
         <Route path="/find-pros" component={FindNearbyPros} />
         <Route path="/home-profile" component={HomeProfilePage} />
         <Route path="/reminders" component={RemindersPage} />
+        <Route path="/photo-wall" component={PhotoWallPage} />
+        <Route path="/warranties" component={WarrantiesPage} />
+        <Route path="/bundle-requests" component={BundleRequestsPage} />
+        <Route path="/availability" component={AvailabilityPage} />
+        <Route path="/service-history" component={ServiceHistoryPage} />
         <Route path="/pros/:proId" component={ProProfilePage} />
-        <Route path="/messages" component={MessagesList} />
-        <Route path="/messages/:id" component={ChatPage} />
-        <Route path="/calendar" component={CalendarPage} />
-        <Route path="/admin" component={AdminPanel} />
-        <Route path="/report-bug" component={ReportBug} />
-        <Route path="/profile" component={ProfilePage} />
-        <Route path="/privacy" component={PrivacyPolicy} />
-        <Route path="/terms" component={TermsOfService} />
+        {SharedRoutes()}
         <Route component={NotFound} />
       </Switch>
     </Layout>
   );
 }
 
-// Syncs role to/from Firestore whenever the user or role changes.
+// Syncs dual-role state to/from Firestore whenever the user changes.
 function RoleCloudBridge() {
-  const { user, loadRoleFromCloud, saveRoleToCloud } = useAuth();
-  const { role, setRole } = useRole();
+  const { user, loadRolesFromCloud, saveRolesToCloud } = useAuth();
+  const { roles, currentMode, setRoles } = useRole();
 
   useEffect(() => {
     if (!user) return;
-    loadRoleFromCloud().then((cloudRole) => {
-      if (cloudRole && !role) setRole(cloudRole);
+    loadRolesFromCloud().then((cloud) => {
+      if (cloud && roles.length === 0) {
+        setRoles(cloud.roles, cloud.currentMode);
+      }
     });
   }, [user?.uid]);
 
   useEffect(() => {
-    if (user && role) saveRoleToCloud(role);
-  }, [user?.uid, role]);
+    if (user && currentMode && roles.length > 0) {
+      saveRolesToCloud(roles, currentMode);
+    }
+  }, [user?.uid, currentMode, roles.join(",")]);
 
   return null;
 }
@@ -146,9 +166,6 @@ function RoleGate() {
   const [, navigate] = useLocation();
   const prevRole = useRef<string | null>(null);
 
-  // When the user picks a role from the account chooser (role goes from
-  // null → something), always land on "/" so they never hit a 404 because
-  // their old URL isn't valid in the new role's router.
   useEffect(() => {
     if (role && !prevRole.current) {
       navigate("/");
@@ -165,7 +182,6 @@ function AuthGate() {
   const { user, loading, isConfigured } = useAuth();
   const [location] = useLocation();
 
-  // While Firebase is resolving auth state, show a minimal loading screen.
   if (isConfigured && loading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50">
@@ -177,7 +193,6 @@ function AuthGate() {
     );
   }
 
-  // If Firebase is configured and user is NOT logged in → auth pages.
   if (isConfigured && !user) {
     return (
       <Switch>
@@ -187,7 +202,6 @@ function AuthGate() {
     );
   }
 
-  // Redirect /login and /signup away once logged in (or in offline mode).
   if (location === "/login" || location === "/signup") {
     return <RoleGate />;
   }
