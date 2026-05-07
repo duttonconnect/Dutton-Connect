@@ -37,6 +37,8 @@ type SavedRoute = {
   createdAt: string;
   deletedAt?: string;
   starred?: boolean;
+  previousName?: string;
+  renamedAt?: string;
 };
 
 function isToday(dateStr: string): boolean {
@@ -483,6 +485,7 @@ export default function RoutePlanner() {
 
   const plannerRef = useRef<HTMLDivElement>(null);
   const pendingDeleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const pendingRenameTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const isDirty = routePlannerDirty;
   const setIsDirty = setRoutePlannerDirty;
@@ -576,7 +579,83 @@ export default function RoutePlanner() {
         );
       }
 
+      // Re-surface undo toasts for any renames that survived a reload
+      const staleRenameIds: string[] = [];
+      const pendingRenames: SavedRoute[] = [];
+      for (const route of activeRoutes) {
+        if (route.previousName !== undefined && route.renamedAt) {
+          const elapsed = now - new Date(route.renamedAt).getTime();
+          if (elapsed >= UNDO_WINDOW_MS) {
+            staleRenameIds.push(route.id);
+          } else {
+            pendingRenames.push(route);
+          }
+        }
+      }
+
+      // Purge stale rename metadata in the background
+      for (const id of staleRenameIds) {
+        updateDoc(doc(firestore, "routes", id), {
+          previousName: deleteField(),
+          renamedAt: deleteField(),
+        }).catch((err) =>
+          console.warn("[RoutePlanner] Failed to purge stale rename metadata:", err),
+        );
+      }
+
       setSavedRoutes(activeRoutes);
+
+      // Re-surface undo toasts for any rename operations that survived a reload
+      for (const route of pendingRenames) {
+        const elapsed = Date.now() - new Date(route.renamedAt!).getTime();
+        const remaining = Math.max(500, UNDO_WINDOW_MS - elapsed);
+        let undone = false;
+
+        const existingTimer = pendingRenameTimers.current.get(route.id);
+        if (existingTimer !== undefined) clearTimeout(existingTimer);
+
+        const timer = setTimeout(() => {
+          pendingRenameTimers.current.delete(route.id);
+          if (undone) return;
+          updateDoc(doc(firestore, "routes", route.id), {
+            previousName: deleteField(),
+            renamedAt: deleteField(),
+          }).catch((err) =>
+            console.warn("[RoutePlanner] Failed to clear rename metadata:", err),
+          );
+        }, remaining);
+        pendingRenameTimers.current.set(route.id, timer);
+
+        toast.success("Route renamed.", {
+          duration: remaining,
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              if (undone) return;
+              clearTimeout(timer);
+              pendingRenameTimers.current.delete(route.id);
+              try {
+                await updateDoc(doc(firestore, "routes", route.id), {
+                  name: route.previousName,
+                  previousName: deleteField(),
+                  renamedAt: deleteField(),
+                });
+                undone = true;
+                setSavedRoutes((prev) =>
+                  prev.map((r) =>
+                    r.id === route.id
+                      ? { ...r, name: route.previousName!, previousName: undefined, renamedAt: undefined }
+                      : r,
+                  ),
+                );
+              } catch (err) {
+                console.warn("[RoutePlanner] Undo rename failed:", err);
+                toast.error("Could not undo rename. Please try again.");
+              }
+            },
+          },
+        });
+      }
 
       // Re-surface undo toasts for any deletions that survived a reload
       for (const route of pendingRoutes) {
@@ -884,26 +963,59 @@ export default function RoutePlanner() {
 
     const previousRoute = savedRoutes.find((r) => r.id === id);
     const previousName = previousRoute?.name ?? "";
+    const renamedAt = new Date().toISOString();
 
     try {
-      await updateDoc(doc(firestore, "routes", id), { name: newName });
+      // Persist previousName and renamedAt so the undo survives a page reload
+      await updateDoc(doc(firestore, "routes", id), {
+        name: newName,
+        previousName,
+        renamedAt,
+      });
       setSavedRoutes((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, name: newName } : r)),
+        prev.map((r) => (r.id === id ? { ...r, name: newName, previousName, renamedAt } : r)),
       );
 
       let undone = false;
 
+      // Cancel any pre-existing rename timer for this route
+      const existingTimer = pendingRenameTimers.current.get(id);
+      if (existingTimer !== undefined) clearTimeout(existingTimer);
+
+      // Schedule cleanup of the persisted rename metadata after the undo window
+      const timer = setTimeout(() => {
+        pendingRenameTimers.current.delete(id);
+        if (undone) return;
+        updateDoc(doc(firestore, "routes", id), {
+          previousName: deleteField(),
+          renamedAt: deleteField(),
+        }).catch((err) =>
+          console.warn("[RoutePlanner] Failed to clear rename metadata:", err),
+        );
+      }, UNDO_WINDOW_MS);
+      pendingRenameTimers.current.set(id, timer);
+
       toast.success("Route renamed.", {
-        duration: 5000,
+        duration: UNDO_WINDOW_MS,
         action: {
           label: "Undo",
           onClick: async () => {
             if (undone) return;
+            clearTimeout(timer);
+            pendingRenameTimers.current.delete(id);
             try {
-              await updateDoc(doc(firestore, "routes", id), { name: previousName });
+              await updateDoc(doc(firestore, "routes", id), {
+                name: previousName,
+                previousName: deleteField(),
+                renamedAt: deleteField(),
+              });
               undone = true;
               setSavedRoutes((prev) =>
-                prev.map((r) => (r.id === id ? { ...r, name: previousName } : r)),
+                prev.map((r) =>
+                  r.id === id
+                    ? { ...r, name: previousName, previousName: undefined, renamedAt: undefined }
+                    : r,
+                ),
               );
             } catch (err) {
               console.warn("[RoutePlanner] Undo rename failed:", err);
