@@ -915,6 +915,42 @@ describe("calendarEvents collection", () => {
     );
   });
 
+  it("allows owner to update their calendar event without changing userId", async () => {
+    await seedDoc(eventPath, eventData);
+    await assertSucceeds(
+      updateDoc(doc(authed(ownerUid).firestore(), eventPath), {
+        title: "Rescheduled Meeting",
+        userId: ownerUid,
+      })
+    );
+  });
+
+  it("denies owner from changing userId on update (ownership transfer)", async () => {
+    await seedDoc(eventPath, eventData);
+    await assertFails(
+      updateDoc(doc(authed(ownerUid).firestore(), eventPath), {
+        userId: otherUid,
+      })
+    );
+  });
+
+  it("denies another user from updating someone else's calendar event", async () => {
+    await seedDoc(eventPath, eventData);
+    await assertFails(
+      updateDoc(doc(authed(otherUid).firestore(), eventPath), {
+        title: "Hacked",
+        userId: otherUid,
+      })
+    );
+  });
+
+  it("denies unauthenticated update", async () => {
+    await seedDoc(eventPath, eventData);
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), eventPath), { title: "Unauthorized" })
+    );
+  });
+
   it("allows owner to delete their calendar event", async () => {
     await seedDoc(eventPath, eventData);
     await assertSucceeds(
@@ -927,6 +963,11 @@ describe("calendarEvents collection", () => {
     await assertFails(
       deleteDoc(doc(authed(otherUid).firestore(), eventPath))
     );
+  });
+
+  it("denies unauthenticated delete", async () => {
+    await seedDoc(eventPath, eventData);
+    await assertFails(deleteDoc(doc(unauthed().firestore(), eventPath)));
   });
 });
 
@@ -963,6 +1004,61 @@ describe("jobTemplates collection", () => {
     await assertFails(
       setDoc(doc(authed(otherUid).firestore(), tmplPath), tmplData)
     );
+  });
+
+  it("allows owner to update their template without changing userId", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertSucceeds(
+      updateDoc(doc(authed(ownerUid).firestore(), tmplPath), {
+        name: "Premium Cleaning",
+        userId: ownerUid,
+      })
+    );
+  });
+
+  it("denies owner from changing userId on update (ownership transfer)", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertFails(
+      updateDoc(doc(authed(ownerUid).firestore(), tmplPath), {
+        userId: otherUid,
+      })
+    );
+  });
+
+  it("denies another user from updating someone else's template", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertFails(
+      updateDoc(doc(authed(otherUid).firestore(), tmplPath), {
+        name: "Hacked Template",
+        userId: otherUid,
+      })
+    );
+  });
+
+  it("denies unauthenticated update", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), tmplPath), { name: "Unauthorized" })
+    );
+  });
+
+  it("allows owner to delete their template", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertSucceeds(
+      deleteDoc(doc(authed(ownerUid).firestore(), tmplPath))
+    );
+  });
+
+  it("denies another user from deleting someone else's template", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertFails(
+      deleteDoc(doc(authed(otherUid).firestore(), tmplPath))
+    );
+  });
+
+  it("denies unauthenticated delete", async () => {
+    await seedDoc(tmplPath, tmplData);
+    await assertFails(deleteDoc(doc(unauthed().firestore(), tmplPath)));
   });
 });
 
@@ -1001,6 +1097,42 @@ describe("savedAddresses collection", () => {
     );
   });
 
+  it("allows owner to update their saved address without changing userId", async () => {
+    await seedDoc(addrPath, addrData);
+    await assertSucceeds(
+      updateDoc(doc(authed(ownerUid).firestore(), addrPath), {
+        label: "Work",
+        userId: ownerUid,
+      })
+    );
+  });
+
+  it("denies owner from changing userId on update (ownership transfer)", async () => {
+    await seedDoc(addrPath, addrData);
+    await assertFails(
+      updateDoc(doc(authed(ownerUid).firestore(), addrPath), {
+        userId: otherUid,
+      })
+    );
+  });
+
+  it("denies another user from updating someone else's saved address", async () => {
+    await seedDoc(addrPath, addrData);
+    await assertFails(
+      updateDoc(doc(authed(otherUid).firestore(), addrPath), {
+        label: "Hacked",
+        userId: otherUid,
+      })
+    );
+  });
+
+  it("denies unauthenticated update", async () => {
+    await seedDoc(addrPath, addrData);
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), addrPath), { label: "Unauthorized" })
+    );
+  });
+
   it("allows owner to delete their saved address", async () => {
     await seedDoc(addrPath, addrData);
     await assertSucceeds(
@@ -1013,6 +1145,11 @@ describe("savedAddresses collection", () => {
     await assertFails(
       deleteDoc(doc(authed(otherUid).firestore(), addrPath))
     );
+  });
+
+  it("denies unauthenticated delete", async () => {
+    await seedDoc(addrPath, addrData);
+    await assertFails(deleteDoc(doc(unauthed().firestore(), addrPath)));
   });
 });
 
