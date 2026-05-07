@@ -996,9 +996,23 @@ export default function RoutePlanner() {
 
               {orderedStops.length > 0 && (
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">
-                    Selected Stops ({orderedStops.length}) — drag to reorder
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Selected Stops ({orderedStops.length}) — drag to reorder
+                    </Label>
+                    {orderedStops.some((addr) => !activeJobAddresses.has(addr)) && (
+                      <button
+                        onClick={() => {
+                          markDirty();
+                          setOrderedStops((prev) => prev.filter((addr) => activeJobAddresses.has(addr)));
+                          toast.success("Unmatched stops removed.");
+                        }}
+                        className="text-xs text-amber-600 dark:text-amber-400 hover:underline shrink-0 ml-2"
+                      >
+                        Remove unmatched
+                      </button>
+                    )}
+                  </div>
                   <div className="max-h-56 overflow-y-auto pr-0.5">
                     <DraggableStopList
                       stops={orderedStops}
