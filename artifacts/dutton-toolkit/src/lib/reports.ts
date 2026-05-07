@@ -77,3 +77,17 @@ export async function markReportReviewed(reportId: string): Promise<void> {
     console.error("[Reports] markReviewed failed:", err);
   }
 }
+
+export async function updateReportStatus(
+  reportId: string,
+  status: Report["status"],
+): Promise<boolean> {
+  if (!isFirebaseConfigured || !db) return false;
+  try {
+    await updateDoc(doc(db, "reports", reportId), { status });
+    return true;
+  } catch (err) {
+    console.error("[Reports] updateStatus failed:", err);
+    return false;
+  }
+}

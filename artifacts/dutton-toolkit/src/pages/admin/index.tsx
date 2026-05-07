@@ -14,6 +14,8 @@ import {
   Clock,
   Zap,
   Star,
+  Flag,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
@@ -28,6 +30,11 @@ import {
   updateBugReportStatus,
 } from "@/lib/bug-reports";
 import {
+  type Report,
+  loadAllReports,
+  updateReportStatus,
+} from "@/lib/reports";
+import {
   type BusinessProfile,
   type BadgeKey,
   loadAllBusinessProfiles,
@@ -39,6 +46,25 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function CopyableId({ label, id }: { label: string; id: string }) {
+  return (
+    <span className="flex items-center gap-1">
+      <span className="font-medium text-gray-600">{label}:</span>
+      <button
+        className="font-mono bg-gray-100 hover:bg-gray-200 rounded px-1 py-0.5 text-[11px] text-gray-700 transition-colors cursor-pointer select-all"
+        title="Click to copy"
+        onClick={() => {
+          navigator.clipboard.writeText(id).then(() => {
+            /* silent success */
+          });
+        }}
+      >
+        {id}
+      </button>
+    </span>
+  );
+}
 
 function formatDate(iso: string): string {
   if (!iso) return "—";
@@ -71,6 +97,11 @@ export default function AdminPanel() {
   const [loadingBugs, setLoadingBugs] = useState(true);
   const [updatingBugId, setUpdatingBugId] = useState<string | null>(null);
 
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [updatingReportId, setUpdatingReportId] = useState<string | null>(null);
+  const [reportStatusFilter, setReportStatusFilter] = useState<"all" | Report["status"]>("all");
+
   const [proProfiles, setProProfiles] = useState<BusinessProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [togglingBadge, setTogglingBadge] = useState<string | null>(null);
@@ -84,9 +115,16 @@ export default function AdminPanel() {
 
   async function fetchBugReports() {
     setLoadingBugs(true);
-    const reports = await loadBugReports();
-    setBugReports(reports);
+    const bugs = await loadBugReports();
+    setBugReports(bugs);
     setLoadingBugs(false);
+  }
+
+  async function fetchReports() {
+    setLoadingReports(true);
+    const list = await loadAllReports();
+    setReports(list);
+    setLoadingReports(false);
   }
 
   async function fetchProProfiles() {
@@ -123,9 +161,11 @@ export default function AdminPanel() {
       fetchUsers();
       fetchBugReports();
       fetchProProfiles();
+      fetchReports();
     } else {
       setLoading(false);
       setLoadingBugs(false);
+      setLoadingReports(false);
     }
   }, [isAdmin]);
 
@@ -239,6 +279,26 @@ export default function AdminPanel() {
       toast.error("Failed to update role.");
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleReportStatus(
+    report: Report,
+    newStatus: Report["status"],
+  ) {
+    setUpdatingReportId(report.id + newStatus);
+    try {
+      const ok = await updateReportStatus(report.id, newStatus);
+      if (ok) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === report.id ? { ...r, status: newStatus } : r)),
+        );
+        toast.success(`Report marked as ${newStatus}.`);
+      } else {
+        toast.error("Failed to update report.");
+      }
+    } finally {
+      setUpdatingReportId(null);
     }
   }
 
@@ -561,6 +621,186 @@ export default function AdminPanel() {
           )}
         </CardContent>
       </Card>
+
+      {/* ─── User Reports ────────────────────────────────────────────────── */}
+      {(() => {
+        const filteredReports =
+          reportStatusFilter === "all"
+            ? reports
+            : reports.filter((r) => r.status === reportStatusFilter);
+        const openCount = reports.filter((r) => r.status === "open").length;
+
+        return (
+          <Card>
+            <CardHeader className="pb-3 border-b">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Flag className="h-4 w-4" />
+                  User Reports
+                  <Badge variant="secondary" className="ml-1">{reports.length}</Badge>
+                  {openCount > 0 && (
+                    <Badge className="bg-red-100 text-red-700 border-red-200 border ml-1 font-semibold">
+                      {openCount} open
+                    </Badge>
+                  )}
+                </CardTitle>
+                <Button variant="outline" size="sm" onClick={fetchReports} disabled={loadingReports}>
+                  <RefreshCw className={`mr-2 h-3.5 w-3.5 ${loadingReports ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
+
+              {/* Status filter tabs */}
+              {!loadingReports && reports.length > 0 && (
+                <div className="flex gap-1 mt-3">
+                  {(["all", "open", "reviewed", "resolved"] as const).map((s) => {
+                    const count =
+                      s === "all" ? reports.length : reports.filter((r) => r.status === s).length;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setReportStatusFilter(s)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          reportStatusFilter === s
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                        <span className="ml-1 opacity-70">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardHeader>
+            <CardContent className="p-0">
+              {loadingReports ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : filteredReports.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  <Flag className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">
+                    {reports.length === 0 ? "No user reports yet." : `No ${reportStatusFilter} reports.`}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredReports.map((r) => {
+                    const isMarkingReviewed = updatingReportId === r.id + "reviewed";
+                    const isMarkingResolved = updatingReportId === r.id + "resolved";
+                    return (
+                      <div key={r.id} className="px-4 py-4 space-y-2">
+                        {/* Title row */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Issue type badge */}
+                            <Badge
+                              variant="outline"
+                              className={
+                                r.issueType === "Harassment" || r.issueType === "Scam"
+                                  ? "border-red-300 text-red-700 bg-red-50"
+                                  : r.issueType === "Payment Issue" || r.issueType === "No Show"
+                                    ? "border-amber-300 text-amber-700 bg-amber-50"
+                                    : "border-gray-300 text-gray-600 bg-gray-50"
+                              }
+                            >
+                              {r.issueType === "Harassment" || r.issueType === "Scam" ? (
+                                <AlertTriangle className="h-3 w-3 mr-1 inline" />
+                              ) : null}
+                              {r.issueType}
+                            </Badge>
+
+                            {/* Status badge */}
+                            <Badge
+                              variant="outline"
+                              className={
+                                r.status === "resolved"
+                                  ? "border-green-300 text-green-700 bg-green-50"
+                                  : r.status === "reviewed"
+                                    ? "border-blue-300 text-blue-700 bg-blue-50"
+                                    : "border-orange-300 text-orange-600 bg-orange-50"
+                              }
+                            >
+                              {r.status === "resolved" ? (
+                                <CheckCircle2 className="h-3 w-3 mr-1 inline" />
+                              ) : r.status === "reviewed" ? (
+                                <Clock className="h-3 w-3 mr-1 inline" />
+                              ) : (
+                                <Flag className="h-3 w-3 mr-1 inline" />
+                              )}
+                              {r.status}
+                            </Badge>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {r.status === "open" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs px-2"
+                                disabled={!!updatingReportId}
+                                onClick={() => handleReportStatus(r, "reviewed")}
+                              >
+                                {isMarkingReviewed ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  "Mark Reviewed"
+                                )}
+                              </Button>
+                            )}
+                            {r.status !== "resolved" && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-7 text-xs px-2"
+                                disabled={!!updatingReportId}
+                                onClick={() => handleReportStatus(r, "resolved")}
+                              >
+                                {isMarkingResolved ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  "Mark Resolved"
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                          {r.description}
+                        </p>
+
+                        {/* Meta row */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                          <CopyableId label="Reporter" id={r.reporterId} />
+                          {r.relatedUserId && (
+                            <CopyableId label="Reported user" id={r.relatedUserId} />
+                          )}
+                          {r.relatedJobId && (
+                            <CopyableId label="Job" id={r.relatedJobId} />
+                          )}
+                          {r.relatedConversationId && (
+                            <CopyableId label="Conversation" id={r.relatedConversationId} />
+                          )}
+                          <span>
+                            <span className="font-medium text-gray-600">Submitted:</span>{" "}
+                            {formatDate(r.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* ─── Bug Reports ─────────────────────────────────────────────────── */}
       <Card>
