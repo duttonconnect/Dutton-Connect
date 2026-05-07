@@ -174,7 +174,7 @@ function DraggableStopList({
                 No matching job
               </span>
             )}
-            <span className="text-muted-foreground font-medium shrink-0">{index + 1}</span>
+            <span className="shrink-0 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-amber-500 text-white dark:bg-amber-400 dark:text-amber-950 text-xs font-semibold leading-none">{index + 1}</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
