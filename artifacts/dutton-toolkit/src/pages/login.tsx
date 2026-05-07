@@ -33,6 +33,7 @@ import {
   CalendarDays,
   FileText,
   DollarSign,
+  ArrowRight,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
@@ -165,11 +166,11 @@ export default function Login() {
       </section>
 
       {/* Role cards */}
-      <section className="px-6 py-10 max-w-2xl mx-auto w-full">
-        <div className="grid sm:grid-cols-2 gap-4">
+      <section className="px-6 py-10 max-w-3xl mx-auto w-full">
+        <div className="grid sm:grid-cols-3 gap-4">
           {/* Customer card */}
           <Link href="/signup?role=customer">
-            <div className="group cursor-pointer rounded-2xl border-2 border-blue-100 bg-white p-6 hover:border-blue-400 hover:shadow-lg transition-all flex flex-col gap-3">
+            <div className="group cursor-pointer rounded-2xl border-2 border-blue-100 bg-white p-6 hover:border-blue-400 hover:shadow-lg transition-all flex flex-col gap-3 h-full">
               <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-blue-600" />
               </div>
@@ -187,7 +188,7 @@ export default function Login() {
 
           {/* Pro card */}
           <Link href="/signup?role=pro">
-            <div className="group cursor-pointer rounded-2xl border-2 border-gray-100 bg-white p-6 hover:border-gray-300 hover:shadow-lg transition-all flex flex-col gap-3">
+            <div className="group cursor-pointer rounded-2xl border-2 border-gray-100 bg-white p-6 hover:border-gray-300 hover:shadow-lg transition-all flex flex-col gap-3 h-full">
               <div className="h-12 w-12 rounded-xl bg-gray-100 flex items-center justify-center">
                 <Hammer className="h-6 w-6 text-gray-700" />
               </div>
@@ -199,6 +200,27 @@ export default function Login() {
               </div>
               <Button variant="outline" className="mt-auto w-full rounded-xl" size="sm">
                 Join as a Pro
+              </Button>
+            </div>
+          </Link>
+
+          {/* Both card */}
+          <Link href="/signup?role=both">
+            <div className="group cursor-pointer rounded-2xl border-2 border-slate-800 bg-[#0F172A] p-6 hover:border-slate-600 hover:shadow-lg transition-all flex flex-col gap-3 h-full">
+              <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <div className="text-lg font-bold text-white">I do both</div>
+                <p className="text-sm text-slate-400 mt-1">
+                  Full access to Customer and Pro features in one account.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="mt-auto w-full rounded-xl bg-white text-[#0F172A] hover:bg-gray-100"
+              >
+                Get Full Access <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Button>
             </div>
           </Link>

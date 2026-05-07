@@ -17,7 +17,8 @@ export default function Signup() {
   const [, setLocation] = useLocation();
   const search = useSearch();
   const params = new URLSearchParams(search);
-  const preselectedRole = params.get("role") === "pro" ? "pro" : "customer";
+  const rawRole = params.get("role");
+  const preselectedRole: RoleOption = rawRole === "pro" ? "pro" : rawRole === "both" ? "both" : "customer";
   const referralCode = params.get("ref") ?? "";
 
   const [name, setName] = useState("");
