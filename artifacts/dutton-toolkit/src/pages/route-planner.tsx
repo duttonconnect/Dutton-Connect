@@ -962,9 +962,22 @@ export default function RoutePlanner() {
                         variant="destructive"
                         className="h-7 px-2 text-xs"
                         onClick={() => {
+                          const previousStops = [...orderedStops];
                           markDirty();
                           setOrderedStops([]);
                           setConfirmingClearAll(false);
+                          let undone = false;
+                          toast.success("Stops cleared.", {
+                            duration: UNDO_WINDOW_MS,
+                            action: {
+                              label: "Undo",
+                              onClick: () => {
+                                if (undone) return;
+                                undone = true;
+                                setOrderedStops(previousStops);
+                              },
+                            },
+                          });
                         }}
                       >
                         Yes, clear
