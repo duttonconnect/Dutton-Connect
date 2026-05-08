@@ -1425,22 +1425,50 @@ export default function RoutePlanner() {
             </div>
           ) : (
             <div className="space-y-3">
-              {visibleRoutes.map((route) => (
-                <RouteCard
-                  key={route.id}
-                  route={route}
-                  onDelete={handleDeleteRoute}
-                  onRename={handleRenameRoute}
-                  onLoad={handleLoadRoute}
-                  onStar={handleStarRoute}
-                  plannerHasContent={
-                    startAddress.trim().length > 0 ||
-                    endAddress.trim().length > 0 ||
-                    orderedStops.length > 0
+              {(() => {
+                const hasStarred = visibleRoutes.some((r) => r.starred);
+                const items: React.ReactNode[] = [];
+                let unstarredLabelAdded = false;
+                visibleRoutes.forEach((route) => {
+                  if (hasStarred) {
+                    if (route.starred && items.length === 0) {
+                      items.push(
+                        <div key="__label-starred" className="flex items-center gap-2">
+                          <Star className="h-3 w-3 text-amber-400 fill-amber-400 shrink-0" />
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Starred</span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                      );
+                    }
+                    if (!route.starred && !unstarredLabelAdded) {
+                      unstarredLabelAdded = true;
+                      items.push(
+                        <div key="__label-all" className="flex items-center gap-2 pt-1">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">All routes</span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                      );
+                    }
                   }
-                  activeJobAddresses={activeJobAddresses}
-                />
-              ))}
+                  items.push(
+                    <RouteCard
+                      key={route.id}
+                      route={route}
+                      onDelete={handleDeleteRoute}
+                      onRename={handleRenameRoute}
+                      onLoad={handleLoadRoute}
+                      onStar={handleStarRoute}
+                      plannerHasContent={
+                        startAddress.trim().length > 0 ||
+                        endAddress.trim().length > 0 ||
+                        orderedStops.length > 0
+                      }
+                      activeJobAddresses={activeJobAddresses}
+                    />
+                  );
+                });
+                return items;
+              })()}
             </div>
           )}
         </CardContent>
