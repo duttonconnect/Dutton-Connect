@@ -1,0 +1,9 @@
+{
+  "buildCommand": "pnpm --filter @workspace/dutton-toolkit run vercel:build",
+  "outputDirectory": "artifacts/dutton-toolkit/dist/public",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
