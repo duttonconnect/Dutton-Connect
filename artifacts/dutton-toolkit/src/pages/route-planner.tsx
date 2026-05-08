@@ -1312,9 +1312,21 @@ export default function RoutePlanner() {
                     {!stopsCollapsed && orderedStops.some((addr) => !activeJobAddresses.has(addr)) && (
                       <button
                         onClick={() => {
+                          const previousStops = [...orderedStops];
                           markDirty();
                           setOrderedStops((prev) => prev.filter((addr) => activeJobAddresses.has(addr)));
-                          toast.success("Unmatched stops removed.");
+                          let undone = false;
+                          toast.success("Unmatched stops removed.", {
+                            duration: UNDO_WINDOW_MS,
+                            action: {
+                              label: "Undo",
+                              onClick: () => {
+                                if (undone) return;
+                                undone = true;
+                                setOrderedStops(previousStops);
+                              },
+                            },
+                          });
                         }}
                         className="text-xs text-amber-600 dark:text-amber-400 hover:underline shrink-0 ml-2"
                       >
