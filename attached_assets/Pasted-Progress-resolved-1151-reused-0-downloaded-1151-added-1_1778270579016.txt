@@ -1,0 +1,51 @@
+Progress: resolved 1151, reused 0, downloaded 1151, added 1035
+Progress: resolved 1151, reused 0, downloaded 1151, added 1148
+Progress: resolved 1151, reused 0, downloaded 1151, added 1151, done
+
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "${npm_config_user_agent:-pnpm/0}" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @firebase/util@1.15.0, esbuild@0.27.3, protobufjs@7.5.6, re2@1.24.0
+
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1151
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1151, reused 0, downloaded 133, added 113
+Progress: resolved 1151, reused 0, downloaded 296, added 235
+Progress: resolved 1151, reused 0, downloaded 451, added 339
+Progress: resolved 1151, reused 0, downloaded 576, added 365
+Progress: resolved 1151, reused 0, downloaded 681, added 400
+Progress: resolved 1151, reused 0, downloaded 863, added 476
+Progress: resolved 1151, reused 0, downloaded 947, added 520
+Progress: resolved 1151, reused 0, downloaded 1034, added 559
+Progress: resolved 1151, reused 0, downloaded 1126, added 586
+Progress: resolved 1151, reused 0, downloaded 1150, added 772
+Progress: resolved 1151, reused 0, downloaded 1151, added 1035
+Progress: resolved 1151, reused 0, downloaded 1151, added 1148
+Progress: resolved 1151, reused 0, downloaded 1151, added 1151, done
+
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "${npm_config_user_agent:-pnpm/0}" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @firebase/util@1.15.0, esbuild@0.27.3, protobufjs@7.5.6, re2@1.24.0
+
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+Build web app for Capacitor
