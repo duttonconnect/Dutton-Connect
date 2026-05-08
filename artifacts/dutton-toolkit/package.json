@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
     "build": "vite build --config vite.config.ts",
+    "cap:build": "vite build --config vite.config.cap.ts",
+    "cap:sync": "cap sync",
+    "cap:open:ios": "cap open ios",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "firebase emulators:exec --only firestore --project test-project 'vitest run --config vitest.config.ts'"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.0",
+    "@capacitor/ios": "^7.4.0",
     "@firebase/rules-unit-testing": "^5.0.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.4",
@@ -80,6 +85,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@capacitor/core": "^7.4.0",
     "firebase": "^12.12.1",
     "leaflet": "^1.9.4",
     "react-leaflet": "^5.0.0"
