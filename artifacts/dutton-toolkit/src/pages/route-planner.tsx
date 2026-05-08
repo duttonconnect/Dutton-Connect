@@ -343,7 +343,12 @@ function RouteCard({
                 size="sm"
                 variant="ghost"
                 className="h-7 px-2 text-xs"
-                onClick={() => setConfirmingDelete(false)}
+                onClick={() => {
+                  setConfirmingDelete(false);
+                  requestAnimationFrame(() => {
+                    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  });
+                }}
                 aria-label="Cancel delete"
               >
                 No
@@ -419,7 +424,12 @@ function RouteCard({
                 size="sm"
                 variant="ghost"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => setConfirmingDelete(true)}
+                onClick={() => {
+                  setConfirmingDelete(true);
+                  requestAnimationFrame(() => {
+                    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  });
+                }}
                 aria-label="Delete route"
               >
                 <Trash2 className="h-3.5 w-3.5" />
