@@ -1,0 +1,49 @@
+ ➜ Explicit dependency on target 'Capacitor' in project 'Pods'
+        ➜ Explicit dependency on target 'CapacitorCordova' in project 'Pods'
+    Target 'Capacitor' in project 'Pods'
+        ➜ Explicit dependency on target 'CapacitorCordova' in project 'Pods'
+    Target 'CapacitorCordova' in project 'Pods' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode-26.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode-26.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/usr/bin/ibtool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/builder/clone/artifacts/dutton-toolkit/ios/App/App/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode-26.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.4.sdk -x objective-c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool -V
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+Build description signature: 5bf213344b3b8e7b9ea09676a4761dcb
+Build description path: /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/XCBuildData/5bf213344b3b8e7b9ea09676a4761dcb.xcbuilddata
+/Users/builder/clone/artifacts/dutton-toolkit/ios/App/App.xcodeproj: error: App has conflicting provisioning settings. App is automatically signed for development, but a conflicting code signing identity Apple Distribution has been manually specified. Set the code signing identity value to "Apple Development" in the build settings editor, or switch to manual signing in the Signing & Capabilities editor. (in target 'App' from project 'App')
+warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+/Users/builder/clone/artifacts/dutton-toolkit/ios/App/Pods/Pods.xcodeproj: error: CapacitorCordova has conflicting provisioning settings. CapacitorCordova is automatically signed for development, but a conflicting code signing identity Apple Distribution has been manually specified. Set the code signing identity value to "Apple Development" in the build settings editor, or switch to manual signing in the Signing & Capabilities editor. (in target 'CapacitorCordova' from project 'Pods')
+/Users/builder/clone/artifacts/dutton-toolkit/ios/App/Pods/Pods.xcodeproj: error: Capacitor has conflicting provisioning settings. Capacitor is automatically signed for development, but a conflicting code signing identity Apple Distribution has been manually specified. Set the code signing identity value to "Apple Development" in the build settings editor, or switch to manual signing in the Signing & Capabilities editor. (in target 'Capacitor' from project 'Pods')
+/Users/builder/clone/artifacts/dutton-toolkit/ios/App/Pods/Pods.xcodeproj: error: Pods-App has conflicting provisioning settings. Pods-App is automatically signed for development, but a conflicting code signing identity Apple Distribution has been manually specified. Set the code signing identity value to "Apple Development" in the build settings editor, or switch to manual signing in the Signing & Capabilities editor. (in target 'Pods-App' from project 'Pods')
+** ARCHIVE FAILED **
+
+
+The following build commands failed:
+	Archiving workspace App with scheme App
+(1 failure)
+error: error: archive not found at path '/tmp/App.xcarchive'
+
+** EXPORT FAILED **
+
+
+
+Build failed :|
+Step 8 script `Build IPA` exited with status code 65

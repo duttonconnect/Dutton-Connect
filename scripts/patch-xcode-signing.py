@@ -10,12 +10,13 @@ if not team_id:
 with open(pbxproj) as f:
     content = f.read()
 
+content = content.replace("CODE_SIGN_STYLE = Automatic", "CODE_SIGN_STYLE = Manual")
 content = content.replace(
     "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;",
-    "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;\n\t\t\t\tDEVELOPMENT_TEAM = " + team_id + ";"
+    "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;\n\t\t\t\tCODE_SIGN_IDENTITY = \"Apple Distribution\";\n\t\t\t\tDEVELOPMENT_TEAM = " + team_id + ";"
 )
 
 with open(pbxproj, "w") as f:
     f.write(content)
 
-print("Patched Xcode project with DEVELOPMENT_TEAM:", team_id)
+print("Patched Xcode project: Manual signing, Apple Distribution, team:", team_id)
