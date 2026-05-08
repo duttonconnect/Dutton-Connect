@@ -1,0 +1,51 @@
+Progress: resolved 98, reused 0, downloaded 97, added 0
+Progress: resolved 305, reused 0, downloaded 283, added 0
+Progress: resolved 367, reused 0, downloaded 344, added 0
+Progress: resolved 457, reused 0, downloaded 435, added 0
+Progress: resolved 698, reused 0, downloaded 661, added 0
+Progress: resolved 829, reused 0, downloaded 786, added 0
+Progress: resolved 1077, reused 0, downloaded 1024, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of proc-log is missing the "time" field
+
+This error happened while installing the dependencies of firebase-tools@15.15.0
+ at @apphosting/build@0.1.7
+ at npm-pick-manifest@9.1.0
+ at npm-package-arg@11.0.3
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+Scope: all 9 workspace projects
+Progress: resolved 1, reused 0, downloaded 0, added 0
+[WARN] The metadata of @types/node is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of @tailwindcss/vite is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of react-day-picker is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of drizzle-orm is missing the "time" field; skipping the minimumReleaseAge check for this package.
+Progress: resolved 89, reused 0, downloaded 77, added 0
+Progress: resolved 97, reused 0, downloaded 95, added 0
+Progress: resolved 97, reused 0, downloaded 97, added 0
+Progress: resolved 98, reused 0, downloaded 97, added 0
+Progress: resolved 305, reused 0, downloaded 283, added 0
+Progress: resolved 367, reused 0, downloaded 344, added 0
+Progress: resolved 457, reused 0, downloaded 435, added 0
+Progress: resolved 698, reused 0, downloaded 661, added 0
+Progress: resolved 829, reused 0, downloaded 786, added 0
+Progress: resolved 1077, reused 0, downloaded 1024, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of proc-log is missing the "time" field
+
+This error happened while installing the dependencies of firebase-tools@15.15.0
+ at @apphosting/build@0.1.7
+ at npm-pick-manifest@9.1.0
+ at npm-package-arg@11.0.3
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+Build web app for Capacitor
