@@ -4,6 +4,7 @@ const SOFT_DELETE_FIELD = "deletedAt";
 const ROUTES_COLLECTION = "routes";
 const UNDO_WINDOW_MS = 5_000;
 const CLEANUP_INTERVAL_MS = 60_000;
+const FIRESTORE_BATCH_LIMIT = 500;
 
 let cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -55,11 +56,18 @@ async function purgeStaleRoutes() {
 
   if (snap.empty) return;
 
-  const batch = db.batch();
-  for (const docSnap of snap.docs) {
-    batch.delete(docSnap.ref);
+  // Firestore batches are capped at 500 operations each. Chunk the deletes so
+  // that a large backlog of stale docs never exceeds the limit and causes the
+  // whole commit to fail.
+  const docs = snap.docs;
+  for (let i = 0; i < docs.length; i += FIRESTORE_BATCH_LIMIT) {
+    const chunk = docs.slice(i, i + FIRESTORE_BATCH_LIMIT);
+    const batch = db.batch();
+    for (const docSnap of chunk) {
+      batch.delete(docSnap.ref);
+    }
+    await batch.commit();
   }
-  await batch.commit();
 
   logger.info(
     { count: snap.size },
