@@ -28,7 +28,7 @@ workflows:
 
       - name: Install workspace dependencies
         script: |
-          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile --resolution-mode=highest
+          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile --config.resolution-mode=highest
 
       - name: Build web app for Capacitor
         script: |
