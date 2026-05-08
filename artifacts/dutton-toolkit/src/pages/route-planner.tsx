@@ -480,7 +480,9 @@ export default function RoutePlanner() {
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [routeSearch, setRouteSearch] = useState("");
+  const [routeSearch, setRouteSearch] = useState(
+    () => sessionStorage.getItem("routePlannerSearch") ?? ""
+  );
   const [routeSort, setRouteSort] = useState<"newest" | "alpha">("newest");
 
   const plannerRef = useRef<HTMLDivElement>(null);
@@ -1365,7 +1367,10 @@ export default function RoutePlanner() {
                 <Input
                   placeholder="Search routes…"
                   value={routeSearch}
-                  onChange={(e) => setRouteSearch(e.target.value)}
+                  onChange={(e) => {
+                    setRouteSearch(e.target.value);
+                    sessionStorage.setItem("routePlannerSearch", e.target.value);
+                  }}
                   className="pl-8 h-8 text-sm"
                 />
               </div>
