@@ -1,0 +1,51 @@
+Build description signature: fdb620b33046f3ac325cdd4f9f784657
+Build description path: /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/XCBuildData/fdb620b33046f3ac325cdd4f9f784657.xcbuilddata
+/Users/builder/clone/artifacts/dutton-toolkit/ios/App/App.xcodeproj: error: "App" requires a provisioning profile. Select a provisioning profile in the Signing & Capabilities editor. (in target 'App' from project 'App')
+warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+** ARCHIVE FAILED **
+
+
+The following build commands failed:
+	Archiving workspace App with scheme App
+(1 failure)
+error: error: archive not found at path '/tmp/App.xcarchive'
+
+** EXPORT FAILED **
+
+
+
+Build failed :|
+Step 8 script `Build IPA` exited with status code 65
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/usr/bin/ibtool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode-26.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.4.sdk -x objective-c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool -V
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ExecuteExternalTool /Applications/Xcode-26.4.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+Build description signature: fdb620b33046f3ac325cdd4f9f784657
+Build description path: /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/XCBuildData/fdb620b33046f3ac325cdd4f9f784657.xcbuilddata
+/Users/builder/clone/artifacts/dutton-toolkit/ios/App/App.xcodeproj: error: "App" requires a provisioning profile. Select a provisioning profile in the Signing & Capabilities editor. (in target 'App' from project 'App')
+warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+** ARCHIVE FAILED **
+
+
+The following build commands failed:
+	Archiving workspace App with scheme App
+(1 failure)
+error: error: archive not found at path '/tmp/App.xcarchive'
+
+** EXPORT FAILED **
+
+
+
+Build failed :|
+Step 8 script `Build IPA` exited with status code 65
+
+Publishing
