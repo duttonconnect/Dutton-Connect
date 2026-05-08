@@ -1,0 +1,65 @@
+Progress: resolved 91, reused 0, downloaded 87, added 0
+Progress: resolved 97, reused 0, downloaded 95, added 0
+Progress: resolved 97, reused 0, downloaded 97, added 0
+Progress: resolved 98, reused 0, downloaded 97, added 0
+Progress: resolved 277, reused 0, downloaded 256, added 0
+Progress: resolved 338, reused 0, downloaded 320, added 0
+Progress: resolved 366, reused 0, downloaded 345, added 0
+Progress: resolved 510, reused 0, downloaded 478, added 0
+Progress: resolved 711, reused 0, downloaded 666, added 0
+Progress: resolved 796, reused 0, downloaded 752, added 0
+Progress: resolved 1035, reused 0, downloaded 970, added 0
+[WARN] 5 deprecated subdependencies found: glob@10.5.0, json-ptr@3.1.1, node-domexception@1.0.0, uuid@8.3.2, uuid@9.0.1
+Packages: +1152
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1158, reused 0, downloaded 1152, added 25
+Progress: resolved 1158, reused 0, downloaded 1152, added 523
+Progress: resolved 1158, reused 0, downloaded 1152, added 909
+Progress: resolved 1158, reused 0, downloaded 1152, added 1018
+Progress: resolved 1158, reused 0, downloaded 1152, added 1152, done
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "${npm_config_user_agent:-pnpm/0}" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+
+devDependencies:
++ prettier 3.8.1 (3.8.3 is available)
++ typescript 5.9.3 (6.0.3 is available)
+
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @firebase/util@1.15.0, esbuild@0.27.3, protobufjs@7.5.6, re2@1.24.0
+
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+Progress: resolved 1158, reused 0, downloaded 1152, added 1018
+Progress: resolved 1158, reused 0, downloaded 1152, added 1152, done
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "${npm_config_user_agent:-pnpm/0}" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Done
+
+devDependencies:
++ prettier 3.8.1 (3.8.3 is available)
++ typescript 5.9.3 (6.0.3 is available)
+
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @firebase/util@1.15.0, esbuild@0.27.3, protobufjs@7.5.6, re2@1.24.0
+
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+Build web app for Capacitor
+< 1s
+Sync web build into iOS project
+< 1s
+Install CocoaPods dependencies
+< 1s
+Set up code signing
+< 1s
+Build IPA
+< 1s
+Publishing
+< 1s
+Cleaning up
+< 1s
+Step 3 script `Install workspace dependencies` exited with status code 1

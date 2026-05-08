@@ -28,6 +28,8 @@ workflows:
 
       - name: Install workspace dependencies
         script: |
+          # Allow all build scripts in CI (pnpm v10 requires explicit approval)
+          echo "dangerouslyAllowAllBuilds: true" >> pnpm-workspace.yaml
           COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile --config.resolution-mode=highest
 
       - name: Build web app for Capacitor
