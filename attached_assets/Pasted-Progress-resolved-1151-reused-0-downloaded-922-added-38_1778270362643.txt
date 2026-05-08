@@ -1,0 +1,51 @@
+Progress: resolved 1151, reused 0, downloaded 922, added 383
+Progress: resolved 1151, reused 0, downloaded 955, added 394
+Progress: resolved 1151, reused 0, downloaded 1057, added 435
+Progress: resolved 1151, reused 0, downloaded 1150, added 545
+Progress: resolved 1151, reused 0, downloaded 1151, added 941
+Progress: resolved 1151, reused 0, downloaded 1151, added 1068
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1151
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1151, reused 0, downloaded 172, added 80
+Progress: resolved 1151, reused 0, downloaded 421, added 210
+Progress: resolved 1151, reused 0, downloaded 613, added 296
+Progress: resolved 1151, reused 0, downloaded 786, added 363
+Progress: resolved 1151, reused 0, downloaded 922, added 383
+Progress: resolved 1151, reused 0, downloaded 955, added 394
+Progress: resolved 1151, reused 0, downloaded 1057, added 435
+Progress: resolved 1151, reused 0, downloaded 1150, added 545
+Progress: resolved 1151, reused 0, downloaded 1151, added 941
+Progress: resolved 1151, reused 0, downloaded 1151, added 1068
+Progress: resolved 1151, reused 0, downloaded 1151, added 1151, done
+
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Use pnpm instead
+. preinstall: Failed
+[ELIFECYCLE] Command failed with exit code 1.
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+Progress: resolved 1151, reused 0, downloaded 1151, added 1151, done
+
+devDependencies:
++ prettier 3.8.1
++ typescript 5.9.3
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+. preinstall: Use pnpm instead
+. preinstall: Failed
+[ELIFECYCLE] Command failed with exit code 1.
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+Build web app for Capacitor
