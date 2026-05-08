@@ -50,21 +50,7 @@ workflows:
 
       - name: Set up code signing
         script: |
-          python3 - <<'PYEOF'
-import os
-pbxproj = "artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj"
-team_id = os.environ["APPLE_TEAM_ID"]
-with open(pbxproj) as f:
-    content = f.read()
-content = content.replace("CODE_SIGN_STYLE = Automatic", "CODE_SIGN_STYLE = Manual")
-content = content.replace(
-    "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;",
-    "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;\n\t\t\t\tDEVELOPMENT_TEAM = " + team_id + ";"
-)
-with open(pbxproj, "w") as f:
-    f.write(content)
-print("Patched Xcode project with team ID:", team_id)
-PYEOF
+          python3 scripts/patch-xcode-signing.py
           app-store-connect fetch-signing-files \
             "$BUNDLE_ID" \
             --type IOS_APP_STORE \
