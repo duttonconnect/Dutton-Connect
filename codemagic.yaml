@@ -12,7 +12,7 @@ workflows:
         XCODE_SCHEME: App
         # Your 10-character Apple Team ID — find it at:
         # developer.apple.com/account → Membership → Team ID
-        APPLE_TEAM_ID: REPLACE_WITH_YOUR_TEAM_ID
+        APPLE_TEAM_ID: XZ68HMHPP4
       groups:
         - apple_credentials
       # Firebase config is required at build time so Vite can embed it.
