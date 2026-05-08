@@ -10,6 +10,9 @@ workflows:
         BUNDLE_ID: com.duttonconnect.app
         XCODE_WORKSPACE: artifacts/dutton-toolkit/ios/App/App.xcworkspace
         XCODE_SCHEME: App
+        # Your 10-character Apple Team ID — find it at:
+        # developer.apple.com/account → Membership → Team ID
+        APPLE_TEAM_ID: REPLACE_WITH_YOUR_TEAM_ID
       groups:
         - apple_credentials
       # Firebase config is required at build time so Vite can embed it.
@@ -47,6 +50,12 @@ workflows:
 
       - name: Set up code signing
         script: |
+          # Inject team ID and switch to manual signing in the Xcode project
+          PBXPROJ="artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj"
+          sed -i '' "s/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g" "$PBXPROJ"
+          # Add DEVELOPMENT_TEAM after PRODUCT_BUNDLE_IDENTIFIER lines
+          sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;/a\\
+\t\t\t\tDEVELOPMENT_TEAM = $APPLE_TEAM_ID;" "$PBXPROJ"
           app-store-connect fetch-signing-files \
             "$BUNDLE_ID" \
             --type IOS_APP_STORE \
