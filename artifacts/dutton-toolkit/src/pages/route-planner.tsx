@@ -1159,12 +1159,18 @@ export default function RoutePlanner() {
           <Card className="overflow-hidden">
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base flex items-center gap-2 flex-wrap">
                   <Navigation className="h-4 w-4" />
                   Route Details
                   {orderedStops.length > 0 && (
                     <span className="inline-flex items-center justify-center h-5 px-2 rounded-full bg-primary text-primary-foreground text-xs font-semibold leading-none shrink-0">
                       {orderedStops.length} {orderedStops.length === 1 ? "stop" : "stops"}
+                    </span>
+                  )}
+                  {isDirty && plannerHasContent && (
+                    <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-medium leading-none shrink-0 border border-amber-200 dark:border-amber-800">
+                      <AlertTriangle className="h-3 w-3 shrink-0" />
+                      Unsaved changes
                     </span>
                   )}
                 </CardTitle>
