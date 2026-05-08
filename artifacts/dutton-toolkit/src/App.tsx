@@ -8,6 +8,8 @@ import { RoleProvider, useRole } from "@/lib/role";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { FirestoreSyncBridge } from "@/lib/firestore-sync";
 import { Layout } from "@/components/layout";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { sendConfigToServiceWorker } from "@/lib/firebase";
 
 import Dashboard from "@/pages/dashboard";
 import JobsList from "@/pages/jobs/index";
@@ -138,6 +140,18 @@ function CustomerRoutes() {
   );
 }
 
+// Registers push notifications after login and keeps token fresh.
+function PushNotificationsBridge() {
+  const { user } = useAuth();
+  usePushNotifications(user?.uid ?? null);
+
+  useEffect(() => {
+    sendConfigToServiceWorker();
+  }, []);
+
+  return null;
+}
+
 // Syncs dual-role state to/from Firestore whenever the user changes.
 function RoleCloudBridge() {
   const { user, loadRolesFromCloud, saveRolesToCloud } = useAuth();
@@ -210,6 +224,7 @@ function AuthGate() {
     <>
       <RoleCloudBridge />
       <FirestoreSyncBridge />
+      <PushNotificationsBridge />
       <RoleGate />
     </>
   );

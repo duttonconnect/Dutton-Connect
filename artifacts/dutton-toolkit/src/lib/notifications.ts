@@ -127,6 +127,110 @@ export function useUnreadNotificationCount(userId: string | undefined): number {
   return count;
 }
 
+// ─── FCM Push Notification Triggers ──────────────────────────────────────────
+// These call the API server which uses Firebase Admin to send FCM messages.
+
+const _BASE = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+
+async function _postNotify(body: Record<string, unknown>) {
+  try {
+    await fetch(`${_BASE}/api/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    // Notifications are best-effort — never block the main flow
+  }
+}
+
+export function notifyNewMessage(
+  recipientId: string,
+  senderName: string,
+  messagePreview: string,
+  conversationId: string,
+) {
+  return _postNotify({
+    event: "new_message",
+    recipientId,
+    title: `New message from ${senderName}`,
+    body: messagePreview.length > 80 ? messagePreview.slice(0, 80) + "\u2026" : messagePreview,
+    data: { url: `/messages/${conversationId}`, tag: `msg-${conversationId}` },
+  });
+}
+
+export function notifyQuoteSent(
+  customerId: string,
+  proName: string,
+  jobTitle: string,
+  jobRequestId: string,
+) {
+  return _postNotify({
+    event: "quote_sent",
+    recipientId: customerId,
+    title: `New quote from ${proName}`,
+    body: `You received a quote on "${jobTitle}"`,
+    data: { url: `/my-jobs/${jobRequestId}/quotes`, tag: `quote-${jobRequestId}` },
+  });
+}
+
+export function notifyQuoteAccepted(
+  proId: string,
+  customerName: string,
+  jobTitle: string,
+  jobRequestId: string,
+) {
+  return _postNotify({
+    event: "quote_accepted",
+    recipientId: proId,
+    title: "Quote accepted",
+    body: `${customerName} accepted your quote for "${jobTitle}"`,
+    data: { url: `/nearby-jobs`, tag: `accepted-${jobRequestId}` },
+  });
+}
+
+export function notifyQuoteDeclined(
+  proId: string,
+  jobTitle: string,
+  jobRequestId: string,
+) {
+  return _postNotify({
+    event: "quote_declined",
+    recipientId: proId,
+    title: "Quote not selected",
+    body: `Your quote for "${jobTitle}" was not selected`,
+    data: { url: `/nearby-jobs`, tag: `declined-${jobRequestId}` },
+  });
+}
+
+export function notifyQuoteRequested(
+  proId: string,
+  customerName: string,
+  service: string,
+) {
+  return _postNotify({
+    event: "quote_requested",
+    recipientId: proId,
+    title: `Quote request from ${customerName}`,
+    body: `Requested service: ${service}`,
+    data: { url: `/lead-inbox`, tag: `request-${proId}` },
+  });
+}
+
+export function notifyNewJobMatch(
+  proId: string,
+  jobTitle: string,
+  jobRequestId: string,
+) {
+  return _postNotify({
+    event: "new_job_match",
+    recipientId: proId,
+    title: "New job near you",
+    body: jobTitle,
+    data: { url: `/nearby-jobs`, tag: `match-${jobRequestId}` },
+  });
+}
+
 // ─── Browser (OS-level) Notifications ────────────────────────────────────────
 
 export function browserNotificationsSupported(): boolean {

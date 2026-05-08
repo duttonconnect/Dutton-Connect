@@ -12,6 +12,7 @@ import {
   type Conversation,
   type Message,
 } from "@/lib/messaging";
+import { notifyNewMessage } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -53,6 +54,17 @@ export default function ChatPage() {
     try {
       await sendMessage(conversationId, user.uid, trimmed);
       toast.success("Message sent");
+      if (conversation) {
+        const recipientId = conversation.participants.find((p) => p !== user.uid);
+        if (recipientId) {
+          void notifyNewMessage(
+            recipientId,
+            user.displayName ?? "Someone",
+            trimmed,
+            conversationId,
+          );
+        }
+      }
     } catch {
       toast.error("Failed to send. Try again.");
       setText(trimmed);

@@ -26,6 +26,7 @@ import {
   type FirestoreJobRequest,
   type ProProfile,
 } from "@/lib/matching";
+import { notifyQuoteAccepted } from "@/lib/notifications";
 import { saveCalendarEvent } from "@/lib/calendar";
 import { getOrCreateConversation } from "@/lib/messaging";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,9 +108,14 @@ export default function JobQuotes() {
     setAccepting(null);
     if (ok) {
       toast.success("Job booked! You can now schedule a date.");
-      // Update local state
       setJob((prev) => prev ? { ...prev, status: "accepted", acceptedProId: quote.proId, acceptedQuoteId: quote.id } : prev);
       setQuotes((prev) => prev.map((q) => q.id === quote.id ? { ...q, status: "accepted" } : q));
+      void notifyQuoteAccepted(
+        quote.proId,
+        user.displayName ?? "A customer",
+        job.title,
+        jobId,
+      );
     } else {
       toast.error("Could not accept quote. Check your connection.");
     }

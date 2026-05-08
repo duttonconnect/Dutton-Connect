@@ -26,6 +26,7 @@ import {
   sendMatchQuote,
   type FirestoreJobRequest,
 } from "@/lib/matching";
+import { notifyQuoteSent } from "@/lib/notifications";
 import { getOrCreateConversation } from "@/lib/messaging";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -264,6 +265,12 @@ export default function NearbyJobs() {
     if (id) {
       setSentIds((prev) => new Set(prev).add(quoting.id));
       toast.success("Quote sent");
+      void notifyQuoteSent(
+        quoting.customerId,
+        user.displayName ?? "A pro",
+        quoting.title,
+        quoting.id,
+      );
     } else {
       toast.error("Could not send quote. Check your connection and try again.");
     }

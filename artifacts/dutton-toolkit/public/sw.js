@@ -1,4 +1,7 @@
 /* Dutton Solutions Toolkit — service worker */
+importScripts("https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/11.0.0/firebase-messaging-compat.js");
+
 const CACHE = "dutton-toolkit-v1";
 const PRECACHE_URLS = [
   "/",
@@ -12,6 +15,60 @@ const PRECACHE_URLS = [
   "/offline.html",
 ];
 
+// ---------------------------------------------------------------------------
+// Firebase Messaging (background push notifications)
+// The config is injected at runtime via a message from the main app.
+// ---------------------------------------------------------------------------
+let messagingInitialised = false;
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "FIREBASE_CONFIG" && !messagingInitialised) {
+    try {
+      firebase.initializeApp(event.data.config);
+      const messaging = firebase.messaging();
+      messagingInitialised = true;
+
+      messaging.onBackgroundMessage((payload) => {
+        const title = payload.notification?.title ?? "Dutton Connect";
+        const body = payload.notification?.body ?? "";
+        const icon = "/icon-192.png";
+        const badge = "/icon-192.png";
+        self.registration.showNotification(title, {
+          body,
+          icon,
+          badge,
+          data: payload.data ?? {},
+          tag: payload.data?.tag ?? "dutton-notification",
+        });
+      });
+    } catch {
+      // Firebase already initialized or config missing — ignore
+    }
+  }
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? "/";
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url.includes(self.location.origin) && "focus" in client) {
+            client.focus();
+            client.postMessage({ type: "NOTIFICATION_CLICK", url });
+            return;
+          }
+        }
+        if (clients.openWindow) return clients.openWindow(url);
+      }),
+  );
+});
+
+// ---------------------------------------------------------------------------
+// PWA caching
+// ---------------------------------------------------------------------------
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -46,10 +103,8 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(req.url);
 
-  // Don't intercept cross-origin (e.g. OpenStreetMap tiles, Google fonts).
   if (url.origin !== self.location.origin) return;
 
-  // SPA navigations: network-first, fall back to cached app shell, then offline page.
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req)
@@ -67,7 +122,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate.
   event.respondWith(
     caches.match(req).then((cached) => {
       const networkFetch = fetch(req)

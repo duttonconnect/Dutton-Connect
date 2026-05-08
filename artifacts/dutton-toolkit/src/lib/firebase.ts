@@ -65,3 +65,24 @@ if (API_KEY) {
 
 export { app, auth, db };
 export const isFirebaseConfigured = Boolean(API_KEY);
+
+/**
+ * Send the Firebase config to the service worker so it can initialise
+ * Firebase Messaging for background push notifications.
+ */
+export function sendConfigToServiceWorker() {
+  if (!API_KEY || !("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.ready.then((registration) => {
+    registration.active?.postMessage({
+      type: "FIREBASE_CONFIG",
+      config: {
+        apiKey: API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
+      },
+    });
+  }).catch(() => {});
+}
