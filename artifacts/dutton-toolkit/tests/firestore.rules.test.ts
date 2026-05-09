@@ -176,6 +176,88 @@ describe("routes collection", () => {
   });
 });
 
+// ─── businessProfiles ────────────────────────────────────────────────────────
+
+describe("businessProfiles collection", () => {
+  const proUid = "pro-user";
+  const otherUid = "other-user";
+  const profilePath = `businessProfiles/${proUid}`;
+  const profileData = {
+    businessName: "Smith Plumbing",
+    ownerName: "Joe Smith",
+    serviceCategories: ["Plumbing"],
+    serviceArea: "Atlanta, GA",
+    serviceRadius: 25,
+    about: "15 years experience.",
+    yearsExperience: 15,
+    updatedAt: new Date().toISOString(),
+  };
+
+  it("allows the owner to create their own business profile", async () => {
+    await assertSucceeds(
+      setDoc(doc(authed(proUid).firestore(), profilePath), profileData)
+    );
+  });
+
+  it("allows the owner to update their own business profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      setDoc(doc(authed(proUid).firestore(), profilePath), { ...profileData, about: "Updated bio." }, { merge: true })
+    );
+  });
+
+  it("allows the owner to read their own business profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(getDoc(doc(authed(proUid).firestore(), profilePath)));
+  });
+
+  it("denies another authenticated user from reading someone else's business profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(getDoc(doc(authed(otherUid).firestore(), profilePath)));
+  });
+
+  it("denies another user from creating a business profile under a different UID", async () => {
+    await assertFails(
+      setDoc(doc(authed(otherUid).firestore(), profilePath), profileData)
+    );
+  });
+
+  it("denies another user from updating someone else's business profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      setDoc(doc(authed(otherUid).firestore(), profilePath), { ...profileData, about: "Hacked." }, { merge: true })
+    );
+  });
+
+  it("denies unauthenticated read", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(getDoc(doc(unauthed().firestore(), profilePath)));
+  });
+
+  it("denies unauthenticated write", async () => {
+    await assertFails(
+      setDoc(doc(unauthed().firestore(), profilePath), profileData)
+    );
+  });
+
+  it("allows admin to read any business profile", async () => {
+    const adminCtx = await seedAdminAndGetContext("admin-bp");
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(getDoc(doc(adminCtx.firestore(), profilePath)));
+  });
+
+  it("allows admin to delete a business profile", async () => {
+    const adminCtx = await seedAdminAndGetContext("admin-bp-del");
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(deleteDoc(doc(adminCtx.firestore(), profilePath)));
+  });
+
+  it("denies a non-admin owner from deleting their own business profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(deleteDoc(doc(authed(proUid).firestore(), profilePath)));
+  });
+});
+
 // ─── users ────────────────────────────────────────────────────────────────────
 
 describe("users collection", () => {

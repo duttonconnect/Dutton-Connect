@@ -37,6 +37,18 @@ service cloud.firestore {
                     && request.auth.uid == request.resource.data.userId;
     }
 
+    // ── businessProfiles ──────────────────────────────────────────────────
+    // Full business profile owned by the pro (contains non-public fields like
+    // yearsExperience, businessLogo, etc.).
+    // Only the owner may write; owner and admins may read.
+    match /businessProfiles/{proId} {
+      allow read: if isSignedIn()
+                  && (request.auth.uid == proId || isAdmin());
+      allow create, update: if isSignedIn()
+                            && request.auth.uid == proId;
+      allow delete: if isAdmin();
+    }
+
     // ── publicProfiles ────────────────────────────────────────────────────
     // A curated projection of each pro's public fields, readable by any
     // authenticated user for customer-facing pro discovery/browsing.
