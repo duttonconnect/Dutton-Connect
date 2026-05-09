@@ -1,10 +1,16 @@
 import subprocess, plistlib, glob, os, sys
 
-profiles = glob.glob(os.path.expanduser(
-    "~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision"))
+search_dirs = [
+    "~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision",
+    "~/Library/Developer/Xcode/UserData/Provisioning Profiles/*.mobileprovision",
+]
+
+profiles = []
+for pattern in search_dirs:
+    profiles.extend(glob.glob(os.path.expanduser(pattern)))
 
 if not profiles:
-    print("ERROR: No provisioning profiles found", file=sys.stderr)
+    print("ERROR: No provisioning profiles found in any search location", file=sys.stderr)
     sys.exit(1)
 
 result = subprocess.run(

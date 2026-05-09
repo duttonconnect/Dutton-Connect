@@ -1,0 +1,51 @@
+=== Downloaded provisioning profiles ===
+=== Downloaded certificates ===
+NONE
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Add certificates to keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Certificates/*.p12
+Searching for files matching /Users/builder/Library/MobileDevice/Certificates/*.p12
+Add certificate /Users/builder/Library/Developer/Xcode/UserData/Certificates/IOS_DISTRIBUTION_63RP7UM7DX_atsa8gf7.p12 to keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+security: SecKeychainItemImport: Unable to decode the provided data.
+1 key imported.
+1 certificate imported.
+ERROR: No provisioning profiles found
+=== Profile UUID:  ===
+ERROR: PROVISIONING_PROFILE_UUID env var not set
+
+
+Build failed :|
+Step 7 script `Set up code signing` exited with status code 1
+Creating new Profile: name: 'Dutton Connect ios_app_store 1778303023', profile type: IOS_APP_STORE, bundle id: 2Z7MRYUXZ4, certificates: ['63RP7UM7DX']
+Created Profile 89582FC67G
+
+Saved Signing Certificate iOS Distribution: Jessica Orton (63RP7UM7DX) to /Users/builder/Library/Developer/Xcode/UserData/Certificates/IOS_DISTRIBUTION_63RP7UM7DX_atsa8gf7.p12
+Saved Profile IOS_APP_STORE Dutton Connect ios_app_store 1778303023 (89582FC67G) to '/Users/builder/Library/Developer/Xcode/UserData/Provisioning Profiles/IOS_APP_STORE_89582FC67G_wx96xyxn.mobileprovision'
+=== Downloaded provisioning profiles ===
+=== Downloaded certificates ===
+NONE
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Add certificates to keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Certificates/*.p12
+Searching for files matching /Users/builder/Library/MobileDevice/Certificates/*.p12
+Add certificate /Users/builder/Library/Developer/Xcode/UserData/Certificates/IOS_DISTRIBUTION_63RP7UM7DX_atsa8gf7.p12 to keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_g1absby0.keychain-db
+security: SecKeychainItemImport: Unable to decode the provided data.
+1 key imported.
+1 certificate imported.
+ERROR: No provisioning profiles found
+=== Profile UUID:  ===
+ERROR: PROVISIONING_PROFILE_UUID env var not set
+
+
+Build failed :|
+Step 7 script `Set up code signing` exited with status code 1
+
+Build IPA
