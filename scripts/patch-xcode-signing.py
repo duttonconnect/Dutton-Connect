@@ -17,6 +17,12 @@ with open(pbxproj) as f:
 content = content.replace("CODE_SIGN_STYLE = Automatic", "CODE_SIGN_STYLE = Manual")
 
 content = re.sub(
+    r'CODE_SIGN_IDENTITY = "[^"]*";',
+    'CODE_SIGN_IDENTITY = "iPhone Distribution";',
+    content
+)
+
+content = re.sub(
     r'(PRODUCT_BUNDLE_IDENTIFIER = com\.duttonconnect\.app;)',
     (
         r'\1' + "\n\t\t\t\t"
@@ -29,4 +35,4 @@ content = re.sub(
 with open(pbxproj, "w") as f:
     f.write(content)
 
-print(f"Patched: Manual signing | Apple Distribution | team={team_id} | profile={profile_uuid}")
+print(f"Patched: Manual signing | CODE_SIGN_IDENTITY=iPhone Distribution | team={team_id} | profile={profile_uuid}")
