@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, re
 
 pbxproj = "artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj"
 team_id = os.environ.get("APPLE_TEAM_ID", "")
@@ -10,13 +10,18 @@ if not team_id:
 with open(pbxproj) as f:
     content = f.read()
 
-# Only inject DEVELOPMENT_TEAM — let xcode-project use-profiles handle signing style
-content = content.replace(
-    "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;",
-    "PRODUCT_BUNDLE_IDENTIFIER = com.duttonconnect.app;\n\t\t\t\tDEVELOPMENT_TEAM = " + team_id + ";"
+# Inject DEVELOPMENT_TEAM next to every PRODUCT_BUNDLE_IDENTIFIER for this app.
+# Leave CODE_SIGN_STYLE as Automatic so -allowProvisioningUpdates can manage signing.
+updated = re.sub(
+    r'(PRODUCT_BUNDLE_IDENTIFIER = com\.duttonconnect\.app;)',
+    r'\1\n\t\t\t\tDEVELOPMENT_TEAM = ' + team_id + ';',
+    content
 )
 
-with open(pbxproj, "w") as f:
-    f.write(content)
+if updated == content:
+    print("WARNING: PRODUCT_BUNDLE_IDENTIFIER not found — project may not be patched", file=sys.stderr)
+else:
+    print(f"Patched {updated.count('DEVELOPMENT_TEAM = ' + team_id)} occurrence(s) with DEVELOPMENT_TEAM={team_id}")
 
-print("Patched Xcode project with DEVELOPMENT_TEAM:", team_id)
+with open(pbxproj, "w") as f:
+    f.write(updated)
