@@ -454,9 +454,30 @@ function RouteCard({
             </div>
           )}
           {stops.length > 0 && (
-            <div className="text-xs">
-              <span className="font-medium">Stops ({stops.length}):</span>{" "}
-              <span className="text-muted-foreground">{stops.join(" → ")}</span>
+            <div className="text-xs space-y-1">
+              <span className="font-medium">Stops ({stops.length}):</span>
+              <div className="space-y-0.5 mt-1">
+                {stops.map((addr, i) => {
+                  const isStale = !activeJobAddresses.has(addr);
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-1.5 rounded px-2 py-1 ${
+                        isStale
+                          ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800"
+                          : "bg-muted"
+                      }`}
+                    >
+                      {isStale ? (
+                        <AlertTriangle className="h-3 w-3 shrink-0 text-amber-500" />
+                      ) : (
+                        <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                      )}
+                      <span className={`truncate ${isStale ? "text-muted-foreground" : ""}`}>{addr}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           {!route.startAddress && !route.endAddress && stops.length === 0 && (
