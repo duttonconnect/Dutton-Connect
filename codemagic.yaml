@@ -63,20 +63,19 @@ workflows:
       - name: Set up code signing
         script: |
           # CERTIFICATE_PRIVATE_KEY must be set in the apple_credentials env group.
-          # Generate once with: openssl genrsa -out cert_key.pem 2048
-          # Then paste the file contents into Codemagic as a secure env var.
-          echo "$CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key.pem
+          # Generate once with: openssl genrsa 2048
+          # Then paste the full output into Codemagic as a secure env var.
 
           # Create iOS Distribution certificate using the private key (idempotent)
           app-store-connect certificates create \
             --type IOS_DISTRIBUTION \
-            --certificate-key /tmp/cert_key.pem || \
+            --certificate-key "$CERTIFICATE_PRIVATE_KEY" || \
             echo "=== Certificate already exists — continuing ==="
 
           # Fetch certificate + App Store provisioning profile (create profile if missing)
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key /tmp/cert_key.pem \
+            --certificate-key "$CERTIFICATE_PRIVATE_KEY" \
             --create
 
           echo "=== Downloaded provisioning profiles ==="
