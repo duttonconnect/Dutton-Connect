@@ -86,6 +86,17 @@ workflows:
           keychain initialize
           keychain add-certificates
 
+          # Remove any stale distribution certs from previous builds on this shared machine
+          # so Xcode cannot accidentally pick one whose private key is missing
+          echo "=== All codesigning identities before cleanup ==="
+          security find-identity -v -p codesigning || true
+          security delete-certificate -c "iPhone Distribution: Jessica Orton (XZ68HMHPP4)" \
+            -t "$HOME/Library/codemagic-cli-tools/keychains/$(ls ~/Library/codemagic-cli-tools/keychains/ | head -1)" 2>/dev/null || true
+          security delete-certificate -c "Apple Distribution: Jessica Orton (XZ68HMHPP4)" \
+            -t "$HOME/Library/codemagic-cli-tools/keychains/$(ls ~/Library/codemagic-cli-tools/keychains/ | head -1)" 2>/dev/null || true
+          echo "=== Codesigning identities after cleanup ==="
+          security find-identity -v -p codesigning || true
+
           PROVISIONING_PROFILE_UUID=$(python3 scripts/extract-profile-uuid.py)
           echo "=== Profile UUID: $PROVISIONING_PROFILE_UUID ==="
           PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 scripts/patch-xcode-signing.py
