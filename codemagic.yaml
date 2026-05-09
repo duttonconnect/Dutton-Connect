@@ -62,15 +62,22 @@ workflows:
 
       - name: Set up code signing
         script: |
-          echo "=== Listing existing Distribution certs in portal ==="
-          app-store-connect list-certificates --type IOS_DISTRIBUTION || true
+          # CERTIFICATE_PRIVATE_KEY must be set in the apple_credentials env group.
+          # Generate once with: openssl genrsa -out cert_key.pem 2048
+          # Then paste the file contents into Codemagic as a secure env var.
+          echo "$CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key.pem
 
-          echo "=== Creating Distribution certificate if needed ==="
-          app-store-connect create-certificate --type IOS_DISTRIBUTION || \
-            echo "Certificate may already exist — continuing"
+          # Create iOS Distribution certificate using the private key (idempotent)
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --certificate-key /tmp/cert_key.pem || \
+            echo "=== Certificate already exists — continuing ==="
 
-          echo "=== Fetching App Store signing files ==="
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create --verbose
+          # Fetch certificate + App Store provisioning profile (create profile if missing)
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key /tmp/cert_key.pem \
+            --create
 
           echo "=== Downloaded provisioning profiles ==="
           ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"

@@ -1,0 +1,49 @@
+=== Downloaded provisioning profiles ===
+=== Downloaded certificates ===
+NONE
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Add certificates to keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Certificates/*.p12
+Searching for files matching /Users/builder/Library/MobileDevice/Certificates/*.p12
+Did not find any certificates from specified locations
+ERROR: No provisioning profiles found
+=== Profile UUID:  ===
+ERROR: PROVISIONING_PROFILE_UUID env var not set
+=== Listing existing Distribution certs in portal ===
+Action `app-store-connect list-certificates` was deprecated in version 0.49.0 and replaced by equivalent action `app-store-connect certificates list`.
+Use `app-store-connect certificates list` instead as `app-store-connect list-certificates` is subject for removal in future releases.
+Did not find any Signing Certificates matching specified filters: certificateType=IOS_DISTRIBUTION.
+=== Creating Distribution certificate if needed ===
+Action `app-store-connect create-certificate` was deprecated in version 0.49.0 and replaced by equivalent action `app-store-connect certificates create`.
+Use `app-store-connect certificates create` instead as `app-store-connect create-certificate` is subject for removal in future releases.
+Cannot create resource without certificate private key
+Certificate may already exist — continuing
+=== Fetching App Store signing files ===
+[01:25:54] ERROR > Cannot save Signing Certificates without certificate private key
+=== Downloaded provisioning profiles ===
+=== Downloaded certificates ===
+NONE
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Add certificates to keychain /Users/builder/Library/codemagic-cli-tools/keychains/09-05-26_sjcqwn45.keychain-db
+Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Certificates/*.p12
+Searching for files matching /Users/builder/Library/MobileDevice/Certificates/*.p12
+Did not find any certificates from specified locations
+ERROR: No provisioning profiles found
+=== Profile UUID:  ===
+ERROR: PROVISIONING_PROFILE_UUID env var not set
+
+
+Build failed :|
+Step 7 script `Set up code signing` exited with status code 1
+
+
+Build failed :|
+Step 7 script `Set up code signing` exited with status code 1
