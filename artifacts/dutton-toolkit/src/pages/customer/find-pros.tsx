@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { calculateDistanceMiles } from "@/lib/distance";
 import { matchesKeyword } from "@/lib/search";
-import { loadAllPublicProfiles } from "@/lib/business-profile";
+import { loadAllPublicProfiles, BUSINESS_CATEGORIES } from "@/lib/business-profile";
+import { savePro, unsavePro, loadSavedPros } from "@/lib/saved-pros";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -10,7 +11,6 @@ import {
   MapPin,
   Star,
   Hammer,
-  CheckCircle2,
   Loader2,
   Search,
   LocateFixed,
@@ -18,7 +18,9 @@ import {
   Filter,
   BadgeCheck,
   Zap,
-  ShieldCheck,
+  ChevronRight,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,21 +39,21 @@ import { sendQuoteRequest } from "@/lib/matching";
 
 type Pro = {
   id: string;
+  displayName?: string;
   business: string;
   services: string[];
   location: string;
   serviceRadiusMiles: number;
   phone?: string;
-  ratingPlaceholder: number;
-  reviewsPlaceholder: number;
-  verified?: boolean;
-  lat?: number;
-  lng?: number;
   verifiedPro?: boolean;
   fastResponder?: boolean;
   topRated?: boolean;
   completedJobsCount?: number;
+  lat?: number;
+  lng?: number;
 };
+
+const ALL_CATEGORY = "__all__";
 
 export default function FindNearbyPros() {
   const { user } = useAuth();
@@ -60,8 +62,15 @@ export default function FindNearbyPros() {
   const [loadingPros, setLoadingPros] = useState(true);
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
+  // Save state: proId → savedDoc id (null = not saved)
+  const [savedMap, setSavedMap] = useState<Record<string, string | null>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  // Search / filter state
   const [keywordInput, setKeywordInput] = useState("");
   const [appliedKeyword, setAppliedKeyword] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY);
   const [searchInput, setSearchInput] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -72,25 +81,37 @@ export default function FindNearbyPros() {
     setLoadingPros(true);
     loadAllPublicProfiles()
       .then((profiles) => {
-        const mapped: Pro[] = profiles.map((pp) => ({
+        // Only include users who have role === "pro"
+        const proProfiles = profiles.filter((pp) => pp.role === "pro");
+        const mapped: Pro[] = proProfiles.map((pp) => ({
           id: pp.proId,
+          displayName: pp.displayName,
           business: pp.businessName,
           services: pp.services,
           location: pp.serviceArea,
           serviceRadiusMiles: pp.serviceRadiusMiles,
           phone: pp.publicPhone,
-          ratingPlaceholder: 0,
-          reviewsPlaceholder: 0,
-          verified: pp.verifiedPro ?? false,
           verifiedPro: pp.verifiedPro,
           fastResponder: pp.fastResponder,
           topRated: pp.topRated,
           completedJobsCount: pp.completedJobsCount,
         }));
         setPros(mapped);
+        return mapped;
+      })
+      .then(async (mapped) => {
+        if (!user) return;
+        // Pre-load save status for all pros in one batch
+        const saved = await loadSavedPros(user.uid);
+        const map: Record<string, string | null> = {};
+        for (const p of mapped) {
+          const entry = saved.find((s) => s.proId === p.id);
+          map[p.id] = entry?.id ?? null;
+        }
+        setSavedMap(map);
       })
       .finally(() => setLoadingPros(false));
-  }, []);
+  }, [user?.uid]);
 
   const handleKeywordSearch = () => {
     setAppliedKeyword(keywordInput.trim());
@@ -155,17 +176,21 @@ export default function FindNearbyPros() {
 
   const filteredPros = useMemo(() => {
     return pros.filter((p) => {
+      // Category filter
+      if (selectedCategory !== ALL_CATEGORY) {
+        const cat = selectedCategory.toLowerCase();
+        if (!p.services.some((s) => s.toLowerCase().includes(cat))) return false;
+      }
+
+      // Keyword filter
       if (
         appliedKeyword &&
-        !matchesKeyword(appliedKeyword, [
-          p.business,
-          ...p.services,
-          p.location,
-        ])
+        !matchesKeyword(appliedKeyword, [p.business, ...(p.displayName ? [p.displayName] : []), ...p.services, p.location])
       ) {
         return false;
       }
 
+      // Location / distance filter
       if (userCoords && p.lat != null && p.lng != null) {
         const d = calculateDistanceMiles(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return d <= distanceMiles;
@@ -173,14 +198,12 @@ export default function FindNearbyPros() {
       if (selectedLocation) {
         return (
           p.location.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-          p.services.some((s) =>
-            s.toLowerCase().includes(selectedLocation.toLowerCase()),
-          )
+          p.services.some((s) => s.toLowerCase().includes(selectedLocation.toLowerCase()))
         );
       }
       return true;
     });
-  }, [pros, userCoords, distanceMiles, selectedLocation, appliedKeyword]);
+  }, [pros, userCoords, distanceMiles, selectedLocation, appliedKeyword, selectedCategory]);
 
   const handleRequestQuote = async (pro: Pro) => {
     if (!user) {
@@ -212,6 +235,41 @@ export default function FindNearbyPros() {
     }
   };
 
+  const handleToggleSave = async (pro: Pro) => {
+    if (!user) { navigate("/login"); return; }
+    setSavingId(pro.id);
+    try {
+      const currentSavedId = savedMap[pro.id] ?? null;
+      if (currentSavedId) {
+        await unsavePro(currentSavedId);
+        setSavedMap((prev) => ({ ...prev, [pro.id]: null }));
+        toast.success("Removed from saved pros");
+      } else {
+        const newId = await savePro({
+          customerId: user.uid,
+          proId: pro.id,
+          businessName: pro.business,
+          services: pro.services,
+        });
+        if (newId) {
+          setSavedMap((prev) => ({ ...prev, [pro.id]: newId }));
+          toast.success("Pro saved");
+        } else {
+          toast.error("Could not save pro. Try again.");
+        }
+      }
+    } catch {
+      toast.error("Could not update saved pros. Try again.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const activeFilterCount =
+    (appliedKeyword ? 1 : 0) +
+    (selectedCategory !== ALL_CATEGORY ? 1 : 0) +
+    (selectedLocation ? 1 : 0);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -222,10 +280,10 @@ export default function FindNearbyPros() {
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Find Nearby Pros
+            Find a Pro
           </h1>
           <p className="text-gray-500 text-sm">
-            Trusted local pros serving your area.
+            Browse trusted local professionals and request a quote.
           </p>
         </div>
       </div>
@@ -236,7 +294,7 @@ export default function FindNearbyPros() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9 pr-9"
-            placeholder="Search by service, keyword, or location"
+            placeholder="Search by name, keyword, or location"
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleKeywordSearch()}
@@ -256,30 +314,27 @@ export default function FindNearbyPros() {
         </Button>
       </div>
 
-      {/* Active keyword badge + result count */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Showing{" "}
-          <span className="font-semibold text-gray-900">{filteredPros.length}</span>{" "}
-          {filteredPros.length === 1 ? "pro" : "pros"}
-          {appliedKeyword && (
-            <> matching <span className="font-medium text-gray-700">"{appliedKeyword}"</span></>
-          )}
-        </span>
-        {appliedKeyword && (
-          <button
-            onClick={handleClearKeyword}
-            className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
-          >
-            <X className="h-3.5 w-3.5" /> Clear search
-          </button>
-        )}
-      </div>
-
-      {/* Location search + distance row */}
+      {/* Category + location row */}
       <div className="flex flex-col sm:flex-row gap-2">
+        {/* Service category filter */}
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-full sm:w-52">
+            <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
+            <SelectValue placeholder="All categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_CATEGORY}>All categories</SelectItem>
+            {BUSINESS_CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Location search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9 pr-9"
             placeholder="Enter city or zip code"
@@ -298,13 +353,12 @@ export default function FindNearbyPros() {
           )}
         </div>
 
-        {/* Distance dropdown */}
+        {/* Distance dropdown — only relevant when using location */}
         <Select
           value={String(distanceMiles)}
           onValueChange={(v) => setDistanceMiles(Number(v))}
         >
           <SelectTrigger className="w-full sm:w-36">
-            <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -317,7 +371,7 @@ export default function FindNearbyPros() {
         </Select>
 
         <Button onClick={handleSearch} disabled={!searchInput.trim()}>
-          <Search className="mr-2 h-4 w-4" /> Search
+          <Search className="mr-2 h-4 w-4" /> Go
         </Button>
         <Button variant="outline" onClick={handleUseMyLocation} disabled={locating}>
           {locating ? (
@@ -325,8 +379,51 @@ export default function FindNearbyPros() {
           ) : (
             <LocateFixed className="mr-2 h-4 w-4" />
           )}
-          Use my location
+          My location
         </Button>
+      </div>
+
+      {/* Active filters summary */}
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <span>
+          Showing{" "}
+          <span className="font-semibold text-gray-900">{filteredPros.length}</span>{" "}
+          {filteredPros.length === 1 ? "pro" : "pros"}
+          {appliedKeyword && (
+            <> matching <span className="font-medium text-gray-700">"{appliedKeyword}"</span></>
+          )}
+        </span>
+
+        {selectedCategory !== ALL_CATEGORY && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-700">
+            {selectedCategory}
+            <button onClick={() => setSelectedCategory(ALL_CATEGORY)} aria-label="Remove category filter">
+              <X className="h-3 w-3 ml-0.5" />
+            </button>
+          </span>
+        )}
+
+        {appliedKeyword && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700">
+            "{appliedKeyword}"
+            <button onClick={handleClearKeyword} aria-label="Remove keyword filter">
+              <X className="h-3 w-3 ml-0.5" />
+            </button>
+          </span>
+        )}
+
+        {activeFilterCount > 1 && (
+          <button
+            className="text-xs text-blue-600 hover:text-blue-800 underline underline-offset-2"
+            onClick={() => {
+              handleClearKeyword();
+              setSelectedCategory(ALL_CATEGORY);
+              handleClearLocation();
+            }}
+          >
+            Clear all
+          </button>
+        )}
       </div>
 
       {/* Active location banner */}
@@ -370,135 +467,161 @@ export default function FindNearbyPros() {
           <p className="text-sm font-medium">
             {selectedLocation
               ? `No pros found near "${selectedLocation}"`
+              : selectedCategory !== ALL_CATEGORY
+              ? `No pros found for "${selectedCategory}"`
               : "No pros available yet in your area."}
           </p>
           <p className="text-xs mt-1">
             {selectedLocation
               ? "Try a nearby city or a broader search term."
+              : selectedCategory !== ALL_CATEGORY
+              ? "Try a different category or remove the filter."
               : "Check back soon as more pros join the platform."}
           </p>
-          {selectedLocation && (
-            <Button variant="ghost" size="sm" className="mt-3" onClick={handleClearLocation}>
-              Clear search
-            </Button>
-          )}
+          <div className="flex justify-center gap-2 mt-3 flex-wrap">
+            {selectedLocation && (
+              <Button variant="ghost" size="sm" onClick={handleClearLocation}>
+                Clear location
+              </Button>
+            )}
+            {selectedCategory !== ALL_CATEGORY && (
+              <Button variant="ghost" size="sm" onClick={() => setSelectedCategory(ALL_CATEGORY)}>
+                Clear category
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
-      <div className="grid gap-4 md:grid-cols-2">
-        {filteredPros.map((pro) => (
-          <Card key={pro.id} className="flex flex-col">
-            <CardContent className="p-5 flex flex-col gap-3 flex-1">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-3 min-w-0 flex-1">
-                  <div className="h-12 w-12 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
-                    <Hammer className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-lg flex items-center gap-1.5">
-                      <span className="truncate" title={pro.business}>
-                        {pro.business}
-                      </span>
-                      {pro.verifiedPro && (
-                        <BadgeCheck
-                          className="h-4 w-4 text-primary shrink-0"
-                          aria-label="Verified Pro"
-                        />
-                      )}
-                      {pro.topRated && (
-                        <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" aria-label="Top Rated" />
-                      )}
-                    </div>
-                    {pro.reviewsPlaceholder > 0 && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium text-gray-700">
-                          {pro.ratingPlaceholder.toFixed(1)}
-                        </span>
-                        <span className="text-xs">
-                          ({pro.reviewsPlaceholder} reviews)
-                        </span>
+        <div className="grid gap-4 md:grid-cols-2">
+          {filteredPros.map((pro) => {
+            const isSaved = !!savedMap[pro.id];
+            const isSaving = savingId === pro.id;
+            return (
+              <Card key={pro.id} className="flex flex-col group hover:shadow-md transition-shadow">
+                <CardContent className="p-5 flex flex-col gap-3 flex-1">
+                  {/* Header row: avatar + name + save button */}
+                  <div className="flex items-start justify-between gap-3">
+                    <Link href={`/pros/${pro.id}`} className="flex gap-3 min-w-0 flex-1">
+                      <div className="h-12 w-12 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+                        <Hammer className="h-6 w-6" />
                       </div>
-                    )}
-                    {(pro.completedJobsCount ?? 0) > 0 && (
-                      <p className="text-xs text-muted-foreground">{pro.completedJobsCount} jobs completed</p>
-                    )}
-                    {/* Trust badge pills */}
-                    {(pro.verifiedPro || pro.fastResponder) && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {pro.verifiedPro && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                            <BadgeCheck className="h-2.5 w-2.5" /> Verified
+                      <div className="min-w-0">
+                        <div className="font-semibold text-lg flex items-center gap-1.5 group-hover:text-primary transition-colors">
+                          <span className="truncate" title={pro.business}>
+                            {pro.business}
                           </span>
+                          {pro.verifiedPro && (
+                            <BadgeCheck
+                              className="h-4 w-4 text-primary shrink-0"
+                              aria-label="Verified Pro"
+                            />
+                          )}
+                          {pro.topRated && (
+                            <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" aria-label="Top Rated" />
+                          )}
+                        </div>
+                        {pro.displayName && pro.displayName !== pro.business && (
+                          <p className="text-xs text-muted-foreground truncate">{pro.displayName}</p>
                         )}
-                        {pro.fastResponder && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                            <Zap className="h-2.5 w-2.5" /> Fast Responder
-                          </span>
+                        {(pro.completedJobsCount ?? 0) > 0 && (
+                          <p className="text-xs text-muted-foreground">{pro.completedJobsCount} jobs completed</p>
+                        )}
+                        {/* Trust badge pills */}
+                        {(pro.verifiedPro || pro.fastResponder) && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {pro.verifiedPro && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                <BadgeCheck className="h-2.5 w-2.5" /> Verified
+                              </span>
+                            )}
+                            {pro.fastResponder && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                                <Zap className="h-2.5 w-2.5" /> Fast Responder
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                    </Link>
 
-              <div className="flex flex-wrap gap-1.5">
-                {pro.services.map((s) => (
-                  <Badge key={s} variant="secondary" className="text-xs">
-                    {s}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-                  <span>
-                    {pro.location} · serves {pro.serviceRadiusMiles} mi radius
-                  </span>
-                </div>
-                {pro.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5 shrink-0" />
-                    <a
-                      href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}
-                      className="text-primary hover:underline"
+                    {/* Save / bookmark button */}
+                    <button
+                      onClick={() => handleToggleSave(pro)}
+                      disabled={isSaving}
+                      aria-label={isSaved ? "Remove from saved" : "Save pro"}
+                      className={`shrink-0 p-1.5 rounded-md transition-colors ${
+                        isSaved
+                          ? "text-primary hover:text-primary/70"
+                          : "text-muted-foreground hover:text-primary"
+                      }`}
                     >
-                      {pro.phone}
-                    </a>
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : isSaved ? (
+                        <BookmarkCheck className="h-5 w-5" />
+                      ) : (
+                        <Bookmark className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
-                )}
-              </div>
 
-              <div className="flex gap-2 mt-auto pt-3 border-t">
-                {pro.phone && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    asChild
-                  >
-                    <a href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}>
-                      <Phone className="mr-2 h-4 w-4" /> Call
-                    </a>
-                  </Button>
-                )}
-                <Button
-                  className="flex-1"
-                  disabled={requestingId === pro.id || sentIds.has(pro.id)}
-                  onClick={() => handleRequestQuote(pro)}
-                >
-                  {requestingId === pro.id ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
-                  ) : sentIds.has(pro.id) ? (
-                    "Request sent"
-                  ) : (
-                    "Request Quote"
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  {/* Service badges */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {pro.services.map((s) => (
+                      <Badge key={s} variant="secondary" className="text-xs">
+                        {s}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {/* Location + phone */}
+                  <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {pro.location} · serves {pro.serviceRadiusMiles} mi radius
+                      </span>
+                    </div>
+                    {pro.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        <a
+                          href={`tel:${pro.phone.replace(/[^0-9]/g, "")}`}
+                          className="text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {pro.phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-auto pt-3 border-t">
+                    <Link href={`/pros/${pro.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        View Profile <ChevronRight className="ml-1.5 h-3.5 w-3.5" />
+                      </Button>
+                    </Link>
+                    <Button
+                      className="flex-1"
+                      disabled={requestingId === pro.id || sentIds.has(pro.id)}
+                      onClick={() => handleRequestQuote(pro)}
+                    >
+                      {requestingId === pro.id ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
+                      ) : sentIds.has(pro.id) ? (
+                        "Request Sent"
+                      ) : (
+                        "Request Quote"
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
       <div className="text-center">
