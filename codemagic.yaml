@@ -60,11 +60,24 @@ workflows:
 
       - name: Set up code signing
         script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          echo "=== Listing existing Distribution certs in portal ==="
+          app-store-connect list-certificates --type IOS_DISTRIBUTION || true
+
+          echo "=== Creating Distribution certificate if needed ==="
+          app-store-connect create-certificate --type IOS_DISTRIBUTION || \
+            echo "Certificate may already exist — continuing"
+
+          echo "=== Fetching App Store signing files ==="
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create --verbose
+
           echo "=== Downloaded provisioning profiles ==="
           ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"
+          echo "=== Downloaded certificates ==="
+          ls ~/Library/MobileDevice/Certificates/ 2>/dev/null || echo "NONE"
+
           keychain initialize
           keychain add-certificates
+
           PROVISIONING_PROFILE_UUID=$(python3 scripts/extract-profile-uuid.py)
           echo "=== Profile UUID: $PROVISIONING_PROFILE_UUID ==="
           PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 scripts/patch-xcode-signing.py
