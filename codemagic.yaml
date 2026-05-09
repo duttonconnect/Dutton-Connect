@@ -60,10 +60,39 @@ workflows:
 
       - name: Set up code signing
         script: |
-          python3 scripts/patch-xcode-signing.py
-          mkdir -p "$HOME/private_keys"
-          printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" \
-            > "$HOME/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8"
+          # Download App Store distribution certificate + provisioning profile (create if missing)
+          app-store-connect fetch-signing-files \
+            "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+          # List what was downloaded
+          echo "=== Downloaded provisioning profiles ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"
+
+          # Install certificate into a temporary keychain
+          keychain initialize
+          keychain add-certificates
+
+          # Extract UUID from the first matching App Store profile
+          PROVISIONING_PROFILE_UUID=$(python3 - <<'PYEOF'
+import subprocess, plistlib, glob, os, sys
+profiles = glob.glob(os.path.expanduser(
+    "~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision"))
+if not profiles:
+    print("ERROR: No provisioning profiles found", file=sys.stderr)
+    sys.exit(1)
+result = subprocess.run(
+    ["security", "cms", "-D", "-i", profiles[0]], capture_output=True)
+plist = plistlib.loads(result.stdout)
+print(plist["UUID"])
+PYEOF
+)
+          echo "=== Profile UUID: $PROVISIONING_PROFILE_UUID ==="
+
+          # Patch the Xcode project: Manual signing + Apple Distribution + team + profile
+          PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" \
+            python3 scripts/patch-xcode-signing.py
 
       - name: Build IPA
         script: |
@@ -73,22 +102,12 @@ workflows:
             -sdk iphoneos \
             -configuration Release \
             -archivePath /tmp/App.xcarchive \
-            archive \
-            CODE_SIGN_STYLE=Automatic \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8" \
-            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            archive
           xcodebuild \
             -exportArchive \
             -archivePath /tmp/App.xcarchive \
             -exportPath /tmp/ipa-output \
-            -exportOptionsPlist artifacts/dutton-toolkit/ios/ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$HOME/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_IDENTIFIER}.p8" \
-            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            -exportOptionsPlist artifacts/dutton-toolkit/ios/ExportOptions.plist
 
     artifacts:
       - /tmp/ipa-output/*.ipa

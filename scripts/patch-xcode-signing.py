@@ -2,26 +2,32 @@ import os, sys, re
 
 pbxproj = "artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj"
 team_id = os.environ.get("APPLE_TEAM_ID", "")
+profile_uuid = os.environ.get("PROVISIONING_PROFILE_UUID", "")
 
 if not team_id:
     print("ERROR: APPLE_TEAM_ID env var not set", file=sys.stderr)
+    sys.exit(1)
+if not profile_uuid:
+    print("ERROR: PROVISIONING_PROFILE_UUID env var not set", file=sys.stderr)
     sys.exit(1)
 
 with open(pbxproj) as f:
     content = f.read()
 
-# Inject DEVELOPMENT_TEAM next to every PRODUCT_BUNDLE_IDENTIFIER for this app.
-# Leave CODE_SIGN_STYLE as Automatic so -allowProvisioningUpdates can manage signing.
-updated = re.sub(
+content = content.replace("CODE_SIGN_STYLE = Automatic", "CODE_SIGN_STYLE = Manual")
+
+content = re.sub(
     r'(PRODUCT_BUNDLE_IDENTIFIER = com\.duttonconnect\.app;)',
-    r'\1\n\t\t\t\tDEVELOPMENT_TEAM = ' + team_id + ';',
+    (
+        r'\1' + "\n\t\t\t\t"
+        + 'CODE_SIGN_IDENTITY = "Apple Distribution";' + "\n\t\t\t\t"
+        + "DEVELOPMENT_TEAM = " + team_id + ";" + "\n\t\t\t\t"
+        + 'PROVISIONING_PROFILE_SPECIFIER = "' + profile_uuid + '";'
+    ),
     content
 )
 
-if updated == content:
-    print("WARNING: PRODUCT_BUNDLE_IDENTIFIER not found — project may not be patched", file=sys.stderr)
-else:
-    print(f"Patched {updated.count('DEVELOPMENT_TEAM = ' + team_id)} occurrence(s) with DEVELOPMENT_TEAM={team_id}")
-
 with open(pbxproj, "w") as f:
-    f.write(updated)
+    f.write(content)
+
+print(f"Patched: Manual signing | Apple Distribution | team={team_id} | profile={profile_uuid}")
