@@ -86,13 +86,14 @@ workflows:
           keychain initialize
           keychain add-certificates
 
-          # Remove any stale distribution certs from ALL accessible keychains on this
-          # shared Codemagic machine so Xcode cannot accidentally pick a wrong one.
+          # Remove stale distribution identities (cert + private key) from ALL keychains.
+          # delete-identity removes both the cert AND its private key so Xcode cannot
+          # find it as a valid signing identity.
           echo "=== All codesigning identities before cleanup ==="
           security find-identity -v -p codesigning || true
           for KC in $(security list-keychains | tr -d '"' | tr -d ' '); do
-            security delete-certificate -c "iPhone Distribution: Jessica Orton (XZ68HMHPP4)" "$KC" 2>/dev/null || true
-            security delete-certificate -c "Apple Distribution: Jessica Orton (XZ68HMHPP4)" "$KC" 2>/dev/null || true
+            security delete-identity -c "iPhone Distribution: Jessica Orton (XZ68HMHPP4)" "$KC" 2>/dev/null || true
+            security delete-identity -c "Apple Distribution: Jessica Orton (XZ68HMHPP4)" "$KC" 2>/dev/null || true
           done
           echo "=== Codesigning identities after cleanup ==="
           security find-identity -v -p codesigning || true
