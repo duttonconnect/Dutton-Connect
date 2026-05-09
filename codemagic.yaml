@@ -86,14 +86,14 @@ workflows:
           keychain initialize
           keychain add-certificates
 
-          # Remove any stale distribution certs from previous builds on this shared machine
-          # so Xcode cannot accidentally pick one whose private key is missing
+          # Remove any stale distribution certs from ALL accessible keychains on this
+          # shared Codemagic machine so Xcode cannot accidentally pick a wrong one.
           echo "=== All codesigning identities before cleanup ==="
           security find-identity -v -p codesigning || true
-          security delete-certificate -c "iPhone Distribution: Jessica Orton (XZ68HMHPP4)" \
-            -t "$HOME/Library/codemagic-cli-tools/keychains/$(ls ~/Library/codemagic-cli-tools/keychains/ | head -1)" 2>/dev/null || true
-          security delete-certificate -c "Apple Distribution: Jessica Orton (XZ68HMHPP4)" \
-            -t "$HOME/Library/codemagic-cli-tools/keychains/$(ls ~/Library/codemagic-cli-tools/keychains/ | head -1)" 2>/dev/null || true
+          for KC in $(security list-keychains | tr -d '"' | tr -d ' '); do
+            security delete-certificate -c "iPhone Distribution: Jessica Orton (XZ68HMHPP4)" "$KC" 2>/dev/null || true
+            security delete-certificate -c "Apple Distribution: Jessica Orton (XZ68HMHPP4)" "$KC" 2>/dev/null || true
+          done
           echo "=== Codesigning identities after cleanup ==="
           security find-identity -v -p codesigning || true
 
@@ -103,12 +103,13 @@ workflows:
 
       - name: Build IPA
         script: |
-          # Find the distribution cert that was just installed in the Codemagic keychain
+          # Use the SHA1 fingerprint of our newly installed cert — unambiguous, can't
+          # accidentally pick the old stale cert that has no private key here.
           KEYCHAIN=$(ls ~/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null | head -1)
-          CERT_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+          CERT_SHA1=$(security find-identity -v -p codesigning "$KEYCHAIN" \
             | grep -E "iPhone Distribution|Apple Distribution" \
-            | awk -F'"' '{print $2}' | head -1)
-          echo "=== Signing with: $CERT_IDENTITY ==="
+            | awk '{print $2}' | head -1)
+          echo "=== Signing with SHA1: $CERT_SHA1 ==="
 
           xcodebuild \
             -workspace "$XCODE_WORKSPACE" \
@@ -117,7 +118,7 @@ workflows:
             -configuration Release \
             -archivePath /tmp/App.xcarchive \
             archive \
-            CODE_SIGN_IDENTITY="$CERT_IDENTITY"
+            CODE_SIGN_IDENTITY="$CERT_SHA1"
           xcodebuild \
             -exportArchive \
             -archivePath /tmp/App.xcarchive \
