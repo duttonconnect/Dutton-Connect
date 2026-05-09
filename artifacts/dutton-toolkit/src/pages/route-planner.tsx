@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Navigation, MapPin, Save, ExternalLink, Route, Trash2, Pencil, Check, X, GripVertical, FolderOpen, Search, ArrowDownAZ, Clock, AlertTriangle, Star, RotateCcw, ChevronDown, ChevronUp, ListFilter } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -515,6 +515,7 @@ export default function RoutePlanner() {
     () => sessionStorage.getItem("routePlannerSearch") ?? ""
   );
   const [routeSort, setRouteSort] = useState<"newest" | "alpha">("newest");
+  const [freshOnly, setFreshOnly] = useState(false);
 
   const plannerRef = useRef<HTMLDivElement>(null);
   const pendingDeleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -1066,6 +1067,10 @@ export default function RoutePlanner() {
 
   const visibleRoutes = savedRoutes
     .filter((r) => {
+      if (freshOnly) {
+        const stops = r.stops ?? [];
+        if (stops.some((addr) => !activeJobAddresses.has(addr))) return false;
+      }
       if (!routeSearch.trim()) return true;
       const q = routeSearch.trim().toLowerCase();
       const displayName = r.name || format(new Date(r.createdAt), "MMM d, yyyy · h:mm a");
@@ -1451,6 +1456,19 @@ export default function RoutePlanner() {
                   A–Z
                 </button>
               </div>
+              <button
+                onClick={() => setFreshOnly((v) => !v)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors shrink-0 ${
+                  freshOnly
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "text-muted-foreground hover:bg-muted border-border"
+                }`}
+                aria-label="Show fresh routes only"
+                aria-pressed={freshOnly}
+              >
+                <ListFilter className="h-3 w-3" />
+                Fresh only
+              </button>
             </div>
           )}
         </CardHeader>
@@ -1470,7 +1488,11 @@ export default function RoutePlanner() {
           ) : visibleRoutes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <div className="text-sm">No routes match your search.</div>
+              <div className="text-sm">
+                {freshOnly && !routeSearch.trim()
+                  ? "No routes with all-fresh stops."
+                  : "No routes match your search."}
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
