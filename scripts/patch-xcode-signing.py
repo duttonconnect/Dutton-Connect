@@ -20,7 +20,6 @@ content = re.sub(
     r'(PRODUCT_BUNDLE_IDENTIFIER = com\.duttonconnect\.app;)',
     (
         r'\1' + "\n\t\t\t\t"
-        + 'CODE_SIGN_IDENTITY = "Apple Distribution";' + "\n\t\t\t\t"
         + "DEVELOPMENT_TEAM = " + team_id + ";" + "\n\t\t\t\t"
         + 'PROVISIONING_PROFILE_SPECIFIER = "' + profile_uuid + '";'
     ),

@@ -92,13 +92,21 @@ workflows:
 
       - name: Build IPA
         script: |
+          # Find the distribution cert that was just installed in the Codemagic keychain
+          KEYCHAIN=$(ls ~/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null | head -1)
+          CERT_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | grep -E "iPhone Distribution|Apple Distribution" \
+            | awk -F'"' '{print $2}' | head -1)
+          echo "=== Signing with: $CERT_IDENTITY ==="
+
           xcodebuild \
             -workspace "$XCODE_WORKSPACE" \
             -scheme "$XCODE_SCHEME" \
             -sdk iphoneos \
             -configuration Release \
             -archivePath /tmp/App.xcarchive \
-            archive
+            archive \
+            CODE_SIGN_IDENTITY="$CERT_IDENTITY"
           xcodebuild \
             -exportArchive \
             -archivePath /tmp/App.xcarchive \
