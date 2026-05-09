@@ -52,30 +52,70 @@ service cloud.firestore {
     // ── publicProfiles ────────────────────────────────────────────────────
     // A curated projection of each pro's public fields, readable by any
     // authenticated user for customer-facing pro discovery/browsing.
-    // Sensitive fields (email, isAdmin) are enforced out of this collection
-    // at the rules level: writes are only accepted if they contain exclusively
-    // the allowlisted safe keys. This is a defense-in-depth measure on top of
-    // the app-level field filtering in saveBusinessProfile.
+    // Sensitive fields (email, isAdmin) are never written here — they live
+    // in users/{uid} which is owner/admin only.
+    //
+    // Write rules are split into create vs. update:
+    //   • Owner create  — only allowlisted safe keys, no admin fields.
+    //   • Owner update  — safe keys + admin-managed fields MUST remain
+    //                     unchanged (prevents owners from awarding themselves
+    //                     trust badges or inflating job counts).
+    //                     Admin fields are included in hasOnly so the check
+    //                     doesn't reject a doc that already has them after
+    //                     an admin write (request.resource.data is the full
+    //                     post-merge document, not just the changed fields).
+    //   • Admin update  — unrestricted; needed to set badges / job counts.
     match /publicProfiles/{userId} {
       allow read: if isSignedIn();
 
-      // Only the profile owner may write, AND the incoming document must
-      // contain only the explicitly allowlisted public fields — never email,
-      // isAdmin, or any other sensitive/unknown field.
-      allow create, update: if isSignedIn()
-                            && request.auth.uid == userId
-                            && request.resource.data.keys().hasOnly([
-                                 'displayName',
-                                 'businessName',
-                                 'services',
-                                 'serviceArea',
-                                 'serviceRadiusMiles',
-                                 'about',
-                                 'publicPhone',
-                                 'profilePhoto',
-                                 'role',
-                                 'updatedAt'
-                               ]);
+      // Owner create: only allowlisted safe keys — never email, isAdmin, or
+      // admin-managed badge/stat fields.
+      allow create: if isSignedIn()
+                    && request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly([
+                         'displayName',
+                         'businessName',
+                         'services',
+                         'serviceArea',
+                         'serviceRadiusMiles',
+                         'about',
+                         'publicPhone',
+                         'profilePhoto',
+                         'role',
+                         'updatedAt'
+                       ]);
+
+      // Owner update: safe keys are writable; admin-managed fields must
+      // remain exactly as they were before the write — owners cannot
+      // introduce or change them.  Including them in hasOnly prevents the
+      // check from rejecting a document that already contains them.
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly([
+                         'displayName',
+                         'businessName',
+                         'services',
+                         'serviceArea',
+                         'serviceRadiusMiles',
+                         'about',
+                         'publicPhone',
+                         'profilePhoto',
+                         'role',
+                         'updatedAt',
+                         'verifiedPro',
+                         'fastResponder',
+                         'topRated',
+                         'completedJobsCount'
+                       ])
+                    && request.resource.data.get('verifiedPro', null)        == resource.data.get('verifiedPro', null)
+                    && request.resource.data.get('fastResponder', null)      == resource.data.get('fastResponder', null)
+                    && request.resource.data.get('topRated', null)           == resource.data.get('topRated', null)
+                    && request.resource.data.get('completedJobsCount', null) == resource.data.get('completedJobsCount', null);
+
+      // Admins may create or update any field (needed for trust badges, job
+      // counts, and the case where a pro has no publicProfiles doc yet when
+      // the first badge is toggled).
+      allow create, update: if isAdmin();
 
       allow delete: if isAdmin();
     }

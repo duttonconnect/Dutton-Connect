@@ -4,7 +4,6 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 
@@ -46,6 +45,8 @@ export type BusinessProfile = {
 /**
  * Fields written to publicProfiles/{uid} — never includes email or isAdmin.
  * Readable by any authenticated user for pro discovery / browsing.
+ * Trust badges (verifiedPro, fastResponder, topRated) and completedJobsCount
+ * are only set by admins via toggleProBadge / incrementCompletedJobsCount.
  */
 export type PublicProfile = {
   displayName: string;
@@ -58,6 +59,11 @@ export type PublicProfile = {
   profilePhoto?: string;
   role: string;
   updatedAt: string;
+  // Admin-managed fields
+  verifiedPro?: boolean;
+  fastResponder?: boolean;
+  topRated?: boolean;
+  completedJobsCount?: number;
 };
 
 export async function loadAllBusinessProfiles(): Promise<BusinessProfile[]> {
@@ -67,6 +73,23 @@ export async function loadAllBusinessProfiles(): Promise<BusinessProfile[]> {
     return snap.docs.map((d) => ({ proId: d.id, ...d.data() } as BusinessProfile));
   } catch (err) {
     console.error("[BusinessProfile] loadAll failed:", err);
+    return [];
+  }
+}
+
+/**
+ * Load all public pro profiles from the publicProfiles collection.
+ * This collection is readable by any authenticated user and contains only
+ * safe fields — never email or isAdmin.
+ * Use this for customer-facing pro discovery instead of loadAllBusinessProfiles.
+ */
+export async function loadAllPublicProfiles(): Promise<(PublicProfile & { proId: string })[]> {
+  if (!isFirebaseConfigured || !db) return [];
+  try {
+    const snap = await getDocs(collection(db, "publicProfiles"));
+    return snap.docs.map((d) => ({ proId: d.id, ...d.data() } as PublicProfile & { proId: string }));
+  } catch (err) {
+    console.error("[BusinessProfile] loadAllPublicProfiles failed:", err);
     return [];
   }
 }
@@ -136,7 +159,12 @@ export async function saveBusinessProfile(
 
 export type BadgeKey = "verifiedPro" | "fastResponder" | "topRated";
 
-/** Toggle a trust badge on a pro's businessProfile and sync to users/{uid}. */
+/**
+ * Toggle a trust badge on a pro's businessProfile and sync to publicProfiles/{uid}.
+ * publicProfiles is readable by any authenticated user, so this makes the badge
+ * visible on the customer-facing pro profile page.
+ * Requires the caller to be an admin (enforced by Firestore rules).
+ */
 export async function toggleProBadge(
   uid: string,
   badge: BadgeKey,
@@ -144,13 +172,21 @@ export async function toggleProBadge(
 ): Promise<boolean> {
   if (!isFirebaseConfigured || !db) return false;
   try {
+    const updatedAt = new Date().toISOString();
+    // Write badge to the full (admin-readable) business profile
     await setDoc(
       doc(db, "businessProfiles", uid),
-      { [badge]: value, updatedAt: new Date().toISOString() },
+      { [badge]: value, updatedAt },
       { merge: true },
     );
-    // Sync badge to users/{uid} so ProProfile reads it too
-    await updateDoc(doc(db, "users", uid), { [badge]: value });
+    // Sync badge to publicProfiles/{uid} so any authenticated user can see it
+    // via loadProProfile() and loadAllPublicProfiles().
+    // Admin write to publicProfiles is permitted by the Firestore rule.
+    await setDoc(
+      doc(db, "publicProfiles", uid),
+      { [badge]: value, updatedAt },
+      { merge: true },
+    );
     return true;
   } catch (err) {
     console.error("[BusinessProfile] toggleProBadge failed:", err);

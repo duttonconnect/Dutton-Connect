@@ -1542,6 +1542,74 @@ describe("publicProfiles collection", () => {
       })
     );
   });
+
+  it("allows an admin to set trust badges on an existing public profile", async () => {
+    const adminUid = "admin-badges";
+    const adminCtx = await seedAdminAndGetContext(adminUid);
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      updateDoc(doc(adminCtx.firestore(), profilePath), {
+        verifiedPro: true,
+      })
+    );
+  });
+
+  it("allows an admin to create a public profile document (e.g. when toggling first badge)", async () => {
+    const adminUid = "admin-create-pub";
+    const adminCtx = await seedAdminAndGetContext(adminUid);
+    await assertSucceeds(
+      setDoc(doc(adminCtx.firestore(), profilePath), {
+        ...profileData,
+        verifiedPro: true,
+      })
+    );
+  });
+
+  it("allows owner to update profile fields after admin has set trust badges", async () => {
+    await seedDoc(profilePath, { ...profileData, verifiedPro: true });
+    await assertSucceeds(
+      updateDoc(doc(authed(proUid).firestore(), profilePath), {
+        about: "Updated bio after badge was set",
+        verifiedPro: true,
+      })
+    );
+  });
+
+  it("denies owner from self-awarding a trust badge that does not exist yet", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      updateDoc(doc(authed(proUid).firestore(), profilePath), {
+        verifiedPro: true,
+      })
+    );
+  });
+
+  it("denies owner from changing an existing trust badge value", async () => {
+    await seedDoc(profilePath, { ...profileData, verifiedPro: false });
+    await assertFails(
+      updateDoc(doc(authed(proUid).firestore(), profilePath), {
+        verifiedPro: true,
+      })
+    );
+  });
+
+  it("denies owner from self-awarding completedJobsCount", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      updateDoc(doc(authed(proUid).firestore(), profilePath), {
+        completedJobsCount: 100,
+      })
+    );
+  });
+
+  it("denies owner from writing verifiedPro on initial create", async () => {
+    await assertFails(
+      setDoc(doc(authed(proUid).firestore(), profilePath), {
+        ...profileData,
+        verifiedPro: true,
+      })
+    );
+  });
 });
 
 // ─── catch-all ────────────────────────────────────────────────────────────────

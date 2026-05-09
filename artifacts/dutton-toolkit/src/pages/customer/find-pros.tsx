@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { calculateDistanceMiles } from "@/lib/distance";
 import { matchesKeyword } from "@/lib/search";
-import { loadAllBusinessProfiles } from "@/lib/business-profile";
+import { loadAllPublicProfiles } from "@/lib/business-profile";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -70,22 +70,22 @@ export default function FindNearbyPros() {
 
   useEffect(() => {
     setLoadingPros(true);
-    loadAllBusinessProfiles()
+    loadAllPublicProfiles()
       .then((profiles) => {
-        const mapped: Pro[] = profiles.map((bp) => ({
-          id: bp.proId,
-          business: bp.businessName,
-          services: bp.serviceCategories as string[],
-          location: bp.serviceArea,
-          serviceRadiusMiles: bp.serviceRadius,
-          phone: bp.publicPhone,
+        const mapped: Pro[] = profiles.map((pp) => ({
+          id: pp.proId,
+          business: pp.businessName,
+          services: pp.services,
+          location: pp.serviceArea,
+          serviceRadiusMiles: pp.serviceRadiusMiles,
+          phone: pp.publicPhone,
           ratingPlaceholder: 0,
           reviewsPlaceholder: 0,
-          verified: bp.verifiedPro ?? false,
-          verifiedPro: bp.verifiedPro,
-          fastResponder: bp.fastResponder,
-          topRated: bp.topRated,
-          completedJobsCount: bp.completedJobsCount,
+          verified: pp.verifiedPro ?? false,
+          verifiedPro: pp.verifiedPro,
+          fastResponder: pp.fastResponder,
+          topRated: pp.topRated,
+          completedJobsCount: pp.completedJobsCount,
         }));
         setPros(mapped);
       })
