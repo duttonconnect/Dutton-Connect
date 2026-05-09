@@ -1,0 +1,51 @@
+Progress: resolved 89, reused 0, downloaded 78, added 0
+Progress: resolved 97, reused 0, downloaded 95, added 0
+Progress: resolved 97, reused 0, downloaded 97, added 0
+Progress: resolved 98, reused 0, downloaded 97, added 0
+Progress: resolved 314, reused 0, downloaded 287, added 0
+Progress: resolved 367, reused 0, downloaded 350, added 0
+Progress: resolved 489, reused 0, downloaded 450, added 0
+Progress: resolved 660, reused 0, downloaded 617, added 0
+Progress: resolved 784, reused 0, downloaded 749, added 0
+Progress: resolved 931, reused 0, downloaded 879, added 0
+Progress: resolved 1127, reused 0, downloaded 1069, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of use-sync-external-store is missing the "time" field
+
+This error happened while installing the dependencies of @radix-ui/react-avatar@1.1.11
+ at @radix-ui/react-use-is-hydrated@0.1.0
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+Scope: all 9 workspace projects
+Progress: resolved 1, reused 0, downloaded 0, added 0
+[WARN] The metadata of @tailwindcss/vite is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of react-day-picker is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of drizzle-orm is missing the "time" field; skipping the minimumReleaseAge check for this package.
+Progress: resolved 89, reused 0, downloaded 78, added 0
+Progress: resolved 97, reused 0, downloaded 95, added 0
+Progress: resolved 97, reused 0, downloaded 97, added 0
+Progress: resolved 98, reused 0, downloaded 97, added 0
+Progress: resolved 314, reused 0, downloaded 287, added 0
+Progress: resolved 367, reused 0, downloaded 350, added 0
+Progress: resolved 489, reused 0, downloaded 450, added 0
+Progress: resolved 660, reused 0, downloaded 617, added 0
+Progress: resolved 784, reused 0, downloaded 749, added 0
+Progress: resolved 931, reused 0, downloaded 879, added 0
+Progress: resolved 1127, reused 0, downloaded 1069, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of use-sync-external-store is missing the "time" field
+
+This error happened while installing the dependencies of @radix-ui/react-avatar@1.1.11
+ at @radix-ui/react-use-is-hydrated@0.1.0
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+Build web app for Capacitor
