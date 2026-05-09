@@ -1,0 +1,51 @@
+Progress: resolved 519, reused 0, downloaded 487, added 0
+Progress: resolved 699, reused 0, downloaded 652, added 0
+Progress: resolved 789, reused 0, downloaded 737, added 0
+Progress: resolved 955, reused 0, downloaded 896, added 0
+Progress: resolved 1121, reused 0, downloaded 1044, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of proc-log is missing the "time" field
+
+This error happened while installing the dependencies of firebase-tools@15.15.0
+ at @apphosting/build@0.1.7
+ at npm-pick-manifest@9.1.0
+ at npm-package-arg@11.0.3
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+Scope: all 9 workspace projects
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 75, reused 0, downloaded 65, added 0
+[WARN] The metadata of react-day-picker is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of drizzle-orm is missing the "time" field; skipping the minimumReleaseAge check for this package.
+Progress: resolved 92, reused 0, downloaded 86, added 0
+Progress: resolved 97, reused 0, downloaded 93, added 0
+Progress: resolved 97, reused 0, downloaded 97, added 0
+Progress: resolved 98, reused 0, downloaded 97, added 0
+Progress: resolved 229, reused 0, downloaded 210, added 0
+Progress: resolved 318, reused 0, downloaded 291, added 0
+Progress: resolved 342, reused 0, downloaded 324, added 0
+Progress: resolved 388, reused 0, downloaded 360, added 0
+Progress: resolved 519, reused 0, downloaded 487, added 0
+Progress: resolved 699, reused 0, downloaded 652, added 0
+Progress: resolved 789, reused 0, downloaded 737, added 0
+Progress: resolved 955, reused 0, downloaded 896, added 0
+Progress: resolved 1121, reused 0, downloaded 1044, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of proc-log is missing the "time" field
+
+This error happened while installing the dependencies of firebase-tools@15.15.0
+ at @apphosting/build@0.1.7
+ at npm-pick-manifest@9.1.0
+ at npm-package-arg@11.0.3
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+
+Build web app for Capacitor
