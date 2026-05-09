@@ -31,9 +31,19 @@ workflows:
 
       - name: Install workspace dependencies
         script: |
+          # firebase-tools is a dev tool not needed for iOS builds — remove it to avoid
+          # ERR_PNPM_MISSING_TIME errors caused by its dependency chain in pnpm v10
+          node -e "
+            const fs = require('fs');
+            const p = 'artifacts/dutton-toolkit/package.json';
+            const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+            delete pkg.devDependencies['firebase-tools'];
+            fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
+            console.log('Removed firebase-tools from devDependencies');
+          "
           # Allow all build scripts in CI (pnpm v10 requires explicit approval)
           printf "\ndangerouslyAllowAllBuilds: true\n" >> pnpm-workspace.yaml
-          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile --config.resolution-mode=highest
+          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile
 
       - name: Build web app for Capacitor
         script: |
