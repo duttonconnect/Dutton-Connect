@@ -43,7 +43,9 @@ workflows:
           "
           # Allow all build scripts in CI (pnpm v10 requires explicit approval)
           printf "\ndangerouslyAllowAllBuilds: true\n" >> pnpm-workspace.yaml
-          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile
+          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile \
+            --config.resolution-mode=highest \
+            --config.minimum-release-age=0
 
       - name: Build web app for Capacitor
         script: |

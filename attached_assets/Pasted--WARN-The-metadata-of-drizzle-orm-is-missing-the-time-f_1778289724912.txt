@@ -1,0 +1,43 @@
+[WARN] The metadata of drizzle-orm is missing the "time" field; skipping the minimumReleaseAge check for this package.
+Progress: resolved 84, reused 0, downloaded 71, added 0
+Progress: resolved 95, reused 0, downloaded 92, added 0
+Progress: resolved 96, reused 0, downloaded 96, added 0
+Progress: resolved 97, reused 0, downloaded 96, added 0
+Progress: resolved 262, reused 0, downloaded 252, added 0
+Progress: resolved 336, reused 0, downloaded 314, added 0
+Progress: resolved 523, reused 0, downloaded 485, added 0
+Removed firebase-tools from devDependencies
+Scope: all 9 workspace projects
+Progress: resolved 1, reused 0, downloaded 0, added 0
+[WARN] The metadata of @tailwindcss/vite is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of react-day-picker is missing the "time" field; skipping the minimumReleaseAge check for this package.
+[WARN] The metadata of drizzle-orm is missing the "time" field; skipping the minimumReleaseAge check for this package.
+Progress: resolved 84, reused 0, downloaded 71, added 0
+Progress: resolved 95, reused 0, downloaded 92, added 0
+Progress: resolved 96, reused 0, downloaded 96, added 0
+Progress: resolved 97, reused 0, downloaded 96, added 0
+Progress: resolved 262, reused 0, downloaded 252, added 0
+Progress: resolved 336, reused 0, downloaded 314, added 0
+Progress: resolved 523, reused 0, downloaded 485, added 0
+Progress: resolved 684, reused 0, downloaded 637, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of brace-expansion is missing the "time" field
+
+This error happened while installing the dependencies of @capacitor/cli@7.6.2
+ at rimraf@6.1.3
+ at glob@13.0.6
+ at minimatch@10.2.5
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+
+
+Build failed :|
+Step 3 script `Install workspace dependencies` exited with status code 1
+Progress: resolved 684, reused 0, downloaded 637, added 0
+/Users/builder/clone/artifacts/dutton-toolkit:
+[ERR_PNPM_MISSING_TIME] The metadata of brace-expansion is missing the "time" field
+
+This error happened while installing the dependencies of @capacitor/cli@7.6.2
+ at rimraf@6.1.3
+ at glob@13.0.6
+ at minimatch@10.2.5
