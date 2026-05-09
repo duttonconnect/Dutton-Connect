@@ -98,12 +98,17 @@ export async function saveBusinessProfile(
       { merge: true },
     );
 
-    // Sync key fields to users/{uid} for owner/admin reads (e.g. admin panel)
-    await updateDoc(doc(db, "users", uid), {
-      businessName: data.businessName,
-      displayName: data.ownerName,
-      hasBusinessProfile: true,
-    });
+    // Sync key fields to users/{uid} for owner/admin reads (e.g. admin panel).
+    // Use setDoc+merge so this works even if the users doc doesn't exist yet.
+    await setDoc(
+      doc(db, "users", uid),
+      {
+        businessName: data.businessName,
+        displayName: data.ownerName,
+        hasBusinessProfile: true,
+      },
+      { merge: true },
+    );
 
     // Write ONLY public fields to publicProfiles/{uid}.
     // This collection is readable by any authenticated user for pro browsing.
