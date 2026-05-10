@@ -124,6 +124,10 @@ workflows:
           echo "=== Profile UUID: $PROVISIONING_PROFILE_UUID ==="
           PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 scripts/patch-xcode-signing.py
 
+          # Rewrite ExportOptions.plist with the actual profile UUID so the
+          # export step can locate it — hardcoded profile names don't work.
+          python3 -c "import plistlib,os;u=os.environ['PROVISIONING_PROFILE_UUID'];p={'method':'app-store-connect','teamID':'XZ68HMHPP4','signingStyle':'manual','signingCertificate':'iPhone Distribution','provisioningProfiles':{'com.duttonconnect.app':u},'uploadBitcode':False,'uploadSymbols':True};plistlib.dump(p,open('artifacts/dutton-toolkit/ios/ExportOptions.plist','wb'));print('ExportOptions.plist written with UUID:',u)" PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID"
+
       - name: Build IPA
         script: |
           # Use the SHA1 fingerprint of our newly installed cert — unambiguous, can't

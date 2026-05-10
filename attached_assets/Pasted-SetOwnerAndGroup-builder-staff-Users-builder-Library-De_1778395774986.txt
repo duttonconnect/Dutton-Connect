@@ -1,0 +1,49 @@
+SetOwnerAndGroup builder:staff /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/builder/clone/artifacts/dutton-toolkit/ios/App
+    /usr/sbin/chown -RH builder:staff /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+
+SetMode u+w,go-w,a+rX /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/builder/clone/artifacts/dutton-toolkit/ios/App
+    /bin/chmod -RH u+w,go-w,a+rX /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+
+CodeSign /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/builder/clone/artifacts/dutton-toolkit/ios/App
+    
+    Signing Identity:     "iPhone Distribution: Jessica Orton (XZ68HMHPP4)"
+    Provisioning Profile: "Dutton Connect ios_app_store 1778303023"
+                          (2e46559c-08f1-494d-8ca4-9ec7cf917a99)
+    
+    /usr/bin/codesign --force --sign 48B8A3CD7B0746E1E79C103374CCB2861445B3E8 --entitlements /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/App.build/Release-iphoneos/App.build/App.app.xcent --generate-entitlement-der /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+
+RegisterExecutionPolicyException /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/builder/clone/artifacts/dutton-toolkit/ios/App
+    builtin-RegisterExecutionPolicyException /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+
+Validate /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/builder/clone/artifacts/dutton-toolkit/ios/App
+    builtin-validationUtility /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app -validate-for-store -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app (in target 'App' from project 'App')
+    cd /Users/builder/clone/artifacts/dutton-toolkit/ios/App
+    /usr/bin/touch -c /Users/builder/Library/Developer/Xcode/DerivedData/App-bqubkmokcfnonnbfbynrledlyril/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+
+warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+** ARCHIVE SUCCEEDED **
+
+2026-05-10 06:49:09.727 xcodebuild[2230:22558] [MT] IDEDistribution: -[IDEDistributionLogging _createLoggingBundleAtPath:]: Created bundle at path "/var/folders/w2/rrf5p87d1bbfyphxc7jdnyvh0000gn/T/App_2026-05-10_06-49-09.727.xcdistributionlogs".
+error: exportArchive No "iOS App Store" profiles for team 'XZ68HMHPP4' matching 'com.duttonconnect.app AppStore' are installed.
+
+** EXPORT FAILED **
+
+
+
+Build failed :|
+Step 8 script `Build IPA` exited with status code 70
+
+
+Build failed :|
+Step 8 script `Build IPA` exited with status code 70
+
+
+Build failed :|
+Step 8 script `Build IPA` exited with status code 70
