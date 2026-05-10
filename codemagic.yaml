@@ -66,18 +66,25 @@ workflows:
           # Generate once with: openssl genrsa 2048
           # Then paste the full output into Codemagic as a secure env var.
 
-          # Step 1 — Create our iOS Distribution certificate (idempotent).
-          app-store-connect certificates create \
+          # Step 1 — Create (or reuse) our iOS Distribution certificate.
+          # Capture the JSON output so we can extract the cert ID directly.
+          NEW_CERT_JSON=$(app-store-connect certificates create \
             --type IOS_DISTRIBUTION \
-            --certificate-key "$CERTIFICATE_PRIVATE_KEY" || \
-            echo "=== Certificate already exists — continuing ==="
+            --certificate-key "$CERTIFICATE_PRIVATE_KEY" \
+            --json 2>/dev/null || echo '{}')
+          NEW_CERT_ID=$(echo "$NEW_CERT_JSON" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('data',{}).get('id',''))" 2>/dev/null || echo "")
+          echo "=== Newly created cert ID: $NEW_CERT_ID ==="
 
-          # Step 2 — Collect every distribution cert ID for this team.
-          # We rebuild the provisioning profile below to include ALL of them so
-          # that Xcode can sign with whichever one it finds in the keychain.
+          # Step 2 — Collect every distribution cert ID for this team, then
+          # add the newly created cert ID to guarantee it is present even if
+          # the API list has not yet reflected the create above.
           ALL_CERT_IDS=$(app-store-connect certificates list \
             --type IOS_DISTRIBUTION \
             --json 2>/dev/null | python3 -c "import json,sys;d=json.load(sys.stdin);ids=[c['id'] for c in d.get('data',[])];sys.stderr.write('Cert IDs: '+str(ids)+'\n');print(' '.join(ids))")
+          # Merge: add newly created ID if not already in the list
+          if [ -n "$NEW_CERT_ID" ]; then
+            ALL_CERT_IDS=$(echo "$ALL_CERT_IDS $NEW_CERT_ID" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+          fi
           echo "=== All distribution cert IDs: $ALL_CERT_IDS ==="
 
           # Step 3 — Delete any existing App Store profile for this bundle ID,
