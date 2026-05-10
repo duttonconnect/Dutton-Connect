@@ -106,7 +106,11 @@ workflows:
             --bundle-id-identifier "$BUNDLE_ID" \
             --certificate-id $ALL_CERT_IDS
 
-          # Step 4 — Download the freshly created profile and our cert.
+          # Step 4 — Wipe any stale profiles cached from previous builds, then
+          # download the freshly created profile and our cert.
+          rm -f ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
+          echo "=== Cleared old profiles from disk ==="
+
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key "$CERTIFICATE_PRIVATE_KEY"
