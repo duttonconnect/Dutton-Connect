@@ -139,7 +139,7 @@ function LeadCard({ lead, tab, onDecline, onSendQuote, onMessage, declining }: L
 }
 
 export default function LeadInbox() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<LeadTab>("new");
   const [loading, setLoading] = useState(true);
@@ -157,7 +157,8 @@ export default function LeadInbox() {
   const [submittingQuote, setSubmittingQuote] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) { setLoading(false); return; }
     setLoading(true);
     Promise.all([
       loadOpenJobRequests(),
@@ -174,7 +175,7 @@ export default function LeadInbox() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, authLoading]);
 
   const handleDecline = async (jobRequestId: string) => {
     if (!user) return;

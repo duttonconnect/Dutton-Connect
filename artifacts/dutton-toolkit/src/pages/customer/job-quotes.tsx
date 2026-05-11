@@ -57,7 +57,7 @@ const QUOTE_STATUS_LABEL: Record<string, string> = {
 export default function JobQuotes() {
   const params = useParams<{ jobId: string }>();
   const jobId = params.jobId;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
   const [job, setJob] = useState<FirestoreJobRequest | null>(null);
@@ -76,7 +76,8 @@ export default function JobQuotes() {
   const [scheduling, setScheduling] = useState(false);
 
   useEffect(() => {
-    if (!user?.uid || !jobId) return;
+    if (authLoading) return;
+    if (!user?.uid || !jobId) { setLoading(false); return; }
     setLoading(true);
 
     Promise.all([
@@ -99,7 +100,7 @@ export default function JobQuotes() {
         });
       });
     }).finally(() => setLoading(false));
-  }, [user?.uid, jobId]);
+  }, [user?.uid, jobId, authLoading]);
 
   const handleAccept = async (quote: MatchQuote) => {
     if (!job || !user) return;

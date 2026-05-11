@@ -92,7 +92,7 @@ function n(s: string): number {
 }
 
 export default function Estimates() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Estimate[]>([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -103,7 +103,7 @@ export default function Estimates() {
   const [converting, setConverting] = useState<string | null>(null);
 
   const reload = () => {
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
     setLoading(true);
     loadEstimates(user.uid)
       .then(setItems)
@@ -111,7 +111,10 @@ export default function Estimates() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { reload(); }, [user]);
+  useEffect(() => {
+    if (authLoading) return;
+    reload();
+  }, [user, authLoading]);
 
   const totalPreview = calcTotal(
     n(form.laborAmount),

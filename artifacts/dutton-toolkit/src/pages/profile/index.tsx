@@ -175,7 +175,7 @@ const RADIUS_OPTIONS = [5, 10, 15, 25, 50, 75, 100];
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ProProfileEdit() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -195,7 +195,11 @@ function ProProfileEdit() {
   const [avgRating, setAvgRating] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     Promise.all([
       loadBusinessProfile(user.uid),
       loadReviewsForPro(user.uid),
@@ -220,7 +224,7 @@ function ProProfileEdit() {
       }
       setLoading(false);
     });
-  }, [user?.uid]);
+  }, [user?.uid, authLoading]);
 
   const toggleCategory = (cat: BusinessCategory) => {
     setServiceCategories((prev) =>
@@ -565,7 +569,7 @@ function ProProfileEdit() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CustomerProfileEdit() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -576,7 +580,11 @@ function CustomerProfileEdit() {
   const [profilePhoto, setProfilePhoto] = useState("");
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     loadCustomerProfile(user.uid).then((p) => {
       if (p) {
         setDisplayName(p.displayName ?? "");
@@ -589,7 +597,7 @@ function CustomerProfileEdit() {
       }
       setLoading(false);
     });
-  }, [user?.uid]);
+  }, [user?.uid, authLoading]);
 
   const completeness = (() => {
     const fields = [displayName, phone, location, bio, profilePhoto];

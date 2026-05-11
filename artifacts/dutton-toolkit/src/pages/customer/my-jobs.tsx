@@ -57,7 +57,7 @@ function canReview(status: string) {
 }
 
 export default function MyJobs() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
   const [jobs, setJobs] = useState<FirestoreJobRequest[]>([]);
@@ -66,7 +66,8 @@ export default function MyJobs() {
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (authLoading) return;
+    if (!user?.uid) { setLoading(false); return; }
     setLoading(true);
     loadJobRequestsForCustomer(user.uid)
       .then((results) => {
@@ -90,7 +91,7 @@ export default function MyJobs() {
         });
       })
       .finally(() => setLoading(false));
-  }, [user?.uid]);
+  }, [user?.uid, authLoading]);
 
   return (
     <div className="space-y-6">

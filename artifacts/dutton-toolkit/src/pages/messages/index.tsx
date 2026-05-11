@@ -8,12 +8,16 @@ import { loadConversationsForUser, type Conversation } from "@/lib/messaging";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function MessagesList() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (authLoading) return;
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
     loadConversationsForUser(user.uid)
       .then((results) =>
         setConversations(
@@ -25,7 +29,7 @@ export default function MessagesList() {
         ),
       )
       .finally(() => setLoading(false));
-  }, [user?.uid]);
+  }, [user?.uid, authLoading]);
 
   return (
     <div className="space-y-6">

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function MyQuotes() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [quotes, setQuotes] = useState<MatchQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [messagingId, setMessagingId] = useState<string | null>(null);
@@ -35,7 +35,8 @@ export default function MyQuotes() {
   };
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (authLoading) return;
+    if (!user?.uid) { setLoading(false); return; }
     setLoading(true);
     loadQuotesForCustomer(user.uid)
       .then((results) => {
@@ -46,7 +47,7 @@ export default function MyQuotes() {
         );
       })
       .finally(() => setLoading(false));
-  }, [user?.uid]);
+  }, [user?.uid, authLoading]);
 
   return (
     <div className="space-y-6">
