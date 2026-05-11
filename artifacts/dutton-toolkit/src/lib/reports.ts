@@ -32,10 +32,11 @@ export type Report = {
   relatedConversationId?: string;
   status: "open" | "reviewed" | "resolved";
   createdAt: string;
+  adminNotes?: string;
 };
 
 export async function submitReport(
-  data: Omit<Report, "id" | "status" | "createdAt">,
+  data: Omit<Report, "id" | "status" | "createdAt" | "adminNotes">,
 ): Promise<string | null> {
   if (!isFirebaseConfigured || !db) return null;
   try {
@@ -90,6 +91,24 @@ export async function updateReportStatus(
     return true;
   } catch (err) {
     console.error("[Reports] updateStatus failed:", err);
+    return false;
+  }
+}
+
+/**
+ * Write (or clear) the admin notes on a report document.
+ * Only the `adminNotes` field is touched; status and other fields are unchanged.
+ */
+export async function updateReportNotes(
+  reportId: string,
+  adminNotes: string,
+): Promise<boolean> {
+  if (!isFirebaseConfigured || !db) return false;
+  try {
+    await updateDoc(doc(db, "reports", reportId), { adminNotes });
+    return true;
+  } catch (err) {
+    console.error("[Reports] updateNotes failed:", err);
     return false;
   }
 }

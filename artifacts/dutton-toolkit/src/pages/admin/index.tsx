@@ -33,6 +33,7 @@ import {
   type Report,
   loadAllReports,
   updateReportStatus,
+  updateReportNotes,
 } from "@/lib/reports";
 import {
   type BusinessProfile,
@@ -101,6 +102,9 @@ export default function AdminPanel() {
   const [loadingReports, setLoadingReports] = useState(true);
   const [updatingReportId, setUpdatingReportId] = useState<string | null>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<"all" | Report["status"]>("all");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
 
   const [proProfiles, setProProfiles] = useState<BusinessProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
@@ -299,6 +303,27 @@ export default function AdminPanel() {
       }
     } finally {
       setUpdatingReportId(null);
+    }
+  }
+
+  async function handleSaveNotes(reportId: string) {
+    setSavingNoteId(reportId);
+    try {
+      const ok = await updateReportNotes(reportId, noteDraft.trim());
+      if (ok) {
+        setReports((prev) =>
+          prev.map((r) =>
+            r.id === reportId ? { ...r, adminNotes: noteDraft.trim() } : r,
+          ),
+        );
+        setEditingNoteId(null);
+        setNoteDraft("");
+        toast.success("Note saved.");
+      } else {
+        toast.error("Failed to save note.");
+      }
+    } finally {
+      setSavingNoteId(null);
     }
   }
 
@@ -691,6 +716,8 @@ export default function AdminPanel() {
                   {filteredReports.map((r) => {
                     const isMarkingReviewed = updatingReportId === r.id + "reviewed";
                     const isMarkingResolved = updatingReportId === r.id + "resolved";
+                    const isEditingNote = editingNoteId === r.id;
+                    const isSavingNote = savingNoteId === r.id;
                     return (
                       <div key={r.id} className="px-4 py-4 space-y-2">
                         {/* Title row */}
@@ -767,6 +794,19 @@ export default function AdminPanel() {
                                 )}
                               </Button>
                             )}
+                            {!isEditingNote && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs px-2 text-gray-500 hover:text-gray-800"
+                                onClick={() => {
+                                  setEditingNoteId(r.id);
+                                  setNoteDraft(r.adminNotes ?? "");
+                                }}
+                              >
+                                {r.adminNotes ? "Edit Note" : "Add Note"}
+                              </Button>
+                            )}
                           </div>
                         </div>
 
@@ -774,6 +814,56 @@ export default function AdminPanel() {
                         <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
                           {r.description}
                         </p>
+
+                        {/* Existing admin notes (read-only) */}
+                        {r.adminNotes && !isEditingNote && (
+                          <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
+                            <p className="text-xs font-semibold text-amber-700 mb-0.5">Admin note</p>
+                            <p className="text-sm text-amber-900 whitespace-pre-line leading-relaxed">
+                              {r.adminNotes}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Inline notes editor */}
+                        {isEditingNote && (
+                          <div className="space-y-2">
+                            <textarea
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-gray-800 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                              rows={3}
+                              placeholder="Describe the action taken on this report…"
+                              value={noteDraft}
+                              onChange={(e) => setNoteDraft(e.target.value)}
+                              autoFocus
+                            />
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs px-3"
+                                disabled={isSavingNote}
+                                onClick={() => handleSaveNotes(r.id)}
+                              >
+                                {isSavingNote ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  "Save Note"
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs px-3"
+                                disabled={isSavingNote}
+                                onClick={() => {
+                                  setEditingNoteId(null);
+                                  setNoteDraft("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Meta row */}
                         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">

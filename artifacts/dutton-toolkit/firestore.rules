@@ -354,13 +354,28 @@ service cloud.firestore {
     // ── reports ───────────────────────────────────────────────────────────
     // Users submit reports about issues (`reporterId` = caller).
     // Reporters may read their own submitted reports.
-    // Admins may read all reports, update their status, and delete them.
+    // Admins may read all reports, update their status/notes, and delete them.
     // Reports are immutable once created — no updates or deletes by reporters.
+    //
+    // Create allowlist: reporters may only write the listed fields.
+    // `adminNotes` and any future admin-only fields are excluded so reporters
+    // cannot pre-populate the admin audit trail.
     match /reports/{reportId} {
       allow read: if isSignedIn()
                   && (request.auth.uid == resource.data.reporterId || isAdmin());
       allow create: if isSignedIn()
-                    && request.auth.uid == request.resource.data.reporterId;
+                    && request.auth.uid == request.resource.data.reporterId
+                    && request.resource.data.keys().hasOnly([
+                         'reporterId',
+                         'issueType',
+                         'description',
+                         'relatedJobId',
+                         'relatedUserId',
+                         'relatedConversationId',
+                         'status',
+                         'createdAt'
+                       ])
+                    && request.resource.data.status == 'open';
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }

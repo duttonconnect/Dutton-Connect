@@ -1303,7 +1303,16 @@ describe("reports collection", () => {
   const reporterUid = "reporter-1";
   const otherUid = "other-reporter";
   const reportPath = "reports/report-1";
+  // Used for seeding (bypasses rules) — may contain any fields.
   const reportData = { reporterId: reporterUid, subject: "Spam", status: "open" };
+  // Valid reporter-writable payload that satisfies the create allowlist.
+  const validCreateData = {
+    reporterId: reporterUid,
+    issueType: "Scam",
+    description: "This user scammed me.",
+    status: "open",
+    createdAt: new Date().toISOString(),
+  };
 
   it("denies unauthenticated read", async () => {
     await seedDoc(reportPath, reportData);
@@ -1324,15 +1333,33 @@ describe("reports collection", () => {
     );
   });
 
-  it("allows a reporter to create a report as themselves", async () => {
+  it("allows a reporter to create a report with allowlisted fields", async () => {
     await assertSucceeds(
-      setDoc(doc(authed(reporterUid).firestore(), reportPath), reportData)
+      setDoc(doc(authed(reporterUid).firestore(), reportPath), validCreateData)
     );
   });
 
   it("denies creating a report with someone else's reporterId", async () => {
     await assertFails(
-      setDoc(doc(authed(otherUid).firestore(), reportPath), reportData)
+      setDoc(doc(authed(otherUid).firestore(), reportPath), validCreateData)
+    );
+  });
+
+  it("denies a reporter from injecting adminNotes during create", async () => {
+    await assertFails(
+      setDoc(doc(authed(reporterUid).firestore(), reportPath), {
+        ...validCreateData,
+        adminNotes: "Looks fine to me.",
+      })
+    );
+  });
+
+  it("denies a reporter from creating a report with status other than 'open'", async () => {
+    await assertFails(
+      setDoc(doc(authed(reporterUid).firestore(), reportPath), {
+        ...validCreateData,
+        status: "resolved",
+      })
     );
   });
 
