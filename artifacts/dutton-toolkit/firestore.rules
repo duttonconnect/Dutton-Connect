@@ -128,8 +128,10 @@ service cloud.firestore {
     // Write rules are split to prevent privilege escalation:
     //   - Admins may write any field freely (needed to set/revoke isAdmin).
     //   - Owners may create their own profile but must not claim isAdmin.
-    //   - Owners may update their own profile but cannot change isAdmin or role
-    //     (those fields are privileged and can only be changed by an admin).
+    //   - Owners may update their own profile but cannot change isAdmin
+    //     (that field is privileged and can only be changed by an admin).
+    //   - Owners may freely change their own role field (pro/customer) — it
+    //     controls which UI they see but grants no access to others' data.
     match /users/{userId} {
       allow read: if isSignedIn()
                   && (request.auth.uid == userId || isAdmin());
@@ -144,11 +146,13 @@ service cloud.firestore {
                     && (!('isAdmin' in request.resource.data)
                         || request.resource.data.isAdmin == false);
 
-      // Owners may update their own profile but privileged fields must not change.
+      // Owners may update their own profile.
+      // isAdmin is immutable for non-admins (prevents privilege escalation).
+      // role ("pro"/"customer") is freely changeable — it only controls which
+      // UI the user sees and grants no access to other users' data.
       allow update: if isSignedIn()
                     && request.auth.uid == userId
-                    && request.resource.data.isAdmin == resource.data.isAdmin
-                    && request.resource.data.role == resource.data.role;
+                    && request.resource.data.isAdmin == resource.data.isAdmin;
 
       // ── users/{uid}/private/appState ──────────────────────────────────
       // Used by src/lib/firestore-sync.tsx to persist per-user app state.

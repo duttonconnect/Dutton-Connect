@@ -331,13 +331,26 @@ describe("users collection", () => {
     );
   });
 
-  it("allows owner to update their profile without changing isAdmin or role", async () => {
+  it("allows owner to update their profile without changing isAdmin", async () => {
     await seedDoc(userPath, userDoc);
     await assertSucceeds(
       updateDoc(doc(authed(ownerUid).firestore(), userPath), {
         displayName: "Alice Updated",
         isAdmin: false,
         role: "pro",
+      })
+    );
+  });
+
+  it("allows owner to change their own role field (pro/customer switching)", async () => {
+    // role is "pro" or "customer" — not a privilege escalation.
+    // Users must be able to switch modes for the dual-role feature to work.
+    await seedDoc(userPath, userDoc);
+    await assertSucceeds(
+      updateDoc(doc(authed(ownerUid).firestore(), userPath), {
+        displayName: "Alice Updated",
+        isAdmin: false,
+        role: "customer",
       })
     );
   });
@@ -349,17 +362,6 @@ describe("users collection", () => {
         displayName: "Alice Updated",
         isAdmin: true,
         role: "pro",
-      })
-    );
-  });
-
-  it("denies owner from changing their role field", async () => {
-    await seedDoc(userPath, userDoc);
-    await assertFails(
-      updateDoc(doc(authed(ownerUid).firestore(), userPath), {
-        displayName: "Alice Updated",
-        isAdmin: false,
-        role: "admin",
       })
     );
   });
