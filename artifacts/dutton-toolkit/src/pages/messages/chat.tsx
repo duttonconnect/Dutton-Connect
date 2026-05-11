@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Flag } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import {
@@ -15,6 +15,7 @@ import {
 import { notifyNewMessage } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportUserDialog } from "@/components/report-user-dialog";
 
 export default function ChatPage() {
   const params = useParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -123,10 +125,18 @@ export default function ChatPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="font-semibold truncate">{conversation.jobRequestTitle}</div>
           <div className="text-xs text-muted-foreground">Job request conversation</div>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Report a problem"
+          onClick={() => setReportOpen(true)}
+        >
+          <Flag className="h-4 w-4 text-destructive" />
+        </Button>
       </div>
 
       {/* Messages */}
@@ -192,6 +202,17 @@ export default function ChatPage() {
           )}
         </Button>
       </div>
+
+      {user && (
+        <ReportUserDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          reporterId={user.uid}
+          relatedConversationId={conversationId}
+          relatedJobId={conversation.jobRequestId}
+          relatedUserId={conversation.participants.find((p) => p !== user.uid)}
+        />
+      )}
     </div>
   );
 }

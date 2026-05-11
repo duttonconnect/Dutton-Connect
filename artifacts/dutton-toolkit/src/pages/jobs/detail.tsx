@@ -4,17 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation, Pencil } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation, Pencil, Flag } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/auth";
+import { ReportUserDialog } from "@/components/report-user-dialog";
 
 export default function JobDetail() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const { jobs, customers, updateJob, deleteJob } = useAppStore();
+  const { user } = useAuth();
   
   const job = jobs.find(j => j.id === id);
   const customer = job ? customers.find(c => c.id === job.customerId) : null;
@@ -24,6 +27,7 @@ export default function JobDetail() {
   
   const [matDesc, setMatDesc] = useState("");
   const [matCost, setMatCost] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
 
   if (!job || !customer) {
     return <div className="p-8 text-center text-muted-foreground">Job not found</div>;
@@ -107,6 +111,9 @@ export default function JobDetail() {
               Start Job
             </Button>
           )}
+          <Button variant="outline" size="icon" title="Report a problem" onClick={() => setReportOpen(true)}>
+            <Flag className="h-4 w-4 text-destructive" />
+          </Button>
         </div>
       </div>
 
@@ -322,6 +329,9 @@ export default function JobDetail() {
                 <CheckCircle className="mr-2 h-4 w-4" /> Complete
               </Button>
             )}
+            <Button variant="outline" size="icon" title="Report a problem" onClick={() => setReportOpen(true)}>
+              <Flag className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
           
           <div className="pt-8">
@@ -339,6 +349,16 @@ export default function JobDetail() {
           </div>
         </div>
       </div>
+
+      {user && (
+        <ReportUserDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          reporterId={user.uid}
+          relatedJobId={job.id}
+          relatedUserId={customer.id}
+        />
+      )}
     </div>
   );
 }
