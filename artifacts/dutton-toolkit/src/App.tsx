@@ -78,6 +78,7 @@ function SharedRoutes() {
       <Route path="/report-bug" component={ReportBug} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
     </>
   );
@@ -211,6 +212,8 @@ function AuthGate() {
     return (
       <Switch>
         <Route path="/signup" component={Signup} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route component={Login} />
       </Switch>
     );

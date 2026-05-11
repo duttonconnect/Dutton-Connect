@@ -471,7 +471,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}
 
             <div className="flex gap-3 pt-1 border-t border-sidebar-border">
-              <Link href="/privacy">
+              <Link href="/privacy-policy">
                 <span className="text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground cursor-pointer">
                   Privacy
                 </span>
@@ -493,7 +493,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <footer className="print:hidden text-center py-3 border-t text-xs text-gray-400 flex items-center justify-center gap-3">
-            <Link href="/privacy">
+            <Link href="/privacy-policy">
               <span className="hover:text-gray-600 cursor-pointer">Privacy Policy</span>
             </Link>
             <span>·</span>
