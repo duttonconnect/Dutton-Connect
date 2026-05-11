@@ -6,6 +6,8 @@ import {
   doc,
   query,
   orderBy,
+  onSnapshot,
+  where,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 
@@ -89,5 +91,34 @@ export async function updateReportStatus(
   } catch (err) {
     console.error("[Reports] updateStatus failed:", err);
     return false;
+  }
+}
+
+/**
+ * Subscribe to the count of open reports in real-time.
+ * Returns an unsubscribe function. Calls `onChange` immediately and on
+ * every subsequent change. Falls back gracefully when Firebase is not
+ * configured.
+ */
+export function subscribeToOpenReportCount(
+  onChange: (count: number) => void,
+): () => void {
+  if (!isFirebaseConfigured || !db) {
+    onChange(0);
+    return () => {};
+  }
+  try {
+    const q = query(
+      collection(db, "reports"),
+      where("status", "==", "open"),
+    );
+    return onSnapshot(
+      q,
+      (snap) => onChange(snap.size),
+      () => onChange(0),
+    );
+  } catch {
+    onChange(0);
+    return () => {};
   }
 }

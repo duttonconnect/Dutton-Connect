@@ -39,6 +39,7 @@ import { Button } from "./ui/button";
 import { useRole } from "@/lib/role";
 import { useAuth } from "@/lib/auth";
 import { useAppStore } from "@/lib/store";
+import { subscribeToOpenReportCount } from "@/lib/reports";
 import {
   Dialog,
   DialogContent,
@@ -99,6 +100,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isConfigured, isAdmin, saveRolesToCloud, addRoleToCloud } = useAuth();
   const { routePlannerDirty, setRoutePlannerDirty, routePlannerHasContent } = useAppStore();
   const routePlannerShouldWarn = routePlannerDirty && routePlannerHasContent;
+
+  const [openReportCount, setOpenReportCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const unsubscribe = subscribeToOpenReportCount(setOpenReportCount);
+    return unsubscribe;
+  }, [isAdmin]);
 
   const [pendingNavCallback, setPendingNavCallback] = useState<(() => void) | null>(null);
 
@@ -328,6 +337,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <Shield size={20} />
                     Admin
+                    {openReportCount > 0 && (
+                      <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold leading-none">
+                        {openReportCount > 99 ? "99+" : openReportCount}
+                      </span>
+                    )}
                   </div>
                 </Link>
               )}
@@ -410,6 +424,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 >
                   <Shield size={18} />
                   Admin
+                  {openReportCount > 0 && (
+                    <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold leading-none">
+                      {openReportCount > 99 ? "99+" : openReportCount}
+                    </span>
+                  )}
                 </div>
               </Link>
             )}
