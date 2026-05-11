@@ -62,58 +62,29 @@ workflows:
 
       - name: Set up code signing
         script: |
-          # CERTIFICATE_PRIVATE_KEY must be set in the apple_credentials env group.
-          # Generate once with: openssl genrsa 2048
-          # Then paste the full output into Codemagic as a secure env var.
+          set -e  # fail fast — if any step below fails, stop immediately
 
-          # Step 1 — Create (or reuse) our iOS Distribution certificate.
-          # Capture the JSON output so we can extract the cert ID directly.
-          NEW_CERT_JSON=$(app-store-connect certificates create \
+          # Step 1 — Ensure our iOS Distribution certificate exists.
+          # If Apple's limit is already reached this will fail — that is fine,
+          # the existing cert will be used in Step 2.
+          app-store-connect certificates create \
             --type IOS_DISTRIBUTION \
-            --certificate-key "$CERTIFICATE_PRIVATE_KEY" \
-            --json 2>/dev/null || echo '{}')
-          NEW_CERT_ID=$(echo "$NEW_CERT_JSON" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('data',{}).get('id',''))" 2>/dev/null || echo "")
-          echo "=== Newly created cert ID: $NEW_CERT_ID ==="
+            --certificate-key "$CERTIFICATE_PRIVATE_KEY" 2>/dev/null \
+            && echo "=== Certificate created ===" \
+            || echo "=== Certificate already exists — continuing ==="
 
-          # Step 2 — Collect every distribution cert ID for this team, then
-          # add the newly created cert ID to guarantee it is present even if
-          # the API list has not yet reflected the create above.
-          ALL_CERT_IDS=$(app-store-connect certificates list \
-            --type IOS_DISTRIBUTION \
-            --json 2>/dev/null | python3 -c "import json,sys;d=json.load(sys.stdin);ids=[c['id'] for c in d.get('data',[])];sys.stderr.write('Cert IDs: '+str(ids)+'\n');print(' '.join(ids))")
-          # Merge: add newly created ID if not already in the list
-          if [ -n "$NEW_CERT_ID" ]; then
-            ALL_CERT_IDS=$(echo "$ALL_CERT_IDS $NEW_CERT_ID" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
-          fi
-          echo "=== All distribution cert IDs: $ALL_CERT_IDS ==="
-
-          # Step 3 — Delete any existing App Store profile for this bundle ID,
-          # then recreate it so it includes every distribution cert.
-          PROFILE_IDS=$(app-store-connect profiles list \
-            --bundle-id-identifier "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --json 2>/dev/null | python3 -c "import json,sys;d=json.load(sys.stdin);print(' '.join(p['id'] for p in d.get('data',[])))")
-          echo "=== Existing profile IDs: $PROFILE_IDS ==="
-          for PID in $PROFILE_IDS; do
-            echo "=== Deleting profile $PID ==="
-            app-store-connect profiles delete "$PID" 2>/dev/null || true
-          done
-
-          echo "=== Creating profile with all certs: $ALL_CERT_IDS ==="
-          app-store-connect profiles create \
-            --name "Dutton Connect ios_app_store" \
-            --type IOS_APP_STORE \
-            --bundle-id-identifier "$BUNDLE_ID" \
-            --certificate-id $ALL_CERT_IDS
-
-          # Step 4 — Wipe any stale profiles cached from previous builds, then
-          # download the freshly created profile and our cert.
+          # Step 2 — Wipe any stale profiles from previous builds, then let
+          # fetch-signing-files handle cert+profile matching automatically.
+          # --create: creates an App Store profile if none exists for this bundle.
+          # This is the idiomatic Codemagic approach; it guarantees the profile
+          # it downloads was built for the cert that matches CERTIFICATE_PRIVATE_KEY.
           rm -f ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
           echo "=== Cleared old profiles from disk ==="
 
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key "$CERTIFICATE_PRIVATE_KEY"
+            --certificate-key "$CERTIFICATE_PRIVATE_KEY" \
+            --create
 
           echo "=== Downloaded provisioning profiles ==="
           ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"
@@ -124,13 +95,14 @@ workflows:
           echo "=== All codesigning identities ==="
           security find-identity -v -p codesigning || true
 
+          # Step 3 — Patch the Xcode project and write ExportOptions.plist.
           PROVISIONING_PROFILE_UUID=$(python3 scripts/extract-profile-uuid.py)
           echo "=== Profile UUID: $PROVISIONING_PROFILE_UUID ==="
           PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 scripts/patch-xcode-signing.py
 
           # Rewrite ExportOptions.plist with the actual profile UUID so the
           # export step can locate it — hardcoded profile names don't work.
-          python3 -c "import plistlib,os;u=os.environ['PROVISIONING_PROFILE_UUID'];p={'method':'app-store-connect','teamID':'XZ68HMHPP4','signingStyle':'manual','signingCertificate':'Apple Distribution','provisioningProfiles':{'com.duttonconnect.app':u},'uploadBitcode':False,'uploadSymbols':True};plistlib.dump(p,open('artifacts/dutton-toolkit/ios/ExportOptions.plist','wb'));print('ExportOptions.plist written with UUID:',u)" PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID"
+          python3 -c "import plistlib,os;u=os.environ['PROVISIONING_PROFILE_UUID'];p={'method':'app-store-connect','teamID':'XZ68HMHPP4','signingStyle':'manual','signingCertificate':'iPhone Distribution','provisioningProfiles':{'com.duttonconnect.app':u},'uploadBitcode':False,'uploadSymbols':True};plistlib.dump(p,open('artifacts/dutton-toolkit/ios/ExportOptions.plist','wb'));print('ExportOptions.plist written with UUID:',u)" PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID"
 
       - name: Build IPA
         script: |
