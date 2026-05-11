@@ -1208,6 +1208,12 @@ export default function RoutePlanner() {
                       variant="destructive"
                       className="h-7 px-2 text-xs"
                       onClick={() => {
+                        const prevStart = startAddress;
+                        const prevEnd = endAddress;
+                        const prevName = routeName;
+                        const prevStops = [...orderedStops];
+                        const prevLoadedRouteId = loadedRouteId;
+                        const prevDirty = isDirty;
                         setStartAddress("");
                         setEndAddress("");
                         setRouteName("");
@@ -1216,7 +1222,23 @@ export default function RoutePlanner() {
                         setConfirmingReset(false);
                         setConfirmingClearAll(false);
                         setIsDirty(false);
-                        toast.success("Planner reset.");
+                        let undone = false;
+                        toast.success("Planner reset.", {
+                          duration: UNDO_WINDOW_MS,
+                          action: {
+                            label: "Undo",
+                            onClick: () => {
+                              if (undone) return;
+                              undone = true;
+                              setStartAddress(prevStart);
+                              setEndAddress(prevEnd);
+                              setRouteName(prevName);
+                              setOrderedStops(prevStops);
+                              setLoadedRouteId(prevLoadedRouteId);
+                              setIsDirty(prevDirty);
+                            },
+                          },
+                        });
                       }}
                     >
                       Yes, reset
