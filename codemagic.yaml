@@ -143,13 +143,13 @@ workflows:
           echo "=== Signing with SHA1: $CERT_SHA1 ==="
 
           xcodebuild \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath /tmp/App.xcarchive \
-            archive \
-            CODE_SIGN_IDENTITY="$CERT_SHA1"
+           -workspace "$XCODE_WORKSPACE" \
+           -scheme "$XCODE_SCHEME" \
+           -sdk iphoneos \
+           -configuration Release \
+           -archivePath /tmp/App.xcarchive \
+           archive \
+          CODE_SIGN_IDENTITY="Apple Distribution"
           xcodebuild \
             -exportArchive \
             -archivePath /tmp/App.xcarchive \
