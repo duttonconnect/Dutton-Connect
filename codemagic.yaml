@@ -48,6 +48,16 @@ workflows:
             --config.resolution-mode=highest \
             --config.minimum-release-age=0
 
+      - name: Set build number from Codemagic run counter
+        script: |
+          # Codemagic provides $BUILD_NUMBER (auto-increments each run).
+          # Write it into both Debug and Release configs so Apple never sees
+          # the same CFBundleVersion twice.
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $BUILD_NUMBER/g" \
+            artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj
+          echo "=== Build number set to $BUILD_NUMBER ==="
+          grep "CURRENT_PROJECT_VERSION" artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj
+
       - name: Build web app for Capacitor
         script: |
           pnpm --filter @workspace/dutton-toolkit run cap:build
