@@ -260,11 +260,10 @@ function ProProfileEdit() {
       serviceArea: serviceArea.trim(),
       serviceRadius,
       about: about.trim(),
-      yearsExperience,
+      yearsExperience: Number.isFinite(yearsExperience) ? yearsExperience : 0,
       website: website.trim() || undefined,
       publicPhone: publicPhone.trim() || undefined,
       profilePhoto: profilePhoto || undefined,
-      businessLogo: undefined,
     });
     setSaving(false);
     if (ok) toast.success("Profile saved.");

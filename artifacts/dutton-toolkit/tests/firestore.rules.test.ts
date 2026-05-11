@@ -1612,6 +1612,81 @@ describe("publicProfiles collection", () => {
   });
 });
 
+// ─── customerProfiles ─────────────────────────────────────────────────────────
+
+describe("customerProfiles collection", () => {
+  const ownerUid = "customer-owner";
+  const otherUid = "customer-other";
+  const profilePath = `customerProfiles/${ownerUid}`;
+  const profileData = {
+    uid: ownerUid,
+    displayName: "Alice Customer",
+    phone: "555-1234",
+    updatedAt: new Date().toISOString(),
+  };
+
+  it("denies unauthenticated read", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(getDoc(doc(unauthed().firestore(), profilePath)));
+  });
+
+  it("denies unauthenticated write", async () => {
+    await assertFails(setDoc(doc(unauthed().firestore(), profilePath), profileData));
+  });
+
+  it("allows owner to read their own profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(getDoc(doc(authed(ownerUid).firestore(), profilePath)));
+  });
+
+  it("denies another user from reading the profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(getDoc(doc(authed(otherUid).firestore(), profilePath)));
+  });
+
+  it("allows owner to create their own profile", async () => {
+    await assertSucceeds(
+      setDoc(doc(authed(ownerUid).firestore(), profilePath), profileData)
+    );
+  });
+
+  it("denies another user from creating the profile", async () => {
+    await assertFails(
+      setDoc(doc(authed(otherUid).firestore(), profilePath), profileData)
+    );
+  });
+
+  it("allows owner to update their own profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertSucceeds(
+      updateDoc(doc(authed(ownerUid).firestore(), profilePath), {
+        displayName: "Alice Updated",
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  });
+
+  it("denies another user from updating the profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(
+      updateDoc(doc(authed(otherUid).firestore(), profilePath), {
+        displayName: "Hacked",
+      })
+    );
+  });
+
+  it("denies owner from deleting their profile", async () => {
+    await seedDoc(profilePath, profileData);
+    await assertFails(deleteDoc(doc(authed(ownerUid).firestore(), profilePath)));
+  });
+
+  it("allows admin to delete the profile", async () => {
+    await seedDoc(profilePath, profileData);
+    const adminCtx = await seedAdminAndGetContext("admin-uid");
+    await assertSucceeds(deleteDoc(doc(adminCtx.firestore(), profilePath)));
+  });
+});
+
 // ─── catch-all ────────────────────────────────────────────────────────────────
 
 describe("catch-all rule", () => {

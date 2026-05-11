@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -114,15 +115,28 @@ export async function saveBusinessProfile(
   try {
     const updatedAt = new Date().toISOString();
 
-    // Write the full profile (owner-only access) to businessProfiles
-    await setDoc(
-      doc(db, "businessProfiles", uid),
-      { proId: uid, ...data, updatedAt },
-      { merge: true },
-    );
+    // Build the businessProfiles document.
+    // Use deleteField() for optional fields so clearing a value actually removes
+    // it from Firestore. Never pass JavaScript `undefined` — the SDK rejects it.
+    const profileDoc = {
+      proId: uid,
+      businessName: data.businessName,
+      ownerName: data.ownerName,
+      serviceCategories: data.serviceCategories,
+      serviceArea: data.serviceArea,
+      serviceRadius: data.serviceRadius,
+      about: data.about,
+      yearsExperience: Number.isFinite(data.yearsExperience) ? data.yearsExperience : 0,
+      website: data.website ?? deleteField(),
+      publicPhone: data.publicPhone ?? deleteField(),
+      profilePhoto: data.profilePhoto ?? deleteField(),
+      // businessLogo is managed separately (not set by the profile page)
+      updatedAt,
+    };
+
+    await setDoc(doc(db, "businessProfiles", uid), profileDoc, { merge: true });
 
     // Sync key fields to users/{uid} for owner/admin reads (e.g. admin panel).
-    // Use setDoc+merge so this works even if the users doc doesn't exist yet.
     await setDoc(
       doc(db, "users", uid),
       {
@@ -134,9 +148,8 @@ export async function saveBusinessProfile(
     );
 
     // Write ONLY public fields to publicProfiles/{uid}.
-    // This collection is readable by any authenticated user for pro browsing.
-    // Sensitive fields (email, isAdmin) are deliberately never written here.
-    const publicProfile: PublicProfile = {
+    // Use deleteField() so optional fields can be cleared intentionally.
+    const publicDoc = {
       displayName: data.ownerName,
       businessName: data.businessName,
       services: data.serviceCategories as string[],
@@ -145,10 +158,10 @@ export async function saveBusinessProfile(
       about: data.about,
       role: "pro",
       updatedAt,
-      ...(data.publicPhone ? { publicPhone: data.publicPhone } : {}),
-      ...(data.profilePhoto ? { profilePhoto: data.profilePhoto } : {}),
+      publicPhone: data.publicPhone ?? deleteField(),
+      profilePhoto: data.profilePhoto ?? deleteField(),
     };
-    await setDoc(doc(db, "publicProfiles", uid), publicProfile, { merge: true });
+    await setDoc(doc(db, "publicProfiles", uid), publicDoc, { merge: true });
 
     return true;
   } catch (err) {
@@ -173,15 +186,11 @@ export async function toggleProBadge(
   if (!isFirebaseConfigured || !db) return false;
   try {
     const updatedAt = new Date().toISOString();
-    // Write badge to the full (admin-readable) business profile
     await setDoc(
       doc(db, "businessProfiles", uid),
       { [badge]: value, updatedAt },
       { merge: true },
     );
-    // Sync badge to publicProfiles/{uid} so any authenticated user can see it
-    // via loadProProfile() and loadAllPublicProfiles().
-    // Admin write to publicProfiles is permitted by the Firestore rule.
     await setDoc(
       doc(db, "publicProfiles", uid),
       { [badge]: value, updatedAt },

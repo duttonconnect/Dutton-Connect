@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteField, doc, getDoc, setDoc } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 
 export type CustomerProfile = {
@@ -30,13 +30,24 @@ export async function saveCustomerProfile(
 ): Promise<boolean> {
   if (!isFirebaseConfigured || !db) return false;
   try {
+    // Use deleteField() for optional fields so clearing a value actually removes
+    // it from Firestore. Never pass JavaScript `undefined` — the SDK rejects it.
     await setDoc(
       doc(db, "customerProfiles", uid),
-      { uid, ...data, updatedAt: new Date().toISOString() },
+      {
+        uid,
+        displayName: data.displayName,
+        phone: data.phone ?? deleteField(),
+        location: data.location ?? deleteField(),
+        bio: data.bio ?? deleteField(),
+        profilePhoto: data.profilePhoto ?? deleteField(),
+        updatedAt: new Date().toISOString(),
+      },
       { merge: true },
     );
     return true;
-  } catch {
+  } catch (err) {
+    console.error("[CustomerProfile] save failed:", err);
     return false;
   }
 }

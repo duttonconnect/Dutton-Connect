@@ -365,6 +365,20 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── customerProfiles ──────────────────────────────────────────────────
+    // Stores personal details for customer accounts (displayName, phone,
+    // location, bio, profilePhoto).  Only the owning customer may read or
+    // write their own document.
+    match /customerProfiles/{userId} {
+      allow read: if isSignedIn()
+                  && request.auth.uid == userId;
+      allow create: if isSignedIn()
+                    && request.auth.uid == userId;
+      allow update: if isSignedIn()
+                    && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
     // ── catch-all ─────────────────────────────────────────────────────────
     // Deny access to any collection not explicitly listed above.
     match /{document=**} {
