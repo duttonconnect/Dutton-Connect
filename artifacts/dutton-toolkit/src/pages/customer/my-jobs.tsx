@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   Briefcase,

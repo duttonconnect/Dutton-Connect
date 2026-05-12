@@ -90,7 +90,6 @@ export function availabilitySummary(avail: ProAvailability): string {
   };
 
   // Try to collapse consecutive days
-  let rangeStr = "";
   let rangeStart = available[0];
   let prev = available[0];
   const allDays = DAYS_OF_WEEK;
@@ -107,7 +106,7 @@ export function availabilitySummary(avail: ProAvailability): string {
     }
   }
   ranges.push(rangeStart === prev ? short[rangeStart] : `${short[rangeStart]}–${short[prev]}`);
-  rangeStr = ranges.join(", ");
+  const rangeStr = ranges.join(", ");
 
   // Use the time from the first available day
   const firstDay = available[0];

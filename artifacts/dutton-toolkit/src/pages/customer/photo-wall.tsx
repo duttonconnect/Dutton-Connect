@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ArrowLeft, Camera, ImagePlus, Trash2, Plus, Home, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Camera, ImagePlus, Trash2, Plus, Home, ChevronUp } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -289,7 +289,6 @@ export default function PhotoWallPage() {
 }
 
 function PhotoCard({ photo: p, onDelete }: { photo: JobPhoto; onDelete: () => void }) {
-  const [expanded, setExpanded] = useState(false);
   return (
     <Card>
       <CardContent className="p-4 space-y-3">

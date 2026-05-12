@@ -1,15 +1,14 @@
 import { useAppStore } from "@/lib/store";
 import { useParams, Link, useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { MapPin, Phone, Mail, Clock, DollarSign, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation, Pencil, Flag } from "lucide-react";
+import { MapPin, Phone, Mail, Calendar, ArrowLeft, Plus, CheckCircle, Trash2, Navigation, Pencil, Flag } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { ReportUserDialog } from "@/components/report-user-dialog";
 

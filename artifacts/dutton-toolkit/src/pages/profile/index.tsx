@@ -9,7 +9,6 @@ import {
   Loader2,
   MapPin,
   Phone,
-  Star,
   User,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -124,25 +123,6 @@ function PhotoAvatar({
         className="hidden"
         onChange={handleChange}
       />
-    </div>
-  );
-}
-
-// ── Inline star rating display ────────────────────────────────────────────────
-
-function StarRow({ rating, count }: { rating: number; count: number }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star
-          key={n}
-          className={`h-4 w-4 ${n <= Math.round(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-        />
-      ))}
-      <span className="text-sm font-semibold">{rating.toFixed(1)}</span>
-      <span className="text-xs text-muted-foreground">
-        ({count} review{count !== 1 ? "s" : ""})
-      </span>
     </div>
   );
 }

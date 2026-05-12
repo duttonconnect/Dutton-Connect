@@ -191,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const existing: Role[] = snap.exists() ? (snap.data()?.roles ?? []) : [];
       const roles: Role[] = existing.includes(role) ? existing : [...existing, role];
       await setDoc(doc(db, "users", user.uid), { roles }, { merge: true });
-    } catch {}
+    } catch { /* intentional */ }
   };
 
   const value: AuthContextValue = {

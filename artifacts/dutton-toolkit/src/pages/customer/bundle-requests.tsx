@@ -2,8 +2,6 @@ import { useState } from "react";
 import { ArrowLeft, Users, Plus, Trash2, ChevronDown, ChevronUp, UserPlus, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
-import { format } from "date-fns";
-
 import { useAppStore, type BundleRequest, REQUEST_CATEGORIES, type RequestCategory, type Urgency } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

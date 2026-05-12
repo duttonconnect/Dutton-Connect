@@ -51,7 +51,7 @@ export default function NewQuote() {
     setLineItems([...lineItems, { id: Math.random().toString(), description: "", qty: 1, unitPrice: 0 }]);
   };
 
-  const updateItem = (id: string, field: string, value: any) => {
+  const updateItem = (id: string, field: string, value: string | number) => {
     setLineItems(lineItems.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 

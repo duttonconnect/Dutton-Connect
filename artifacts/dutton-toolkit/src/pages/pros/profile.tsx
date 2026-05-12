@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -9,12 +9,9 @@ import {
   Star,
   MessageSquare,
   Loader2,
-  User,
-  CheckCircle2,
   Inbox,
   Zap,
   ShieldCheck,
-  Clock,
   BadgeCheck,
 } from "lucide-react";
 

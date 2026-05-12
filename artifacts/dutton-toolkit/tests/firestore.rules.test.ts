@@ -10,8 +10,6 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
-  collection,
-  addDoc,
 } from "firebase/firestore";
 import { readFileSync } from "fs";
 import { resolve, dirname } from "path";

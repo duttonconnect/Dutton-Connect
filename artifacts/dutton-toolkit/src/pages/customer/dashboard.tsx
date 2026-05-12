@@ -14,12 +14,10 @@ import {
   ChevronRight,
   Home,
   Bell,
-  AlertCircle,
 } from "lucide-react";
 import { isPast, isWithinInterval, addDays } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/lib/store";
 import { OnboardingBanner } from "@/components/onboarding-banner";
 

@@ -3,7 +3,7 @@ import { ArrowLeft, CalendarCheck, Clock, MapPin, Loader2, CheckCircle2 } from "
 import { Link } from "wouter";
 import { toast } from "sonner";
 import { format, isFuture, parseISO } from "date-fns";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 
 export default function PaymentsList() {
-  const { payments, jobs, customers, addPayment, deletePayment } = useAppStore();
+  const { payments, jobs, customers, addPayment } = useAppStore();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -85,7 +85,7 @@ export default function PaymentsList() {
               </div>
               <div>
                 <Label>Method</Label>
-                <Select value={method} onValueChange={(v: any) => setMethod(v)}>
+                <Select value={method} onValueChange={(v) => setMethod(v as "cash" | "check" | "card" | "transfer")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="card">Credit Card (Square/Stripe)</SelectItem>

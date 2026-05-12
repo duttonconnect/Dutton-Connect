@@ -148,7 +148,7 @@ export default function LeadInbox() {
   const [declinedIds, setDeclinedIds] = useState<Set<string>>(new Set());
   const [quotedIds, setQuotedIds] = useState<Set<string>>(new Set());
   const [messagedIds, setMessagedIds] = useState<Set<string>>(new Set());
-  const [proQuotes, setProQuotes] = useState<MatchQuote[]>([]);
+  const [_proQuotes, setProQuotes] = useState<MatchQuote[]>([]);
   const [declining, setDeclining] = useState<string | null>(null);
 
   const [quoteDialog, setQuoteDialog] = useState<FirestoreJobRequest | null>(null);

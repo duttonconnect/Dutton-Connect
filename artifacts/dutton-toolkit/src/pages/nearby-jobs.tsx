@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 
-import { type RequestCategory, type Urgency } from "@/lib/store";
+import { type RequestCategory } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import {
   loadOpenJobRequests,

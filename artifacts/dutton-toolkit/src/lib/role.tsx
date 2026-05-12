@@ -19,7 +19,7 @@ function readState(): DualState {
     if (leg === "pro" || leg === "customer") {
       return { roles: [leg], currentMode: leg };
     }
-  } catch {}
+  } catch { /* intentional */ }
   return { roles: [], currentMode: null };
 }
 

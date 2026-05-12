@@ -8,7 +8,6 @@ import {
   Loader2,
   MessageSquare,
   Calendar,
-  Clock,
   CheckCircle2,
   User,
   Inbox,
@@ -29,7 +28,7 @@ import {
 import { notifyQuoteAccepted } from "@/lib/notifications";
 import { saveCalendarEvent } from "@/lib/calendar";
 import { getOrCreateConversation } from "@/lib/messaging";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -176,7 +175,7 @@ export default function JobQuotes() {
     setScheduling(false);
   };
 
-  const acceptedQuote = quotes.find((q) => q.id === job?.acceptedQuoteId);
+  const _acceptedQuote = quotes.find((q) => q.id === job?.acceptedQuoteId);
   const isAccepted = job?.status === "accepted" || job?.status === "scheduled";
 
   return (

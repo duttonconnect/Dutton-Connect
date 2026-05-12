@@ -1,7 +1,7 @@
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -135,7 +135,7 @@ export default function NewJob() {
   }
 
   // Pre-fill address when customer changes
-  const watchCustomerId = form.watch("customerId");
+  form.watch("customerId");
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">

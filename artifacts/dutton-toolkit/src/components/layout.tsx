@@ -96,7 +96,7 @@ const CUSTOMER_NAV = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { role, roles, currentMode, setCurrentMode, addRole, clearRole } = useRole();
+  const { roles, currentMode, setCurrentMode, addRole, clearRole } = useRole();
   const { user, logout, isConfigured, isAdmin, saveRolesToCloud, addRoleToCloud } = useAuth();
   const { routePlannerDirty, setRoutePlannerDirty, routePlannerHasContent } = useAppStore();
   const routePlannerShouldWarn = routePlannerDirty && routePlannerHasContent;

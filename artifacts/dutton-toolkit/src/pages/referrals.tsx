@@ -111,7 +111,7 @@ export default function ReferralsPage() {
           text: "Find local pros for any home service — cleaning, handyman, plumbing, and more.",
           url: referralLink,
         });
-      } catch {}
+      } catch { /* intentional */ }
     } else {
       handleCopy(referralLink);
     }
