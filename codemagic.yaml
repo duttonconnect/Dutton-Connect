@@ -75,37 +75,14 @@ workflows:
         script: |
           set -e  # fail fast — if any step below fails, stop immediately
 
-          # Step 1 — Ensure our iOS Distribution certificate exists.
-          # If Apple's limit is already reached this will fail — that is fine,
-          # the existing cert will be used in Step 2.
-          # Pass API credentials explicitly — env-var auto-detection is unreliable
-          # on some Codemagic runner images.
-          app-store-connect certificates create \
-            --type IOS_DISTRIBUTION \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" 2>/dev/null \
-            && echo "=== Certificate created ===" \
-            || echo "=== Certificate already exists — continuing ==="
-
-          # Step 2 — Wipe any stale profiles from previous builds, then let
-          # fetch-signing-files handle cert+profile matching automatically.
-          # --create: creates an App Store profile if none exists for this bundle.
-          rm -f ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
-          echo "=== Cleared old profiles from disk ==="
-
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
-            --create
-
-          echo "=== Downloaded provisioning profiles ==="
-          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"
-
+          # Use Codemagic's saved iOS code signing identities (certificates +
+          # provisioning profiles configured in the Codemagic UI / team settings)
+          # instead of creating or fetching signing files during the build.
           keychain initialize
           keychain add-certificates
+
+          echo "=== Provisioning profiles available ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"
 
           echo "=== All codesigning identities ==="
           security find-identity -v -p codesigning || true
