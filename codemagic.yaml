@@ -78,8 +78,13 @@ workflows:
           # Step 1 — Ensure our iOS Distribution certificate exists.
           # If Apple's limit is already reached this will fail — that is fine,
           # the existing cert will be used in Step 2.
+          # Pass API credentials explicitly — env-var auto-detection is unreliable
+          # on some Codemagic runner images.
           app-store-connect certificates create \
-            --type IOS_DISTRIBUTION 2>/dev/null \
+            --type IOS_DISTRIBUTION \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" 2>/dev/null \
             && echo "=== Certificate created ===" \
             || echo "=== Certificate already exists — continuing ==="
 
@@ -91,6 +96,9 @@ workflows:
 
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
             --create
 
           echo "=== Downloaded provisioning profiles ==="

@@ -1,0 +1,34 @@
+=== Certificate already exists — continuing ===
+=== Cleared old profiles from disk ===
+usage: app-store-connect [-h] [--log-stream {stderr,stdout}] [--no-color] [--version] [-s] [-v] {app-store-version-localizations,app-store-version-phased-releases,app-store-version-submissions,app-store-versions,apps,beta-app-review-submissions,beta-build-localizations,beta-groups,builds,bundle-ids,certificates,devices,fetch-signing-files,get-latest-app-store-build-number,get-latest-build-number,get-latest-testflight-build-number,profiles,publish,review-submission-items,review-submissions} ...
+app-store-connect: error: argument --issuer-id: Missing value ISSUER_ID. Provide it with argument --issuer-id, or set environment variable APP_STORE_CONNECT_ISSUER_ID
+
+
+Build failed :|
+Step 8 script `Set up code signing` exited with status code 2
+=== Certificate already exists — continuing ===
+=== Cleared old profiles from disk ===
+usage: app-store-connect [-h] [--log-stream {stderr,stdout}] [--no-color] [--version] [-s] [-v] {app-store-version-localizations,app-store-version-phased-releases,app-store-version-submissions,app-store-versions,apps,beta-app-review-submissions,beta-build-localizations,beta-groups,builds,bundle-ids,certificates,devices,fetch-signing-files,get-latest-app-store-build-number,get-latest-build-number,get-latest-testflight-build-number,profiles,publish,review-submission-items,review-submissions} ...
+app-store-connect: error: argument --issuer-id: Missing value ISSUER_ID. Provide it with argument --issuer-id, or set environment variable APP_STORE_CONNECT_ISSUER_ID
+
+
+Build failed :|
+Step 8 script `Set up code signing` exited with status code 2
+=== Certificate already exists — continuing ===
+=== Cleared old profiles from disk ===
+usage: app-store-connect [-h] [--log-stream {stderr,stdout}] [--no-color] [--version] [-s] [-v] {app-store-version-localizations,app-store-version-phased-releases,app-store-version-submissions,app-store-versions,apps,beta-app-review-submissions,beta-build-localizations,beta-groups,builds,bundle-ids,certificates,devices,fetch-signing-files,get-latest-app-store-build-number,get-latest-build-number,get-latest-testflight-build-number,profiles,publish,review-submission-items,review-submissions} ...
+app-store-connect: error: argument --issuer-id: Missing value ISSUER_ID. Provide it with argument --issuer-id, or set environment variable APP_STORE_CONNECT_ISSUER_ID
+
+
+Build failed :|
+Step 8 script `Set up code signing` exited with status code 2
+=== Certificate already exists — continuing ===
+=== Cleared old profiles from disk ===
+usage: app-store-connect [-h] [--log-stream {stderr,stdout}] [--no-color] [--version] [-s] [-v] {app-store-version-localizations,app-store-version-phased-releases,app-store-version-submissions,app-store-versions,apps,beta-app-review-submissions,beta-build-localizations,beta-groups,builds,bundle-ids,certificates,devices,fetch-signing-files,get-latest-app-store-build-number,get-latest-build-number,get-latest-testflight-build-number,profiles,publish,review-submission-items,review-submissions} ...
+app-store-connect: error: argument --issuer-id: Missing value ISSUER_ID. Provide it with argument --issuer-id, or set environment variable APP_STORE_CONNECT_ISSUER_ID
+
+
+Build failed :|
+Step 8 script `Set up code signing` exited with status code 2
+
+Build IPA
