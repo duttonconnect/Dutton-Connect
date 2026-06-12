@@ -24,6 +24,9 @@ workflows:
         VITE_FIREBASE_APP_ID: "1:466844599639:web:f412c0053b2a0c54036a12"
       groups:
         - apple_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.duttonconnect.app
     scripts:
       - name: Install pnpm
         script: |
