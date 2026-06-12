@@ -237,7 +237,7 @@ function ProProfileEdit() {
       return;
     }
     setSaving(true);
-    const ok = await saveBusinessProfile(user.uid, {
+    const result = await saveBusinessProfile(user.uid, {
       businessName: businessName.trim(),
       ownerName: ownerName.trim(),
       serviceCategories,
@@ -250,8 +250,12 @@ function ProProfileEdit() {
       profilePhoto: profilePhoto || undefined,
     });
     setSaving(false);
-    if (ok) toast.success("Profile saved.");
-    else toast.error("Save failed. Check your connection and try again.");
+    if (result.ok) {
+      toast.success("Profile saved.");
+    } else {
+      console.error("[Profile] Business profile save failed:", result.error);
+      toast.error(`Save failed: ${result.error}`);
+    }
   };
 
   if (loading) {
@@ -587,7 +591,7 @@ function CustomerProfileEdit() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const ok = await saveCustomerProfile(user.uid, {
+    const result = await saveCustomerProfile(user.uid, {
       displayName: displayName.trim(),
       phone: phone.trim() || undefined,
       location: location.trim() || undefined,
@@ -595,8 +599,12 @@ function CustomerProfileEdit() {
       profilePhoto: profilePhoto || undefined,
     });
     setSaving(false);
-    if (ok) toast.success("Profile saved.");
-    else toast.error("Save failed. Check your connection and try again.");
+    if (result.ok) {
+      toast.success("Profile saved.");
+    } else {
+      console.error("[Profile] Customer profile save failed:", result.error);
+      toast.error(`Save failed: ${result.error}`);
+    }
   };
 
   if (loading) {

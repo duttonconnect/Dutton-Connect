@@ -79,22 +79,18 @@ workflows:
           # If Apple's limit is already reached this will fail — that is fine,
           # the existing cert will be used in Step 2.
           app-store-connect certificates create \
-            --type IOS_DISTRIBUTION \
-            --certificate-key "$CERTIFICATE_PRIVATE_KEY" 2>/dev/null \
+            --type IOS_DISTRIBUTION 2>/dev/null \
             && echo "=== Certificate created ===" \
             || echo "=== Certificate already exists — continuing ==="
 
           # Step 2 — Wipe any stale profiles from previous builds, then let
           # fetch-signing-files handle cert+profile matching automatically.
           # --create: creates an App Store profile if none exists for this bundle.
-          # This is the idiomatic Codemagic approach; it guarantees the profile
-          # it downloads was built for the cert that matches CERTIFICATE_PRIVATE_KEY.
           rm -f ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
           echo "=== Cleared old profiles from disk ==="
 
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key "$CERTIFICATE_PRIVATE_KEY" \
             --create
 
           echo "=== Downloaded provisioning profiles ==="

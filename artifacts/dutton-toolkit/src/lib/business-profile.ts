@@ -67,6 +67,10 @@ export type PublicProfile = {
   completedJobsCount?: number;
 };
 
+export type SaveResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
 export async function loadAllBusinessProfiles(): Promise<BusinessProfile[]> {
   if (!isFirebaseConfigured || !db) return [];
   try {
@@ -102,7 +106,8 @@ export async function loadBusinessProfile(uid: string): Promise<BusinessProfile 
     if (!snap.exists()) return null;
     return { proId: snap.id, ...snap.data() } as BusinessProfile;
   } catch (err) {
-    console.error("[BusinessProfile] load failed:", err);
+    const code = (err as { code?: string })?.code ?? "unknown";
+    console.error(`[BusinessProfile] load failed (code=${code}):`, err);
     return null;
   }
 }
@@ -110,8 +115,10 @@ export async function loadBusinessProfile(uid: string): Promise<BusinessProfile 
 export async function saveBusinessProfile(
   uid: string,
   data: Omit<BusinessProfile, "proId" | "updatedAt">,
-): Promise<boolean> {
-  if (!isFirebaseConfigured || !db) return false;
+): Promise<SaveResult> {
+  if (!isFirebaseConfigured || !db) {
+    return { ok: false, error: "Firebase is not configured on this device." };
+  }
   try {
     const updatedAt = new Date().toISOString();
 
@@ -134,9 +141,12 @@ export async function saveBusinessProfile(
       updatedAt,
     };
 
+    console.log("[BusinessProfile] Writing businessProfiles/%s...", uid);
     await setDoc(doc(db, "businessProfiles", uid), profileDoc, { merge: true });
+    console.log("[BusinessProfile] businessProfiles write OK");
 
     // Sync key fields to users/{uid} for owner/admin reads (e.g. admin panel).
+    console.log("[BusinessProfile] Writing users/%s sync...", uid);
     await setDoc(
       doc(db, "users", uid),
       {
@@ -146,8 +156,11 @@ export async function saveBusinessProfile(
       },
       { merge: true },
     );
+    console.log("[BusinessProfile] users sync write OK");
 
     // Write ONLY public fields to publicProfiles/{uid}.
+    // This is best-effort — a failure here does NOT fail the whole save,
+    // because the critical data is already persisted in businessProfiles.
     // Use deleteField() so optional fields can be cleared intentionally.
     const publicDoc = {
       displayName: data.ownerName,
@@ -161,12 +174,24 @@ export async function saveBusinessProfile(
       publicPhone: data.publicPhone ?? deleteField(),
       profilePhoto: data.profilePhoto ?? deleteField(),
     };
-    await setDoc(doc(db, "publicProfiles", uid), publicDoc, { merge: true });
+    try {
+      console.log("[BusinessProfile] Writing publicProfiles/%s...", uid);
+      await setDoc(doc(db, "publicProfiles", uid), publicDoc, { merge: true });
+      console.log("[BusinessProfile] publicProfiles write OK");
+    } catch (pubErr) {
+      const pubCode = (pubErr as { code?: string })?.code ?? "unknown";
+      console.error(
+        `[BusinessProfile] publicProfiles sync failed (code=${pubCode}) — profile is still saved, customer discovery view may be stale:`,
+        pubErr,
+      );
+    }
 
-    return true;
+    return { ok: true };
   } catch (err) {
-    console.error("[BusinessProfile] save failed:", err);
-    return false;
+    const code = (err as { code?: string })?.code ?? "unknown";
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[BusinessProfile] save failed (code=${code}):`, err);
+    return { ok: false, error: `${code}: ${message}` };
   }
 }
 

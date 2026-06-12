@@ -1,0 +1,3 @@
+- [publicProfiles Firestore rule pattern](publicprofiles-rule.md) — use affectedKeys() delta check, not hasOnly(), for UPDATE rules on docs that may have legacy fields
+- [Firebase rules deploy method](firebase-rules-deploy.md) — deploy via Python + JWT + firebaserules.googleapis.com REST API; Firebase CLI fails with 403
+- [Codemagic signing flags](codemagic-signing.md) — never pass --certificate-key flag to certificates create or fetch-signing-files; key comes from env group only

@@ -57,13 +57,14 @@ service cloud.firestore {
     //
     // Write rules are split into create vs. update:
     //   • Owner create  — only allowlisted safe keys, no admin fields.
-    //   • Owner update  — safe keys + admin-managed fields MUST remain
-    //                     unchanged (prevents owners from awarding themselves
-    //                     trust badges or inflating job counts).
-    //                     Admin fields are included in hasOnly so the check
-    //                     doesn't reject a doc that already has them after
-    //                     an admin write (request.resource.data is the full
-    //                     post-merge document, not just the changed fields).
+    //   • Owner update  — the UPDATE must not introduce or change email /
+    //                     isAdmin, and admin-managed badge/stat fields must
+    //                     remain unchanged (prevents self-awarding).
+    //                     We check affectedKeys() (the delta) rather than
+    //                     hasOnly() on the full post-merge document — this
+    //                     keeps saves working for pro accounts whose existing
+    //                     Firestore documents contain legacy fields written
+    //                     by older app versions.
     //   • Admin update  — unrestricted; needed to set badges / job counts.
     match /publicProfiles/{userId} {
       allow read: if isSignedIn();
@@ -85,28 +86,13 @@ service cloud.firestore {
                          'updatedAt'
                        ]);
 
-      // Owner update: safe keys are writable; admin-managed fields must
-      // remain exactly as they were before the write — owners cannot
-      // introduce or change them.  Including them in hasOnly prevents the
-      // check from rejecting a document that already contains them.
+      // Owner update: block writes that introduce or change email / isAdmin
+      // (check the delta, not the full document, so legacy fields already in
+      // the doc don't permanently lock the owner out of editing).
+      // Admin-managed badge/stat fields must stay exactly as they are.
       allow update: if isSignedIn()
                     && request.auth.uid == userId
-                    && request.resource.data.keys().hasOnly([
-                         'displayName',
-                         'businessName',
-                         'services',
-                         'serviceArea',
-                         'serviceRadiusMiles',
-                         'about',
-                         'publicPhone',
-                         'profilePhoto',
-                         'role',
-                         'updatedAt',
-                         'verifiedPro',
-                         'fastResponder',
-                         'topRated',
-                         'completedJobsCount'
-                       ])
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'isAdmin'])
                     && request.resource.data.get('verifiedPro', null)        == resource.data.get('verifiedPro', null)
                     && request.resource.data.get('fastResponder', null)      == resource.data.get('fastResponder', null)
                     && request.resource.data.get('topRated', null)           == resource.data.get('topRated', null)
