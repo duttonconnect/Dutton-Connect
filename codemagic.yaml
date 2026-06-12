@@ -79,6 +79,11 @@ workflows:
           # provisioning profiles configured in the Codemagic UI / team settings)
           # instead of creating or fetching signing files during the build.
           keychain initialize
+
+          echo "=== Checking available p12 certificates ==="
+          find ~/Library -name "*.p12" -print || true
+          find /Users/builder -name "*.p12" -print || true
+
           keychain add-certificates
 
           echo "=== Provisioning profiles available ==="
