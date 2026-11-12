@@ -18,7 +18,7 @@ content = content.replace("CODE_SIGN_STYLE = Automatic", "CODE_SIGN_STYLE = Manu
 
 content = re.sub(
     r'CODE_SIGN_IDENTITY = "[^"]*";',
-    'CODE_SIGN_IDENTITY = "Apple Distribution";',
+    'CODE_SIGN_IDENTITY = "iPhone Distribution";',
     content
 )
 
@@ -35,4 +35,4 @@ content = re.sub(
 with open(pbxproj, "w") as f:
     f.write(content)
 
-print(f"Patched: Manual signing | CODE_SIGN_IDENTITY=Apple Distribution | team={team_id} | profile={profile_uuid}")
+print(f"Patched: Manual signing | CODE_SIGN_IDENTITY=iPhone Distribution | team={team_id} | profile={profile_uuid}")

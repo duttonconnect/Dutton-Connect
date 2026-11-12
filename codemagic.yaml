@@ -1,3 +1,4 @@
+
 workflows:
   ios-release:
     name: Dutton Connect — iOS Release
@@ -10,12 +11,7 @@ workflows:
         BUNDLE_ID: com.duttonconnect.app
         XCODE_WORKSPACE: artifacts/dutton-toolkit/ios/App/App.xcworkspace
         XCODE_SCHEME: App
-        # Your 10-character Apple Team ID — find it at:
-        # developer.apple.com/account → Membership → Team ID
         APPLE_TEAM_ID: XZ68HMHPP4
-        # Firebase client config — these are NOT secrets.
-        # Firebase security comes from Firestore Rules, not from hiding these values.
-        # See: firebase.google.com/docs/projects/api-keys
         VITE_FIREBASE_API_KEY: AIzaSyDRY-_9BcDkToYif6xtvgavT_RhxsFN2oc
         VITE_FIREBASE_AUTH_DOMAIN: dutton-connect.firebaseapp.com
         VITE_FIREBASE_PROJECT_ID: dutton-connect
@@ -27,6 +23,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.duttonconnect.app
+
     scripts:
       - name: Install pnpm
         script: |
@@ -36,24 +33,19 @@ workflows:
 
       - name: Install workspace dependencies
         script: |
-          # firebase-tools is a dev tool not needed for iOS builds — remove it to avoid
-          # ERR_PNPM_MISSING_TIME errors caused by its dependency chain in pnpm v10
           node -e "
             const fs = require('fs');
             const p = 'artifacts/dutton-toolkit/package.json';
             const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
-            delete pkg.devDependencies['firebase-tools'];
+            if (pkg.devDependencies) delete pkg.devDependencies['firebase-tools'];
             fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
-            console.log('Removed firebase-tools from devDependencies');
+            console.log('Removed firebase-tools from devDependencies if present');
           "
           # Retain the workspace's approved build scripts and package-age policy.
           COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile
 
       - name: Set build number from Codemagic run counter
         script: |
-          # Codemagic provides $BUILD_NUMBER (auto-increments each run).
-          # Write it into both Debug and Release configs so Apple never sees
-          # the same CFBundleVersion twice.
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $BUILD_NUMBER/g" \
             artifacts/dutton-toolkit/ios/App/App.xcodeproj/project.pbxproj
           echo "=== Build number set to $BUILD_NUMBER ==="
@@ -80,64 +72,27 @@ workflows:
 
       - name: Install CocoaPods dependencies
         script: |
+          cd artifacts/dutton-toolkit/ios/App
           pod install
-        working_directory: artifacts/dutton-toolkit/ios/App
 
       - name: Set up code signing
         script: |
-          set -e  # fail fast — if any step below fails, stop immediately
-
-          # Use Codemagic's saved iOS code signing identities (certificates +
-          # provisioning profiles configured in the Codemagic UI / team settings)
-          # instead of creating or fetching signing files during the build.
+          set -e
           keychain initialize
-
-          echo "=== Checking available p12 certificates ==="
-          find ~/Library -name "*.p12" -print || true
-          find /Users/builder -name "*.p12" -print || true
-
           keychain add-certificates
-
-          echo "=== Provisioning profiles available ==="
-          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "NONE"
-
-          echo "=== All codesigning identities ==="
+          xcode-project use-profiles
+          echo "=== Available signing identities ==="
           security find-identity -v -p codesigning || true
-
-          # Step 3 — Patch the Xcode project and write ExportOptions.plist.
-          PROVISIONING_PROFILE_UUID=$(python3 scripts/extract-profile-uuid.py)
-          echo "=== Profile UUID: $PROVISIONING_PROFILE_UUID ==="
-          PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 scripts/patch-xcode-signing.py
-
-          # Rewrite ExportOptions.plist with the actual profile UUID so the
-          # export step can locate it — hardcoded profile names don't work.
-          PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 -c "import plistlib,os;u=os.environ['PROVISIONING_PROFILE_UUID'];p={'method':'app-store-connect','teamID':os.environ['APPLE_TEAM_ID'],'signingStyle':'manual','signingCertificate':'Apple Distribution','provisioningProfiles':{'com.duttonconnect.app':u},'uploadBitcode':False,'uploadSymbols':True};plistlib.dump(p,open('artifacts/dutton-toolkit/ios/ExportOptions.plist','wb'));print('ExportOptions.plist written with UUID:',u)"
 
       - name: Build IPA
         script: |
-          # Use the SHA1 fingerprint of our newly installed cert — unambiguous, can't
-          # accidentally pick the old stale cert that has no private key here.
-          KEYCHAIN=$(ls ~/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null | head -1)
-          CERT_SHA1=$(security find-identity -v -p codesigning "$KEYCHAIN" \
-            | grep -E "iPhone Distribution|Apple Distribution" \
-            | awk '{print $2}' | head -1)
-          echo "=== Signing with SHA1: $CERT_SHA1 ==="
-
-          xcodebuild \
-           -workspace "$XCODE_WORKSPACE" \
-           -scheme "$XCODE_SCHEME" \
-           -sdk iphoneos \
-           -configuration Release \
-           -archivePath /tmp/App.xcarchive \
-           archive \
-          CODE_SIGN_IDENTITY="Apple Distribution"
-          xcodebuild \
-            -exportArchive \
-            -archivePath /tmp/App.xcarchive \
-            -exportPath /tmp/ipa-output \
-            -exportOptionsPlist artifacts/dutton-toolkit/ios/ExportOptions.plist
+          set -e
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
 
     artifacts:
+      - build/ios/ipa/*.ipa
       - /tmp/ipa-output/*.ipa
       - /tmp/xcodebuild_logs/*.log
 

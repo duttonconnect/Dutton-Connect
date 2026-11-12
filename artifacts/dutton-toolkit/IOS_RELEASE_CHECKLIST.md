@@ -6,7 +6,8 @@
 - Keep the bundle identifier `com.duttonconnect.app`.
 - Keep the saved App Store distribution certificate and matching provisioning
   profile available to the `apple_credentials` environment group / iOS signing
-  configuration. The workflow now fails rather than selecting another app's profile.
+  configuration. The workflow uses `xcode-project use-profiles` to configure signing
+  and `xcode-project build-ipa` to archive/export.
 - Confirm these **web client** settings belong to the Dutton Connect Firebase
   project in the Codemagic workflow:
   - `VITE_FIREBASE_API_KEY`
