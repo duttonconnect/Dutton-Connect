@@ -59,11 +59,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser ? toAuthUser(firebaseUser) : null);
+    // Restoring a saved session must not leave the first screen waiting forever.
+    const timeout = setTimeout(() => {
+      console.warn("[Dutton Connect] Session restore is taking too long; showing sign-in.");
       setLoading(false);
-    });
-    return unsub;
+    }, 12000);
+    const unsub = onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        clearTimeout(timeout);
+        setUser(firebaseUser ? toAuthUser(firebaseUser) : null);
+        setLoading(false);
+      },
+      (error) => {
+        clearTimeout(timeout);
+        console.error("[Dutton Connect] Session restore failed:", error);
+        setLoading(false);
+      },
+    );
+    return () => {
+      clearTimeout(timeout);
+      unsub();
+    };
   }, []);
 
   // Load isAdmin flag whenever the logged-in user changes.

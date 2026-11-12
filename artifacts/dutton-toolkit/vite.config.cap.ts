@@ -33,6 +33,7 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   build: {
+    manifest: "asset-manifest.json",
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {

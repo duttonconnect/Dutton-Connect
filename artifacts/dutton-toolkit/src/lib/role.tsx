@@ -47,12 +47,16 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<DualState>(() => readState());
 
   useEffect(() => {
-    localStorage.setItem(DUAL_KEY, JSON.stringify(state));
-    // Keep legacy key in sync for any consumers that read it directly
-    if (state.currentMode) {
-      localStorage.setItem(LEGACY_KEY, state.currentMode);
-    } else {
-      localStorage.removeItem(LEGACY_KEY);
+    try {
+      localStorage.setItem(DUAL_KEY, JSON.stringify(state));
+      // Keep legacy key in sync for any consumers that read it directly
+      if (state.currentMode) {
+        localStorage.setItem(LEGACY_KEY, state.currentMode);
+      } else {
+        localStorage.removeItem(LEGACY_KEY);
+      }
+    } catch (error) {
+      console.error("[Dutton Connect] Could not persist account mode:", error);
     }
   }, [state]);
 

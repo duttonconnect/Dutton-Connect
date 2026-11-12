@@ -31,7 +31,8 @@ workflows:
       - name: Install pnpm
         script: |
           corepack disable || true
-          which pnpm || npm install -g pnpm@latest
+          npm install -g pnpm@10.26.1
+          pnpm --version
 
       - name: Install workspace dependencies
         script: |
@@ -45,11 +46,8 @@ workflows:
             fs.writeFileSync(p, JSON.stringify(pkg, null, 2));
             console.log('Removed firebase-tools from devDependencies');
           "
-          # Allow all build scripts in CI (pnpm v10 requires explicit approval)
-          printf "\ndangerouslyAllowAllBuilds: true\n" >> pnpm-workspace.yaml
-          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile \
-            --config.resolution-mode=highest \
-            --config.minimum-release-age=0
+          # Retain the workspace's approved build scripts and package-age policy.
+          COREPACK_ENABLE_STRICT=0 pnpm install --no-frozen-lockfile
 
       - name: Set build number from Codemagic run counter
         script: |
@@ -63,11 +61,22 @@ workflows:
 
       - name: Build web app for Capacitor
         script: |
+          set -euo pipefail
+          for key in VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN VITE_FIREBASE_PROJECT_ID VITE_FIREBASE_STORAGE_BUCKET VITE_FIREBASE_MESSAGING_SENDER_ID VITE_FIREBASE_APP_ID; do
+            if [ -z "${!key:-}" ]; then
+              echo "ERROR: Missing required Firebase build variable: $key"
+              exit 1
+            fi
+          done
           pnpm --filter @workspace/dutton-toolkit run cap:build
+          node artifacts/dutton-toolkit/scripts/verify-ios-web-assets.mjs artifacts/dutton-toolkit/dist/public
 
       - name: Sync web build into iOS project
         script: |
+          set -euo pipefail
           pnpm --filter @workspace/dutton-toolkit run cap:sync
+          node artifacts/dutton-toolkit/scripts/verify-ios-web-assets.mjs artifacts/dutton-toolkit/ios/App/App/public
+          test -s artifacts/dutton-toolkit/ios/App/App/capacitor.config.json
 
       - name: Install CocoaPods dependencies
         script: |
@@ -102,7 +111,7 @@ workflows:
 
           # Rewrite ExportOptions.plist with the actual profile UUID so the
           # export step can locate it — hardcoded profile names don't work.
-          python3 -c "import plistlib,os;u=os.environ['PROVISIONING_PROFILE_UUID'];p={'method':'app-store-connect','teamID':'XZ68HMHPP4','signingStyle':'manual','signingCertificate':'iPhone Distribution','provisioningProfiles':{'com.duttonconnect.app':u},'uploadBitcode':False,'uploadSymbols':True};plistlib.dump(p,open('artifacts/dutton-toolkit/ios/ExportOptions.plist','wb'));print('ExportOptions.plist written with UUID:',u)" PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID"
+          PROVISIONING_PROFILE_UUID="$PROVISIONING_PROFILE_UUID" python3 -c "import plistlib,os;u=os.environ['PROVISIONING_PROFILE_UUID'];p={'method':'app-store-connect','teamID':os.environ['APPLE_TEAM_ID'],'signingStyle':'manual','signingCertificate':'Apple Distribution','provisioningProfiles':{'com.duttonconnect.app':u},'uploadBitcode':False,'uploadSymbols':True};plistlib.dump(p,open('artifacts/dutton-toolkit/ios/ExportOptions.plist','wb'));print('ExportOptions.plist written with UUID:',u)"
 
       - name: Build IPA
         script: |

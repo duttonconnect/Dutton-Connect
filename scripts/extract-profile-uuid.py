@@ -45,11 +45,5 @@ for profile_path in profiles:
         print(uuid)
         sys.exit(0)
 
-# Fallback: use the newest profile regardless of bundle ID.
-print("WARNING: no profile matched bundle ID — falling back to newest profile", file=sys.stderr)
-result = subprocess.run(
-    ["security", "cms", "-D", "-i", profiles[0]], capture_output=True)
-plist = plistlib.loads(result.stdout)
-uuid = plist["UUID"]
-print(f"FALLBACK: {profiles[0]} ({uuid})", file=sys.stderr)
-print(uuid)
+print(f"ERROR: No provisioning profile matched {BUNDLE_ID}", file=sys.stderr)
+sys.exit(1)

@@ -29,60 +29,114 @@
  *
  * Deploy rules with: firebase deploy --only firestore:rules
  */
-import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import {
+  getApps,
+  initializeApp,
+  type FirebaseApp,
+  type FirebaseOptions,
+} from "firebase/app";
+import { Capacitor } from "@capacitor/core";
+import {
+  browserLocalPersistence,
+  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from "firebase/auth";
 import {
   getFirestore,
   type Firestore,
 } from "firebase/firestore";
 
-const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY as string | undefined;
+const firebaseConfig: FirebaseOptions = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string | undefined,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string | undefined,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
+};
+
+const missingConfig = Object.entries(firebaseConfig)
+  .filter(([, value]) => typeof value !== "string" || value.trim() === "")
+  .map(([key]) => key);
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let activeFirebaseConfig: FirebaseOptions | null = null;
 
-if (API_KEY) {
-  const firebaseConfig = {
-    apiKey: API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
-  };
+if (missingConfig.length === 0) {
+  try {
+    app =
+      getApps().find((firebaseApp) => firebaseApp.name === "[DEFAULT]") ??
+      initializeApp(firebaseConfig);
 
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  auth = getAuth(app);
-  db = getFirestore(app);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        // The browser popup/redirect resolver is not needed for this app's
+        // email/password flows and can do unsupported work in WKWebView.
+        auth = initializeAuth(app, {
+          persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+        });
+      } catch (nativeAuthError) {
+        // HMR can revisit this module after Auth was initialized. Do not fall
+        // back to browser popup dependencies for unrelated native errors.
+        if (
+          typeof nativeAuthError === "object" &&
+          nativeAuthError !== null &&
+          "code" in nativeAuthError &&
+          nativeAuthError.code === "auth/already-initialized"
+        ) {
+          auth = getAuth(app);
+        } else {
+          throw nativeAuthError;
+        }
+      }
+    } else {
+      auth = getAuth(app);
+    }
+
+    db = getFirestore(app);
+    activeFirebaseConfig = firebaseConfig;
+  } catch (error) {
+    console.error(
+      "[Dutton Connect] Firebase initialization failed; starting without cloud services.",
+      error,
+    );
+    app = null;
+    auth = null;
+    db = null;
+  }
 } else {
-  console.warn(
-    "[Dutton Connect] Firebase is not configured. " +
-      "Set VITE_FIREBASE_* environment variables to enable cloud sync and authentication. " +
-      "App will run in offline/localStorage mode.",
+  console.error(
+    "[Dutton Connect] Firebase client configuration is incomplete. " +
+      `Missing fields: ${missingConfig.join(", ")}. ` +
+      "The app will start in offline/localStorage mode.",
   );
 }
 
 export { app, auth, db };
-export const isFirebaseConfigured = Boolean(API_KEY);
+export const isFirebaseConfigured = Boolean(auth && db);
 
 /**
  * Send the Firebase config to the service worker so it can initialise
  * Firebase Messaging for background push notifications.
  */
 export function sendConfigToServiceWorker() {
-  if (!API_KEY || !("serviceWorker" in navigator)) return;
+  if (
+    !activeFirebaseConfig ||
+    Capacitor.isNativePlatform() ||
+    typeof navigator === "undefined" ||
+    !("serviceWorker" in navigator)
+  ) {
+    return;
+  }
+
   navigator.serviceWorker.ready.then((registration) => {
     registration.active?.postMessage({
       type: "FIREBASE_CONFIG",
-      config: {
-        apiKey: API_KEY,
-        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
-        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string,
-        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string,
-        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string,
-        appId: import.meta.env.VITE_FIREBASE_APP_ID as string,
-      },
+      config: activeFirebaseConfig,
     });
   }).catch(() => {});
 }

@@ -329,7 +329,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [routePlannerHasContent, setRoutePlannerHasContent] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("dutton_toolkit_state", JSON.stringify(state));
+    try {
+      localStorage.setItem("dutton_toolkit_state", JSON.stringify(state));
+    } catch (error) {
+      console.error("[Dutton Connect] Could not persist app state:", error);
+    }
   }, [state]);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
